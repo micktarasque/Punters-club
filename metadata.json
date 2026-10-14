@@ -1,0 +1,8 @@
+{
+  "name": "TurfSheet NSW — TAB Racing & Betting Ledger",
+  "description": "Smart horse racing form guide, NSW TAB results scraper, exotic dividend calculator, and interactive betting sheet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

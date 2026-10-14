@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "PunterSheet": {
+      "title": "PunterSheet",
+      "description": "Stores a syndicate member's cross-device horse racing selections and Joker Round nominations.",
+      "type": "object",
+      "properties": {
+        "punterId": {
+          "type": "string",
+          "description": "Unique identifier for the punter profile (e.g. punter-steve-f, punter-mark-s).",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the punter.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "role": {
+          "type": "string",
+          "description": "Syndicate role description.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the user who saved the sheet.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "selectionsMap": {
+          "type": "object",
+          "description": "Nested map of meetingId to raceNumber to { firstPref, secondPref, thirdPref, updatedAt }."
+        },
+        "jokerMap": {
+          "type": "object",
+          "description": "Map of meetingId to nominated Joker Race number (or null)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "punterId",
+        "name",
+        "role",
+        "ownerId",
+        "selectionsMap",
+        "jokerMap",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/punterSheets/{sheetId}": {
+      "schema": {
+        "$ref": "#/entities/PunterSheet"
+      },
+      "description": "Stores per-punter cross-device racing selections and Joker Round nominations."
+    }
+  }
+}

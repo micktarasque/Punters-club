@@ -1,0 +1,2601 @@
+{
+  "2026-10-10:caulfield:r1": {
+    "meetingId": "vic-caulfield-2026-10-10",
+    "venue": "Caulfield",
+    "date": "2026-10-10",
+    "trackRating": "Good 3",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "9 - 4",
+        "dividend": 187.7
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "9 - 4",
+        "dividend": 145.9
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "9 - 4 - 10",
+        "dividend": 1040.0
+      },
+      {
+        "poolType": "First 4",
+        "combination": "9 - 4 - 10 - 5",
+        "dividend": 6284.3
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Bring Forth",
+        "finishPosition": 10,
+        "margin": "7.5L",
+        "nswTabWin": 41.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 41.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Charisse",
+        "finishPosition": 8,
+        "margin": "3.8L",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Foujita San",
+        "finishPosition": 2,
+        "margin": "1.0L",
+        "nswTabWin": 61.0,
+        "nswTabPlace": 9.0,
+        "fixedWin": 61.0,
+        "fixedPlace": 8.0
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Regal Lion",
+        "finishPosition": 4,
+        "margin": "2.0L",
+        "nswTabWin": 26.0,
+        "nswTabPlace": 4.5,
+        "fixedWin": 26.0,
+        "fixedPlace": 4.5
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Veyepee",
+        "finishPosition": 6,
+        "margin": "2.5L",
+        "nswTabWin": 2.7,
+        "nswTabPlace": 1.28,
+        "fixedWin": 2.7,
+        "fixedPlace": 1.28
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Classic Gem",
+        "finishPosition": 5,
+        "margin": "2.2L",
+        "nswTabWin": 13.0,
+        "nswTabPlace": 2.9,
+        "fixedWin": 13.0,
+        "fixedPlace": 2.9
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "In'Kantosstar",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.7,
+        "nswTabPlace": 1.6,
+        "fixedWin": 4.0,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Just Desserts",
+        "finishPosition": 3,
+        "margin": "1.8L",
+        "nswTabWin": 3.2,
+        "nswTabPlace": 1.5,
+        "fixedWin": 3.2,
+        "fixedPlace": 1.35
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Ichnusa",
+        "finishPosition": 7,
+        "margin": "3.5L",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.45,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Korobeiniki",
+        "finishPosition": 9,
+        "margin": "5.8L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 12.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 12.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:caulfield:r2": {
+    "meetingId": "vic-caulfield-2026-10-10",
+    "venue": "Caulfield",
+    "date": "2026-10-10",
+    "trackRating": "Good 3",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Quinella",
+        "combination": "5 - 6",
+        "dividend": 84.7
+      },
+      {
+        "poolType": "First 4",
+        "combination": "5 - 6 - 4 - 8",
+        "dividend": 3026.3
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "5 - 6 - 4",
+        "dividend": 577.6
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "5 - 6",
+        "dividend": 117.9
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Verzain",
+        "finishPosition": 7,
+        "margin": "6.6L",
+        "nswTabWin": 13.0,
+        "nswTabPlace": 3.2,
+        "fixedWin": 13.0,
+        "fixedPlace": 3.2
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Moana Spirit",
+        "finishPosition": 6,
+        "margin": "6.4L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.0,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.0
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Jacaranda",
+        "finishPosition": 3,
+        "margin": "2.6L",
+        "nswTabWin": 7.5,
+        "nswTabPlace": 1.9,
+        "fixedWin": 7.5,
+        "fixedPlace": 2.25
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Sequinned",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 2.5,
+        "nswTabPlace": 1.3,
+        "fixedWin": 2.8,
+        "fixedPlace": 1.35
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Almost An Angel",
+        "finishPosition": 2,
+        "margin": "2.5L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 9.1,
+        "fixedWin": 71.0,
+        "fixedPlace": 9.5
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Superbec",
+        "finishPosition": 8,
+        "margin": "7.4L",
+        "nswTabWin": 17.0,
+        "nswTabPlace": 3.7,
+        "fixedWin": 17.0,
+        "fixedPlace": 3.7
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Gas Station Rose",
+        "finishPosition": 4,
+        "margin": "4.8L",
+        "nswTabWin": 9.5,
+        "nswTabPlace": 2.6,
+        "fixedWin": 9.5,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Fiery Fun",
+        "finishPosition": 5,
+        "margin": "4.9L",
+        "nswTabWin": 4.2,
+        "nswTabPlace": 1.65,
+        "fixedWin": 4.2,
+        "fixedPlace": 1.65
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Roseatic",
+        "finishPosition": 9,
+        "margin": "15.4L",
+        "nswTabWin": 8.5,
+        "nswTabPlace": 2.45,
+        "fixedWin": 8.5,
+        "fixedPlace": 2.45
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:caulfield:r3": {
+    "meetingId": "vic-caulfield-2026-10-10",
+    "venue": "Caulfield",
+    "date": "2026-10-10",
+    "trackRating": "Good 3",
+    "raceNumber": 3,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "1 - 9",
+        "dividend": 13.1
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "1 - 9 - 8",
+        "dividend": 75.7
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "1 - 9",
+        "dividend": 5.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "1 - 9 - 8 - 5",
+        "dividend": 264.8
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Surfin' Bird",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.1,
+        "nswTabPlace": 1.8,
+        "fixedWin": 4.2,
+        "fixedPlace": 1.7
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Private Legacy",
+        "finishPosition": 7,
+        "margin": "6.2L",
+        "nswTabWin": 16.0,
+        "nswTabPlace": 3.9,
+        "fixedWin": 16.0,
+        "fixedPlace": 3.9
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Sneaky Sunrise",
+        "finishPosition": 10,
+        "margin": "8.0L",
+        "nswTabWin": 46.0,
+        "nswTabPlace": 8.0,
+        "fixedWin": 46.0,
+        "fixedPlace": 8.0
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Jenni's Meadow",
+        "finishPosition": 8,
+        "margin": "7.0L",
+        "nswTabWin": 34.0,
+        "nswTabPlace": 6.5,
+        "fixedWin": 34.0,
+        "fixedPlace": 6.5
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "On Display",
+        "finishPosition": 4,
+        "margin": "5.0L",
+        "nswTabWin": 4.8,
+        "nswTabPlace": 1.85,
+        "fixedWin": 4.8,
+        "fixedPlace": 1.85
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Astral Flame",
+        "finishPosition": 6,
+        "margin": "5.9L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 2.2,
+        "fixedWin": 6.5,
+        "fixedPlace": 2.2
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Tarvue",
+        "finishPosition": 12,
+        "margin": "14.8L",
+        "nswTabWin": 301.0,
+        "nswTabPlace": 27.0,
+        "fixedWin": 301.0,
+        "fixedPlace": 27.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Perfect Ten",
+        "finishPosition": 3,
+        "margin": "4.8L",
+        "nswTabWin": 9.0,
+        "nswTabPlace": 2.9,
+        "fixedWin": 9.0,
+        "fixedPlace": 2.7
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Savitri",
+        "finishPosition": 2,
+        "margin": "2.0L",
+        "nswTabWin": 3.5,
+        "nswTabPlace": 1.4,
+        "fixedWin": 3.5,
+        "fixedPlace": 1.55
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "All Business",
+        "finishPosition": 5,
+        "margin": "5.2L",
+        "nswTabWin": 61.0,
+        "nswTabPlace": 9.5,
+        "fixedWin": 61.0,
+        "fixedPlace": 9.5
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Oraqua",
+        "finishPosition": 11,
+        "margin": "14.0L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 71.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Moonlight Circus",
+        "finishPosition": 9,
+        "margin": "7.2L",
+        "nswTabWin": 20.0,
+        "nswTabPlace": 4.5,
+        "fixedWin": 20.0,
+        "fixedPlace": 4.5
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:caulfield:r4": {
+    "meetingId": "vic-caulfield-2026-10-10",
+    "venue": "Caulfield",
+    "date": "2026-10-10",
+    "trackRating": "Good 3",
+    "raceNumber": 4,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Trifecta",
+        "combination": "12 - 15 - 6",
+        "dividend": 802.6
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "12 - 15",
+        "dividend": 91.9
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "12 - 15",
+        "dividend": 59.2
+      },
+      {
+        "poolType": "First 4",
+        "combination": "12 - 15 - 6 - 3",
+        "dividend": 3124.6
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Onesmoothoperator",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 5.5,
+        "fixedWin": 23.0,
+        "fixedPlace": 5.5
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Campaldino",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 26.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 26.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Future History",
+        "finishPosition": 4,
+        "margin": "0.0L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 2.35,
+        "fixedWin": 6.5,
+        "fixedPlace": 2.35
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Zakouma",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.45,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Knight's Choice",
+        "finishPosition": 3,
+        "margin": "0.0L",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.7,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Soulcombe",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.5,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.5
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Okita Soushi",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 61.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 61.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Machine Gun Gracie",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.5,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.5
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Highland Bling",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 15.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 15.0
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Pinhole",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 3.5,
+        "nswTabPlace": 1.55,
+        "fixedWin": 3.7,
+        "fixedPlace": 1.7
+      },
+      {
+        "tabNumber": 13,
+        "horseName": "Strictly Business",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 81.0,
+        "nswTabPlace": 13.0,
+        "fixedWin": 81.0,
+        "fixedPlace": 13.0
+      },
+      {
+        "tabNumber": 14,
+        "horseName": "Shockletz",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 2.1,
+        "fixedWin": 5.5,
+        "fixedPlace": 2.1
+      },
+      {
+        "tabNumber": 15,
+        "horseName": "Suntora",
+        "finishPosition": 2,
+        "margin": "0.0L",
+        "nswTabWin": 27.0,
+        "nswTabPlace": 8.35,
+        "fixedWin": 27.0,
+        "fixedPlace": 6.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:rosehill-gardens:r1": {
+    "meetingId": "nsw-rosehill-gardens-2026-10-10",
+    "venue": "Rosehill Gardens",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "4 - 13",
+        "dividend": 46.2
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "4 - 13 - 1",
+        "dividend": 187.6
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "4 - 13",
+        "dividend": 31.3
+      },
+      {
+        "poolType": "First 4",
+        "combination": "4 - 13 - 1 - 10",
+        "dividend": 1402.2
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Felix Majestic",
+        "finishPosition": 3,
+        "margin": "1.9L",
+        "nswTabWin": 3.4,
+        "nswTabPlace": 1.6,
+        "fixedWin": 3.4,
+        "fixedPlace": 1.55
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Cosmic Lad",
+        "finishPosition": 11,
+        "margin": "5.7L",
+        "nswTabWin": 41.0,
+        "nswTabPlace": 7.5,
+        "fixedWin": 41.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Alabama State",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 3.7,
+        "nswTabPlace": 1.7,
+        "fixedWin": 4.0,
+        "fixedPlace": 1.7
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Magical Moments",
+        "finishPosition": 6,
+        "margin": "2.9L",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.35,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.35
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Federal Reserve",
+        "finishPosition": 9,
+        "margin": "4.4L",
+        "nswTabWin": 31.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 31.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Powder Man",
+        "finishPosition": 4,
+        "margin": "2.5L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 4.4,
+        "fixedWin": 18.0,
+        "fixedPlace": 4.4
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Queen Of Clubs",
+        "finishPosition": 10,
+        "margin": "4.7L",
+        "nswTabWin": 8.0,
+        "nswTabPlace": 2.6,
+        "fixedWin": 8.0,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Vetwelve",
+        "finishPosition": 5,
+        "margin": "2.8L",
+        "nswTabWin": 11.0,
+        "nswTabPlace": 3.1,
+        "fixedWin": 11.0,
+        "fixedPlace": 3.1
+      },
+      {
+        "tabNumber": 13,
+        "horseName": "Force March",
+        "finishPosition": 2,
+        "margin": "0.6L",
+        "nswTabWin": 11.0,
+        "nswTabPlace": 3.5,
+        "fixedWin": 11.0,
+        "fixedPlace": 3.1
+      },
+      {
+        "tabNumber": 14,
+        "horseName": "Monkhana",
+        "finishPosition": 8,
+        "margin": "4.3L",
+        "nswTabWin": 41.0,
+        "nswTabPlace": 7.5,
+        "fixedWin": 41.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 15,
+        "horseName": "Call Me Sassy",
+        "finishPosition": 7,
+        "margin": "3.1L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.3,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.3
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:rosehill-gardens:r2": {
+    "meetingId": "nsw-rosehill-gardens-2026-10-10",
+    "venue": "Rosehill Gardens",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "First 4",
+        "combination": "2 - 1 - 10 - 12",
+        "dividend": 57788.4
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "2 - 1",
+        "dividend": 142.5
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "2 - 1 - 10",
+        "dividend": 5130.0
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "2 - 1",
+        "dividend": 223.4
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Condone",
+        "finishPosition": 2,
+        "margin": "0.7L",
+        "nswTabWin": 17.0,
+        "nswTabPlace": 5.0,
+        "fixedWin": 17.0,
+        "fixedPlace": 4.5
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Hammoon Sensation",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 12.3,
+        "nswTabPlace": 4.0,
+        "fixedWin": 11.0,
+        "fixedPlace": 3.3
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Magic Merlin",
+        "finishPosition": 8,
+        "margin": "2.5L",
+        "nswTabWin": 8.0,
+        "nswTabPlace": 2.7,
+        "fixedWin": 8.0,
+        "fixedPlace": 2.7
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Ocean Tsunami",
+        "finishPosition": 5,
+        "margin": "2.3L",
+        "nswTabWin": 3.8,
+        "nswTabPlace": 1.7,
+        "fixedWin": 3.8,
+        "fixedPlace": 1.7
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Vltava",
+        "finishPosition": 10,
+        "margin": "2.9L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 4.6,
+        "fixedWin": 18.0,
+        "fixedPlace": 4.6
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Hip Hip Ole",
+        "finishPosition": 13,
+        "margin": "14.3L",
+        "nswTabWin": 9.5,
+        "nswTabPlace": 3.0,
+        "fixedWin": 9.5,
+        "fixedPlace": 3.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Mr Chips",
+        "finishPosition": 9,
+        "margin": "2.7L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 19.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 19.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Snowy",
+        "finishPosition": 6,
+        "margin": "2.4L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.5,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.5
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Spread The Love",
+        "finishPosition": 3,
+        "margin": "1.2L",
+        "nswTabWin": 35.0,
+        "nswTabPlace": 7.2,
+        "fixedWin": 35.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Sipping Shamus",
+        "finishPosition": 12,
+        "margin": "4.5L",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 5.5,
+        "fixedWin": 23.0,
+        "fixedPlace": 5.5
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Wolf Island",
+        "finishPosition": 4,
+        "margin": "1.4L",
+        "nswTabWin": 81.0,
+        "nswTabPlace": 14.0,
+        "fixedWin": 81.0,
+        "fixedPlace": 14.0
+      },
+      {
+        "tabNumber": 13,
+        "horseName": "Costalivin",
+        "finishPosition": 7,
+        "margin": "2.4L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 2.35,
+        "fixedWin": 6.5,
+        "fixedPlace": 2.35
+      },
+      {
+        "tabNumber": 14,
+        "horseName": "Street Force",
+        "finishPosition": 11,
+        "margin": "3.1L",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 2.15,
+        "fixedWin": 5.5,
+        "fixedPlace": 2.15
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:rosehill-gardens:r3": {
+    "meetingId": "nsw-rosehill-gardens-2026-10-10",
+    "venue": "Rosehill Gardens",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 3,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Quinella",
+        "combination": "11 - 9",
+        "dividend": 7.5
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "11 - 9",
+        "dividend": 17.2
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "11 - 9 - 5",
+        "dividend": 149.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "11 - 9 - 5 - 4",
+        "dividend": 393.2
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Our Anchorage",
+        "finishPosition": 6,
+        "margin": "4.7L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Starzintheireyes",
+        "finishPosition": 4,
+        "margin": "1.3L",
+        "nswTabWin": 3.8,
+        "nswTabPlace": 1.45,
+        "fixedWin": 3.8,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Elliptical",
+        "finishPosition": 3,
+        "margin": "1.3L",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 3.3,
+        "fixedWin": 23.0,
+        "fixedPlace": 3.8
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Sir Chartwell",
+        "finishPosition": 7,
+        "margin": "4.9L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Barrengarry",
+        "finishPosition": 2,
+        "margin": "0.0L",
+        "nswTabWin": 3.2,
+        "nswTabPlace": 1.3,
+        "fixedWin": 3.2,
+        "fixedPlace": 1.35
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Mister Rizz",
+        "finishPosition": 8,
+        "margin": "11.4L",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 1.95,
+        "fixedWin": 7.0,
+        "fixedPlace": 1.95
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Anthracite",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.4,
+        "nswTabPlace": 1.6,
+        "fixedWin": 4.2,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Mukhtalif",
+        "finishPosition": 5,
+        "margin": "4.5L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 1.85,
+        "fixedWin": 6.5,
+        "fixedPlace": 1.85
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:eagle-farm:r1": {
+    "meetingId": "qld-eagle-farm-2026-10-10",
+    "venue": "Eagle Farm",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "First 4",
+        "combination": "2 - 9 - 1 - 5",
+        "dividend": 100.4
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "2 - 9",
+        "dividend": 12.2
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "2 - 9",
+        "dividend": 15.3
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "2 - 9 - 1",
+        "dividend": 35.1
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Highwire Queen",
+        "finishPosition": 3,
+        "margin": "2.8L",
+        "nswTabWin": 3.5,
+        "nswTabPlace": 1.65,
+        "fixedWin": 3.5,
+        "fixedPlace": 1.65
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Venus Invicta",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 1.7,
+        "nswTabPlace": 1.2,
+        "fixedWin": 1.65,
+        "fixedPlace": 1.18
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Mishani Jazz",
+        "finishPosition": 7,
+        "margin": "21.5L",
+        "nswTabWin": 26.0,
+        "nswTabPlace": 7.5,
+        "fixedWin": 26.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Mishani Kimitsu",
+        "finishPosition": 4,
+        "margin": "4.0L",
+        "nswTabWin": 7.5,
+        "nswTabPlace": 2.8,
+        "fixedWin": 7.5,
+        "fixedPlace": 2.8
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Mishani Tyzone",
+        "finishPosition": 5,
+        "margin": "7.0L",
+        "nswTabWin": 35.0,
+        "nswTabPlace": 9.0,
+        "fixedWin": 35.0,
+        "fixedPlace": 9.0
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Miss Kobi",
+        "finishPosition": 6,
+        "margin": "9.1L",
+        "nswTabWin": 21.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 21.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Better Be Done",
+        "finishPosition": 2,
+        "margin": "1.8L",
+        "nswTabWin": 17.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 17.0,
+        "fixedPlace": 5.5
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:eagle-farm:r2": {
+    "meetingId": "qld-eagle-farm-2026-10-10",
+    "venue": "Eagle Farm",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "5 - 2",
+        "dividend": 16.7
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "5 - 2 - 6",
+        "dividend": 77.5
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "5 - 2",
+        "dividend": 11.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "5 - 2 - 6 - 4",
+        "dividend": 251.7
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 2,
+        "horseName": "Little Beginnings",
+        "finishPosition": 2,
+        "margin": "0.2L",
+        "nswTabWin": 11.0,
+        "nswTabPlace": 2.7,
+        "fixedWin": 11.0,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Our Magnus",
+        "finishPosition": 6,
+        "margin": "4.8L",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.45,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Chief In Charge",
+        "finishPosition": 4,
+        "margin": "3.1L",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 1.75,
+        "fixedWin": 5.5,
+        "fixedPlace": 1.75
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Bat Out Of Hell",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 2.1,
+        "nswTabPlace": 1.3,
+        "fixedWin": 2.25,
+        "fixedPlace": 1.22
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Superalloy",
+        "finishPosition": 3,
+        "margin": "2.5L",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 1.6,
+        "fixedWin": 5.5,
+        "fixedPlace": 1.75
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Kick On Command",
+        "finishPosition": 7,
+        "margin": "6.2L",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Kingdom Undersiege",
+        "finishPosition": 8,
+        "margin": "8.8L",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.45,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Boondocks",
+        "finishPosition": 5,
+        "margin": "4.5L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 2.8,
+        "fixedWin": 12.0,
+        "fixedPlace": 2.8
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:morphettville:r1": {
+    "meetingId": "sa-morphettville-2026-10-10",
+    "venue": "Morphettville",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Trifecta",
+        "combination": "1 - 2 - 3",
+        "dividend": 30.9
+      },
+      {
+        "poolType": "First 4",
+        "combination": "1 - 2 - 3 - 5",
+        "dividend": 74.0
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "1 - 2",
+        "dividend": 8.1
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "1 - 2",
+        "dividend": 9.2
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Ole Go",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 1.6,
+        "nswTabPlace": 1.1,
+        "fixedWin": 1.7,
+        "fixedPlace": 1.2
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Czech Out",
+        "finishPosition": 2,
+        "margin": "1.7L",
+        "nswTabWin": 14.0,
+        "nswTabPlace": 4.7,
+        "fixedWin": 14.0,
+        "fixedPlace": 4.5
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Super Wonder",
+        "finishPosition": 3,
+        "margin": "2.2L",
+        "nswTabWin": 4.8,
+        "nswTabPlace": 2.05,
+        "fixedWin": 4.8,
+        "fixedPlace": 2.05
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Tallingas Chief",
+        "finishPosition": 7,
+        "margin": "12.1L",
+        "nswTabWin": 51.0,
+        "nswTabPlace": 12.0,
+        "fixedWin": 51.0,
+        "fixedPlace": 12.0
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Our Brave Boy",
+        "finishPosition": 4,
+        "margin": "3.1L",
+        "nswTabWin": 5.0,
+        "nswTabPlace": 2.1,
+        "fixedWin": 5.0,
+        "fixedPlace": 2.1
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Azytass",
+        "finishPosition": 6,
+        "margin": "5.5L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 4.0,
+        "fixedWin": 12.0,
+        "fixedPlace": 4.0
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Blazing Missile",
+        "finishPosition": 5,
+        "margin": "3.7L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 16.0,
+        "fixedWin": 71.0,
+        "fixedPlace": 16.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:morphettville:r2": {
+    "meetingId": "sa-morphettville-2026-10-10",
+    "venue": "Morphettville",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "8 - 2",
+        "dividend": 9.8
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "8 - 2",
+        "dividend": 3.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "8 - 2 - 7 - 13",
+        "dividend": 941.2
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "8 - 2 - 7",
+        "dividend": 150.4
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Cold Copy",
+        "finishPosition": 8,
+        "margin": "7.4L",
+        "nswTabWin": 26.0,
+        "nswTabPlace": 4.5,
+        "fixedWin": 26.0,
+        "fixedPlace": 4.5
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Confucious Flyer",
+        "finishPosition": 2,
+        "margin": "0.6L",
+        "nswTabWin": 2.0,
+        "nswTabPlace": 1.2,
+        "fixedWin": 2.0,
+        "fixedPlace": 1.16
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Expeeare",
+        "finishPosition": 6,
+        "margin": "5.0L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 3.6,
+        "fixedWin": 18.0,
+        "fixedPlace": 3.6
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Gus The Shark",
+        "finishPosition": 10,
+        "margin": "10.7L",
+        "nswTabWin": 201.0,
+        "nswTabPlace": 17.0,
+        "fixedWin": 201.0,
+        "fixedPlace": 17.0
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Larry Can",
+        "finishPosition": 7,
+        "margin": "5.9L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 2.8,
+        "fixedWin": 12.0,
+        "fixedPlace": 2.8
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Mean Mazzle",
+        "finishPosition": 3,
+        "margin": "3.7L",
+        "nswTabWin": 46.0,
+        "nswTabPlace": 7.7,
+        "fixedWin": 46.0,
+        "fixedPlace": 6.5
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Prestige Lucky",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.1,
+        "nswTabPlace": 1.4,
+        "fixedWin": 3.6,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Gift Of Silence",
+        "finishPosition": 5,
+        "margin": "4.8L",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.45,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 13,
+        "horseName": "Klasyk Mode",
+        "finishPosition": 4,
+        "margin": "4.3L",
+        "nswTabWin": 9.5,
+        "nswTabPlace": 2.4,
+        "fixedWin": 9.5,
+        "fixedPlace": 2.4
+      },
+      {
+        "tabNumber": 14,
+        "horseName": "Out Ontario",
+        "finishPosition": 9,
+        "margin": "10.5L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 9.0,
+        "fixedWin": 71.0,
+        "fixedPlace": 9.0
+      },
+      {
+        "tabNumber": 16,
+        "horseName": "Gartmorn's Girl",
+        "finishPosition": 11,
+        "margin": "21.5L",
+        "nswTabWin": 201.0,
+        "nswTabPlace": 17.0,
+        "fixedWin": 201.0,
+        "fixedPlace": 17.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:hamilton:r1": {
+    "meetingId": "vic-hamilton-2026-10-10",
+    "venue": "Hamilton",
+    "date": "2026-10-10",
+    "trackRating": "Soft 5",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Trifecta",
+        "combination": "1 - 4 - 5",
+        "dividend": 49.3
+      },
+      {
+        "poolType": "First 4",
+        "combination": "1 - 4 - 5 - 17",
+        "dividend": 378.7
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "1 - 4",
+        "dividend": 12.5
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "1 - 4",
+        "dividend": 14.7
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Hank Honk",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 1.6,
+        "nswTabPlace": 1.1,
+        "fixedWin": 1.65,
+        "fixedPlace": 1.12
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Magna Sententia",
+        "finishPosition": 2,
+        "margin": "0.8L",
+        "nswTabWin": 13.0,
+        "nswTabPlace": 3.7,
+        "fixedWin": 13.0,
+        "fixedPlace": 2.9
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Prestige Hellbent",
+        "finishPosition": 3,
+        "margin": "3.2L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 1.5,
+        "fixedWin": 6.5,
+        "fixedPlace": 1.9
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Rubio",
+        "finishPosition": 9,
+        "margin": "18.3L",
+        "nswTabWin": 11.0,
+        "nswTabPlace": 2.6,
+        "fixedWin": 11.0,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Run Forrest Run",
+        "finishPosition": 11,
+        "margin": "28.6L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 13.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 13.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Cafe Gravity",
+        "finishPosition": 10,
+        "margin": "19.6L",
+        "nswTabWin": 31.0,
+        "nswTabPlace": 5.0,
+        "fixedWin": 31.0,
+        "fixedPlace": 5.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Hold Sway",
+        "finishPosition": 8,
+        "margin": "8.3L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 2.8,
+        "fixedWin": 12.0,
+        "fixedPlace": 2.8
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Renaissance Girl",
+        "finishPosition": 5,
+        "margin": "5.2L",
+        "nswTabWin": 14.0,
+        "nswTabPlace": 3.1,
+        "fixedWin": 14.0,
+        "fixedPlace": 3.1
+      },
+      {
+        "tabNumber": 13,
+        "horseName": "Snow Party",
+        "finishPosition": 6,
+        "margin": "5.3L",
+        "nswTabWin": 46.0,
+        "nswTabPlace": 6.5,
+        "fixedWin": 46.0,
+        "fixedPlace": 6.5
+      },
+      {
+        "tabNumber": 16,
+        "horseName": "Luna Doro",
+        "finishPosition": 7,
+        "margin": "5.8L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 3.6,
+        "fixedWin": 18.0,
+        "fixedPlace": 3.6
+      },
+      {
+        "tabNumber": 17,
+        "horseName": "Queen Of The Top",
+        "finishPosition": 4,
+        "margin": "5.0L",
+        "nswTabWin": 41.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 41.0,
+        "fixedPlace": 6.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:hamilton:r2": {
+    "meetingId": "vic-hamilton-2026-10-10",
+    "venue": "Hamilton",
+    "date": "2026-10-10",
+    "trackRating": "Soft 5",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Trifecta",
+        "combination": "1 - 11 - 6",
+        "dividend": 46.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "1 - 11 - 6 - 3",
+        "dividend": 181.6
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "1 - 11",
+        "dividend": 11.5
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "1 - 11",
+        "dividend": 4.3
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Accuser",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.7,
+        "nswTabPlace": 1.9,
+        "fixedWin": 3.9,
+        "fixedPlace": 1.55
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Balsino Prince",
+        "finishPosition": 7,
+        "margin": "5.0L",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 4.6,
+        "fixedWin": 23.0,
+        "fixedPlace": 4.6
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Big Vee",
+        "finishPosition": 4,
+        "margin": "3.0L",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.15,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.15
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Enniscrone",
+        "finishPosition": 5,
+        "margin": "3.2L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 4.0,
+        "fixedWin": 18.0,
+        "fixedPlace": 4.0
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Hiney's Bar",
+        "finishPosition": 6,
+        "margin": "4.7L",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 4.6,
+        "fixedWin": 23.0,
+        "fixedPlace": 4.6
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "I'm Da Boss",
+        "finishPosition": 3,
+        "margin": "0.6L",
+        "nswTabWin": 8.0,
+        "nswTabPlace": 2.4,
+        "fixedWin": 8.0,
+        "fixedPlace": 2.35
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Northern Gold",
+        "finishPosition": 10,
+        "margin": "8.2L",
+        "nswTabWin": 151.0,
+        "nswTabPlace": 17.0,
+        "fixedWin": 151.0,
+        "fixedPlace": 17.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Piccadilly Thunder",
+        "finishPosition": 13,
+        "margin": "14.8L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 15.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 15.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Symphatum",
+        "finishPosition": 9,
+        "margin": "7.2L",
+        "nswTabWin": 14.0,
+        "nswTabPlace": 3.4,
+        "fixedWin": 14.0,
+        "fixedPlace": 3.4
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Tycoon Iggy",
+        "finishPosition": 12,
+        "margin": "13.8L",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 13.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 13.0
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Wyandra",
+        "finishPosition": 2,
+        "margin": "0.2L",
+        "nswTabWin": 2.25,
+        "nswTabPlace": 1.04,
+        "fixedWin": 2.25,
+        "fixedPlace": 1.25
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Slick Vixen",
+        "finishPosition": 8,
+        "margin": "5.8L",
+        "nswTabWin": 51.0,
+        "nswTabPlace": 8.0,
+        "fixedWin": 51.0,
+        "fixedPlace": 8.0
+      },
+      {
+        "tabNumber": 14,
+        "horseName": "Norenson",
+        "finishPosition": 11,
+        "margin": "9.2L",
+        "nswTabWin": 151.0,
+        "nswTabPlace": 17.0,
+        "fixedWin": 151.0,
+        "fixedPlace": 17.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:manangatang:r1": {
+    "meetingId": "vic-manangatang-2026-10-10",
+    "venue": "Manangatang",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Quinella",
+        "combination": "7 - 10",
+        "dividend": 12.6
+      },
+      {
+        "poolType": "First 4",
+        "combination": "7 - 10 - 9 - 5",
+        "dividend": 2012.4
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "7 - 10 - 9",
+        "dividend": 345.5
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "7 - 10",
+        "dividend": 34.9
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "An Poitin Still",
+        "finishPosition": 9,
+        "margin": "6.4L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 3.1,
+        "fixedWin": 12.0,
+        "fixedPlace": 3.1
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Poorlittlerichkid",
+        "finishPosition": 6,
+        "margin": "3.0L",
+        "nswTabWin": 8.5,
+        "nswTabPlace": 2.5,
+        "fixedWin": 8.5,
+        "fixedPlace": 2.5
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Savvy Nights",
+        "finishPosition": 10,
+        "margin": "15.7L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 10.0,
+        "fixedWin": 71.0,
+        "fixedPlace": 10.0
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Waheela",
+        "finishPosition": 4,
+        "margin": "1.4L",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.25,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.25
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Lady Colonist",
+        "finishPosition": 7,
+        "margin": "3.1L",
+        "nswTabWin": 3.3,
+        "nswTabPlace": 1.5,
+        "fixedWin": 3.3,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Misil Beauty",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 9.6,
+        "nswTabPlace": 2.9,
+        "fixedWin": 11.0,
+        "fixedPlace": 3.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Rein Me In",
+        "finishPosition": 5,
+        "margin": "2.7L",
+        "nswTabWin": 9.5,
+        "nswTabPlace": 2.7,
+        "fixedWin": 9.5,
+        "fixedPlace": 2.7
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Shaykhlislamova",
+        "finishPosition": 3,
+        "margin": "1.1L",
+        "nswTabWin": 19.0,
+        "nswTabPlace": 5.1,
+        "fixedWin": 19.0,
+        "fixedPlace": 4.2
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Meet The Prince",
+        "finishPosition": 2,
+        "margin": "0.4L",
+        "nswTabWin": 3.4,
+        "nswTabPlace": 1.4,
+        "fixedWin": 3.4,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Scartaka",
+        "finishPosition": 8,
+        "margin": "4.7L",
+        "nswTabWin": 31.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 31.0,
+        "fixedPlace": 6.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:manangatang:r2": {
+    "meetingId": "vic-manangatang-2026-10-10",
+    "venue": "Manangatang",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Trifecta",
+        "combination": "5 - 12 - 2",
+        "dividend": 329.8
+      },
+      {
+        "poolType": "First 4",
+        "combination": "5 - 12 - 2 - 11",
+        "dividend": 2169.5
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "5 - 12",
+        "dividend": 94.9
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "5 - 12",
+        "dividend": 52.4
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Bick Coin",
+        "finishPosition": 10,
+        "margin": "17.8L",
+        "nswTabWin": 16.0,
+        "nswTabPlace": 3.9,
+        "fixedWin": 16.0,
+        "fixedPlace": 3.9
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Iron Stupa",
+        "finishPosition": 3,
+        "margin": "4.2L",
+        "nswTabWin": 2.9,
+        "nswTabPlace": 1.2,
+        "fixedWin": 2.9,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Wombat",
+        "finishPosition": 6,
+        "margin": "8.3L",
+        "nswTabWin": 13.0,
+        "nswTabPlace": 3.4,
+        "fixedWin": 13.0,
+        "fixedPlace": 3.4
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Atomic Blitz",
+        "finishPosition": 7,
+        "margin": "9.1L",
+        "nswTabWin": 19.0,
+        "nswTabPlace": 4.4,
+        "fixedWin": 19.0,
+        "fixedPlace": 4.4
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Hellish Lee",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 10.8,
+        "nswTabPlace": 2.7,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.9
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Cast A Line",
+        "finishPosition": 5,
+        "margin": "8.0L",
+        "nswTabWin": 8.5,
+        "nswTabPlace": 2.6,
+        "fixedWin": 8.5,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Frosted Steele",
+        "finishPosition": 9,
+        "margin": "11.1L",
+        "nswTabWin": 31.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 31.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Minty",
+        "finishPosition": 8,
+        "margin": "10.3L",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 2.0,
+        "fixedWin": 5.5,
+        "fixedPlace": 2.0
+      },
+      {
+        "tabNumber": 11,
+        "horseName": "Whata Stretch",
+        "finishPosition": 4,
+        "margin": "6.5L",
+        "nswTabWin": 6.5,
+        "nswTabPlace": 2.2,
+        "fixedWin": 6.5,
+        "fixedPlace": 2.2
+      },
+      {
+        "tabNumber": 12,
+        "horseName": "Frosted Amber",
+        "finishPosition": 2,
+        "margin": "0.8L",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.9,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.9
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:albury:r1": {
+    "meetingId": "nsw-albury-2026-10-10",
+    "venue": "Albury",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "First 4",
+        "combination": "1 - 3 - 9 - 6",
+        "dividend": 282.8
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "1 - 3 - 9",
+        "dividend": 47.4
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "1 - 3",
+        "dividend": 11.5
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "1 - 3",
+        "dividend": 10.8
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Regor",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 2.0,
+        "nswTabPlace": 1.1,
+        "fixedWin": 2.15,
+        "fixedPlace": 1.18
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Spy Trader",
+        "finishPosition": 5,
+        "margin": "5.3L",
+        "nswTabWin": 4.4,
+        "nswTabPlace": 1.55,
+        "fixedWin": 4.4,
+        "fixedPlace": 1.55
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "The Major",
+        "finishPosition": 2,
+        "margin": "3.2L",
+        "nswTabWin": 9.5,
+        "nswTabPlace": 2.2,
+        "fixedWin": 9.5,
+        "fixedPlace": 2.35
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "No Doubt Sandy",
+        "finishPosition": 7,
+        "margin": "9.3L",
+        "nswTabWin": 14.0,
+        "nswTabPlace": 3.0,
+        "fixedWin": 14.0,
+        "fixedPlace": 3.0
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Brawlin' Lass",
+        "finishPosition": 10,
+        "margin": "13.9L",
+        "nswTabWin": 61.0,
+        "nswTabPlace": 7.5,
+        "fixedWin": 61.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Conargo",
+        "finishPosition": 4,
+        "margin": "4.2L",
+        "nswTabWin": 34.0,
+        "nswTabPlace": 5.0,
+        "fixedWin": 34.0,
+        "fixedPlace": 5.0
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Ebony Eyes",
+        "finishPosition": 6,
+        "margin": "8.7L",
+        "nswTabWin": 61.0,
+        "nswTabPlace": 7.5,
+        "fixedWin": 61.0,
+        "fixedPlace": 7.5
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Humbug Girl",
+        "finishPosition": 9,
+        "margin": "9.5L",
+        "nswTabWin": 35.0,
+        "nswTabPlace": 5.5,
+        "fixedWin": 35.0,
+        "fixedPlace": 5.5
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Jenni Moo Moo",
+        "finishPosition": 3,
+        "margin": "4.0L",
+        "nswTabWin": 3.9,
+        "nswTabPlace": 1.6,
+        "fixedWin": 3.9,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 10,
+        "horseName": "Retrofit",
+        "finishPosition": 8,
+        "margin": "9.3L",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 10.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 10.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:albury:r2": {
+    "meetingId": "nsw-albury-2026-10-10",
+    "venue": "Albury",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 2,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "First 4",
+        "combination": "2 - 9 - 8 - 7",
+        "dividend": 4323.0
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "2 - 9",
+        "dividend": 103.8
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "2 - 9 - 8",
+        "dividend": 2320.6
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "2 - 9",
+        "dividend": 381.0
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Siyaasi",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 3.4,
+        "nswTabPlace": 1.45,
+        "fixedWin": 3.4,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Noir Vitesse",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 3.7,
+        "nswTabPlace": 1.7,
+        "fixedWin": 3.4,
+        "fixedPlace": 1.45
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Cosmic Grace",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 7.0,
+        "nswTabPlace": 2.05,
+        "fixedWin": 7.0,
+        "fixedPlace": 2.05
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Rosary Sister",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.5,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.5
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Western Lights",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 41.0,
+        "nswTabPlace": 6.0,
+        "fixedWin": 41.0,
+        "fixedPlace": 6.0
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Iconic Rose",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 3.9,
+        "nswTabPlace": 1.55,
+        "fixedWin": 3.9,
+        "fixedPlace": 1.55
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Backflips",
+        "finishPosition": 4,
+        "margin": "0.0L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 8.5,
+        "fixedWin": 71.0,
+        "fixedPlace": 8.5
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Gettin' Tipsy",
+        "finishPosition": 3,
+        "margin": "0.0L",
+        "nswTabWin": 11.0,
+        "nswTabPlace": 3.0,
+        "fixedWin": 11.0,
+        "fixedPlace": 2.7
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Four Esses",
+        "finishPosition": 2,
+        "margin": "0.0L",
+        "nswTabWin": 71.0,
+        "nswTabPlace": 8.5,
+        "fixedWin": 71.0,
+        "fixedPlace": 8.5
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:warwick:r1": {
+    "meetingId": "qld-warwick-2026-10-10",
+    "venue": "Warwick",
+    "date": "2026-10-10",
+    "trackRating": "Soft 5",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Exacta",
+        "combination": "2 - 5",
+        "dividend": 22.2
+      },
+      {
+        "poolType": "Quinella",
+        "combination": "2 - 5",
+        "dividend": 11.9
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "2 - 5 - 3",
+        "dividend": 134.1
+      },
+      {
+        "poolType": "First 4",
+        "combination": "2 - 5 - 3 - 4",
+        "dividend": 580.6
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 2,
+        "horseName": "Apollo Ten",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 4.6,
+        "nswTabPlace": 3.1,
+        "fixedWin": 5.0,
+        "fixedPlace": 2.5
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Command Approved",
+        "finishPosition": 3,
+        "margin": "1.6L",
+        "nswTabWin": 8.0,
+        "nswTabPlace": 3.6,
+        "fixedWin": 8.0,
+        "fixedPlace": 3.6
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Butt Heads",
+        "finishPosition": 4,
+        "margin": "2.0L",
+        "nswTabWin": 7.5,
+        "nswTabPlace": 3.4,
+        "fixedWin": 7.5,
+        "fixedPlace": 3.4
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Little Vain",
+        "finishPosition": 2,
+        "margin": "1.4L",
+        "nswTabWin": 3.6,
+        "nswTabPlace": 2.6,
+        "fixedWin": 3.6,
+        "fixedPlace": 2.0
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Artie Vainqueur",
+        "finishPosition": 7,
+        "margin": "7.1L",
+        "nswTabWin": 3.6,
+        "nswTabPlace": 2.0,
+        "fixedWin": 3.6,
+        "fixedPlace": 2.0
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Rumble Town",
+        "finishPosition": 6,
+        "margin": "4.1L",
+        "nswTabWin": 6.0,
+        "nswTabPlace": 2.9,
+        "fixedWin": 6.0,
+        "fixedPlace": 2.9
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Mishani Steller",
+        "finishPosition": 5,
+        "margin": "3.7L",
+        "nswTabWin": 18.0,
+        "nswTabPlace": 6.5,
+        "fixedWin": 18.0,
+        "fixedPlace": 6.5
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:port-macquarie:r1": {
+    "meetingId": "nsw-port-macquarie-2026-10-10",
+    "venue": "Port Macquarie",
+    "date": "2026-10-10",
+    "trackRating": "Soft 5",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [
+      {
+        "poolType": "Quinella",
+        "combination": "6 - 3",
+        "dividend": 8.3
+      },
+      {
+        "poolType": "First 4",
+        "combination": "6 - 3 - 5 - 1",
+        "dividend": 182.8
+      },
+      {
+        "poolType": "Trifecta",
+        "combination": "6 - 3 - 5",
+        "dividend": 49.9
+      },
+      {
+        "poolType": "Exacta",
+        "combination": "6 - 3",
+        "dividend": 9.6
+      }
+    ],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Supido Star",
+        "finishPosition": 4,
+        "margin": "3.3L",
+        "nswTabWin": 12.0,
+        "nswTabPlace": 2.25,
+        "fixedWin": 12.0,
+        "fixedPlace": 2.25
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Markwell Topsort",
+        "finishPosition": 6,
+        "margin": "6.7L",
+        "nswTabWin": 4.8,
+        "nswTabPlace": 1.4,
+        "fixedWin": 4.8,
+        "fixedPlace": 1.4
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Don't",
+        "finishPosition": 2,
+        "margin": "3.1L",
+        "nswTabWin": 14.0,
+        "nswTabPlace": 2.7,
+        "fixedWin": 14.0,
+        "fixedPlace": 2.45
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "He'Sthechief",
+        "finishPosition": 5,
+        "margin": "4.6L",
+        "nswTabWin": 15.0,
+        "nswTabPlace": 2.6,
+        "fixedWin": 15.0,
+        "fixedPlace": 2.6
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Putinacall",
+        "finishPosition": 3,
+        "margin": "3.1L",
+        "nswTabWin": 8.0,
+        "nswTabPlace": 1.9,
+        "fixedWin": 8.0,
+        "fixedPlace": 1.8
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Home Siren",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 1.4,
+        "nswTabPlace": 1.04,
+        "fixedWin": 1.55,
+        "fixedPlace": 1.06
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "High And Marty",
+        "finishPosition": 8,
+        "margin": "7.9L",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 9.5,
+        "fixedWin": 126.0,
+        "fixedPlace": 9.5
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Clan D'Oro",
+        "finishPosition": 7,
+        "margin": "7.6L",
+        "nswTabWin": 151.0,
+        "nswTabPlace": 10.0,
+        "fixedWin": 151.0,
+        "fixedPlace": 10.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  },
+  "2026-10-10:kembla-grange:r1": {
+    "meetingId": "nsw-kembla-grange-2026-10-10",
+    "venue": "Kembla Grange",
+    "date": "2026-10-10",
+    "trackRating": "Good 4",
+    "raceNumber": 1,
+    "status": "Final",
+    "exotics": [],
+    "runners": [
+      {
+        "tabNumber": 1,
+        "horseName": "Satin Serenade",
+        "finishPosition": 2,
+        "margin": "0.0L",
+        "nswTabWin": 5.5,
+        "nswTabPlace": 1.7,
+        "fixedWin": 5.5,
+        "fixedPlace": 1.7
+      },
+      {
+        "tabNumber": 2,
+        "horseName": "Vision In A Dream",
+        "finishPosition": 3,
+        "margin": "0.0L",
+        "nswTabWin": 4.2,
+        "nswTabPlace": 1.5,
+        "fixedWin": 4.2,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 3,
+        "horseName": "Chinta",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 126.0,
+        "nswTabPlace": 11.0,
+        "fixedWin": 126.0,
+        "fixedPlace": 11.0
+      },
+      {
+        "tabNumber": 4,
+        "horseName": "Waiheke Rose",
+        "finishPosition": 1,
+        "margin": "0.0L",
+        "nswTabWin": 2.7,
+        "nswTabPlace": 1.28,
+        "fixedWin": 2.7,
+        "fixedPlace": 1.28
+      },
+      {
+        "tabNumber": 5,
+        "horseName": "Forsaken",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 4.2,
+        "nswTabPlace": 1.5,
+        "fixedWin": 4.2,
+        "fixedPlace": 1.5
+      },
+      {
+        "tabNumber": 6,
+        "horseName": "Seminal",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 10.0,
+        "nswTabPlace": 2.4,
+        "fixedWin": 10.0,
+        "fixedPlace": 2.4
+      },
+      {
+        "tabNumber": 7,
+        "horseName": "Claire Michelle",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 101.0,
+        "nswTabPlace": 10.0,
+        "fixedWin": 101.0,
+        "fixedPlace": 10.0
+      },
+      {
+        "tabNumber": 8,
+        "horseName": "Moon Flash",
+        "finishPosition": 4,
+        "margin": "0.0L",
+        "nswTabWin": 23.0,
+        "nswTabPlace": 4.0,
+        "fixedWin": 23.0,
+        "fixedPlace": 4.0
+      },
+      {
+        "tabNumber": 9,
+        "horseName": "Andelise",
+        "finishPosition": 0,
+        "margin": "-",
+        "nswTabWin": 301.0,
+        "nswTabPlace": 19.0,
+        "fixedWin": 301.0,
+        "fixedPlace": 19.0
+      }
+    ],
+    "updatedAt": "2026-10-10T03:11:00Z"
+  }
+}

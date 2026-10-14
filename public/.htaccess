@@ -1,0 +1,58 @@
+# ==============================================================================
+# TurfSheet - Punters club — InfinityFree (cupdaypunting.xo.je) Routing & Security
+# Compatible with InfinityFree Apache 2.4 & MonstaFTP File Manager
+# ==============================================================================
+
+DirectoryIndex index.html index.php
+
+# 1. Correct MIME Types for ES Module JS, CSS, WebManifest & SVG
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/css .css
+  AddType application/manifest+json .webmanifest
+  AddType application/json .json
+  AddType image/svg+xml .svg
+</IfModule>
+
+# 2. Security & Cache Revalidation Headers (InfinityFree compatible)
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  <FilesMatch "\.(html|js|mjs|css|json|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+</IfModule>
+
+# 3. URL Rewriting: API Routes -> PHP Proxies & SPA Fallback -> /index.html
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Route /api/health to /api/health.php
+  RewriteRule ^api/health/?$ /api/health.php [L,QSA]
+
+  # Route /api/punters to /api/punters.php
+  RewriteRule ^api/punters/?$ /api/punters.php [L,QSA]
+
+  # Route /api/reports/send-email and /api/reports to /api/reports.php
+  RewriteRule ^api/reports/send-email/?$ /api/reports.php?action=send_email [L,QSA]
+  RewriteRule ^api/reports/?$ /api/reports.php [L,QSA]
+
+  # Route /api/nsw-tab/scrape and /api/scrape to /api/scrape.php
+  RewriteRule ^api/nsw-tab/scrape/?$ /api/scrape.php [L,QSA]
+  RewriteRule ^api/scrape/?$ /api/scrape.php [L,QSA]
+
+  # Never rewrite direct requests to .php scripts, /assets/, or /api/
+  RewriteCond %{REQUEST_URI} \.php$ [NC,OR]
+  RewriteCond %{REQUEST_URI} ^/assets/ [NC,OR]
+  RewriteCond %{REQUEST_URI} ^/api/ [NC]
+  RewriteRule ^ - [L]
+
+  # Serve existing files (.js, .css, .png, .jpg, .php, etc.) and directories directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # SPA Fallback to /index.html
+  RewriteRule ^ /index.html [L]
+</IfModule>

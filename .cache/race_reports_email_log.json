@@ -1,0 +1,24 @@
+[
+  {
+    "sentAt": "2026-10-11T23:39:06.098Z",
+    "from": "Punters Club results",
+    "to": [
+      "bobbydazzler83@gmail.com",
+      "markstead@me.com"
+    ],
+    "subject": "Punters Club results: Test Dispatch",
+    "bodyLength": 29,
+    "relayResults": [
+      {
+        "recipient": "markstead@me.com",
+        "relay": "FormSubmit Free Relay",
+        "ok": true
+      },
+      {
+        "recipient": "bobbydazzler83@gmail.com",
+        "relay": "FormSubmit Free Relay",
+        "ok": true
+      }
+    ]
+  }
+]

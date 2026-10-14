@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "TurfSheet NSW & VIC Racing Ledger",
+  "short_name": "TurfSheet",
+  "description": "Real-time Australian thoroughbred racecards, top favourites, syndicate selections, Joker round, and official TAB results.",
+  "theme_color": "#0C1612",
+  "background_color": "#0C1612",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "./",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

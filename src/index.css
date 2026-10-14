@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #0B110E;
+    color: #F3F4F0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Prevent iOS/iPadOS Safari & Chrome auto-zoom when focusing inputs on mobile viewports */
+  @media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Safari WebKit button, input, and backdrop-filter normalization */
+  button,
+  input,
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .backdrop-blur-md {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  h1, h2, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono, .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ============================================================================
+   THEME 2: MIDNIGHT OBSIDIAN DARK (data-theme="dark")
+   Deep carbon-slate obsidian with high-contrast silver & gold accents
+   ============================================================================ */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background-color: #06080C !important;
+  color: #F8FAFC !important;
+}
+
+html[data-theme="dark"] [class*="bg-[#0B110E]"],
+html[data-theme="dark"] [class*="bg-[#070B09]"],
+html[data-theme="dark"] [class*="bg-[#0D1612]"],
+html[data-theme="dark"] [class*="bg-[#0E1713]"],
+html[data-theme="dark"] [class*="bg-[#0E1813]"],
+html[data-theme="dark"] [class*="bg-[#0E1612]"] {
+  background-color: #090D14 !important;
+}
+
+html[data-theme="dark"] [class*="bg-[#121A16]"],
+html[data-theme="dark"] [class*="bg-[#111C16]"],
+html[data-theme="dark"] [class*="bg-[#132019]"],
+html[data-theme="dark"] [class*="bg-[#121F18]"],
+html[data-theme="dark"] [class*="bg-[#121C17]"],
+html[data-theme="dark"] [class*="bg-[#16221C]"],
+html[data-theme="dark"] [class*="bg-[#15251D]"],
+html[data-theme="dark"] [class*="bg-[#17281F]"],
+html[data-theme="dark"] [class*="bg-[#192620]"] {
+  background-color: #111722 !important;
+}
+
+html[data-theme="dark"] [class*="border-[#1F2D26]"],
+html[data-theme="dark"] [class*="border-[#23352C]"],
+html[data-theme="dark"] [class*="border-[#1E2E26]"],
+html[data-theme="dark"] [class*="border-[#2B3E34]"] {
+  border-color: #1E293B !important;
+}
+
+html[data-theme="dark"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1E293B !important;
+}
+
+/* ============================================================================
+   THEME 3: DAYLIGHT RACEDAY LIGHT (data-theme="light")
+   Crisp warm parchment & ivory race-book aesthetic for bright daylight reading
+   ============================================================================ */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background-color: #F4F1EA !important;
+  color: #0F2419 !important;
+}
+
+html[data-theme="light"] [class*="bg-[#0B110E]"],
+html[data-theme="light"] [class*="bg-[#070B09]"],
+html[data-theme="light"] [class*="bg-[#0D1612]"],
+html[data-theme="light"] [class*="bg-[#0E1713]"],
+html[data-theme="light"] [class*="bg-[#0E1813]"],
+html[data-theme="light"] [class*="bg-[#0E1612]"] {
+  background-color: #FAF8F3 !important;
+}
+
+html[data-theme="light"] [class*="bg-[#121A16]"],
+html[data-theme="light"] [class*="bg-[#111C16]"],
+html[data-theme="light"] [class*="bg-[#132019]"],
+html[data-theme="light"] [class*="bg-[#121F18]"],
+html[data-theme="light"] [class*="bg-[#121C17]"] {
+  background-color: #FFFFFF !important;
+}
+
+html[data-theme="light"] [class*="bg-[#16221C]"],
+html[data-theme="light"] [class*="bg-[#15251D]"],
+html[data-theme="light"] [class*="bg-[#17281F]"],
+html[data-theme="light"] [class*="bg-[#192620]"],
+html[data-theme="light"] [class*="bg-[#152920]"] {
+  background-color: #E8F3EC !important;
+}
+
+html[data-theme="light"] [class*="bg-[#291414]"],
+html[data-theme="light"] [class*="bg-[#241316]"] {
+  background-color: #FEE2E2 !important;
+}
+
+html[data-theme="light"] [class*="border-[#1F2D26]"],
+html[data-theme="light"] [class*="border-[#23352C]"],
+html[data-theme="light"] [class*="border-[#1E2E26]"],
+html[data-theme="light"] [class*="border-[#2B3E34]"] {
+  border-color: #CBD5CE !important;
+}
+
+html[data-theme="light"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #CBD5CE !important;
+}
+
+html[data-theme="light"] [class*="text-[#F3F4F0]"],
+html[data-theme="light"] [class*="text-[#D5DDD8]"] {
+  color: #0D2117 !important;
+}
+
+html[data-theme="light"] [class*="text-[#8A9990]"],
+html[data-theme="light"] [class*="text-[#9BA8A1]"] {
+  color: #43594D !important;
+}
+
+html[data-theme="light"] [class*="text-[#D4AF37]"] {
+  color: #9A6F05 !important;
+}
+
+html[data-theme="light"] [class*="text-[#10B981]"] {
+  color: #047857 !important;
+}
+
+html[data-theme="light"] [class*="bg-[#D4AF37]"] {
+  background-color: #D4AF37 !important;
+  color: #0B110E !important;
+}
+
+html[data-theme="light"] [class*="bg-[#10B981]"] {
+  background-color: #059669 !important;
+  color: #FFFFFF !important;
+}
+
+html[data-theme="light"] svg rect[fill="#080D0B"],
+html[data-theme="light"] svg rect[fill="#0B110E"] {
+  fill: #F1EFE8 !important;
+}
+
+/* ============================================================================
+   THEME 4: RACE / ROYAL TURF GREEN (data-theme="race")
+   Lush Randwick & Flemington Championship Turf Green with vibrant gold rail trim
+   ============================================================================ */
+html[data-theme="race"],
+html[data-theme="race"] body {
+  background-color: #052616 !important;
+  color: #F2FDF7 !important;
+}
+
+html[data-theme="race"] [class*="bg-[#0B110E]"],
+html[data-theme="race"] [class*="bg-[#070B09]"],
+html[data-theme="race"] [class*="bg-[#0D1612]"],
+html[data-theme="race"] [class*="bg-[#0E1713]"],
+html[data-theme="race"] [class*="bg-[#0E1813]"],
+html[data-theme="race"] [class*="bg-[#0E1612]"] {
+  background-color: #072E1B !important;
+}
+
+html[data-theme="race"] [class*="bg-[#121A16]"],
+html[data-theme="race"] [class*="bg-[#111C16]"],
+html[data-theme="race"] [class*="bg-[#132019]"],
+html[data-theme="race"] [class*="bg-[#121F18]"],
+html[data-theme="race"] [class*="bg-[#121C17]"],
+html[data-theme="race"] [class*="bg-[#16221C]"],
+html[data-theme="race"] [class*="bg-[#15251D]"],
+html[data-theme="race"] [class*="bg-[#17281F]"],
+html[data-theme="race"] [class*="bg-[#192620]"] {
+  background-color: #0C3D24 !important;
+}
+
+html[data-theme="race"] [class*="border-[#1F2D26]"],
+html[data-theme="race"] [class*="border-[#23352C]"],
+html[data-theme="race"] [class*="border-[#1E2E26]"],
+html[data-theme="race"] [class*="border-[#2B3E34]"] {
+  border-color: #19613C !important;
+}
+
+html[data-theme="race"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #19613C !important;
+}
+
+html[data-theme="race"] svg rect[fill="#080D0B"],
+html[data-theme="race"] svg rect[fill="#0B110E"] {
+  fill: #062817 !important;
+}
+
+/* Custom subtle scrollbars for high-density racing sheets */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B110E;
+}
+::-webkit-scrollbar-thumb {
+  background: #23332B;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #344B3F;
+}

@@ -1,0 +1,109 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Pillar 2: Validation Blueprint for PunterSheet
+    function isValidPunterSheet(data) {
+      return data.keys().hasAll([
+          'punterId',
+          'name',
+          'role',
+          'ownerId',
+          'selectionsMap',
+          'jokerMap',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'punterId',
+          'name',
+          'role',
+          'ownerId',
+          'selectionsMap',
+          'jokerMap',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.punterId is string
+        && data.punterId.size() >= 1
+        && data.punterId.size() <= 64
+        && data.punterId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 60
+        && data.role is string
+        && data.role.size() >= 1
+        && data.role.size() <= 80
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId == request.auth.uid
+        && data.selectionsMap is map
+        && data.selectionsMap.size() <= 100
+        && data.jokerMap is map
+        && data.jokerMap.size() <= 100
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    match /punterSheets/{sheetId} {
+      allow get: if isSignedIn()
+        && isValidId(sheetId)
+        && existing().ownerId == request.auth.uid;
+
+      allow list: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerifiedUser()
+        && isValidId(sheetId)
+        && isValidPunterSheet(incoming())
+        && incoming().createdAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidPunterSheet(incoming())
+        && isValidId(sheetId)
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().punterId == existing().punterId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name',
+          'role',
+          'selectionsMap',
+          'jokerMap',
+          'updatedAt'
+        ]);
+
+      allow delete: if isVerifiedUser()
+        && isValidId(sheetId)
+        && existing().ownerId == request.auth.uid;
+    }
+  }
+}
