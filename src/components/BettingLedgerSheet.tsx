@@ -20,6 +20,7 @@ import {
   getPunterSelectionsForMeeting,
   resolveAutoSubForRaceTrio,
   SpeedMapLane,
+  RunnerSpeedAndMarketFluc,
 } from "../utils/scoring";
 import { AutoPickStrategy, generateRaceAutoPickTrio } from "../utils/autoPick";
 import {
@@ -45,11 +46,14 @@ import {
   SlidersHorizontal,
   Table as TableIcon,
   Zap,
+  LayoutList,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { StickySyndicateDock } from "./StickySyndicateDock";
-import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
+import { TactileOddsFlucBadge, OddsTrendIndicator } from "./TactileOddsFlucBadge";
 
 interface BettingLedgerSheetProps {
   meetings: RaceMeeting[];
@@ -233,6 +237,56 @@ export function formatDollarReturn(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
+export function getRunnerBriefComment(
+  runner: RaceRunner,
+  speedMapPos: SpeedMapLane,
+  flucData?: RunnerSpeedAndMarketFluc
+): string {
+  if (runner.isScratched || runner.margin === "SCR") {
+    return "Scratched from this event (TAB auto-sub rules apply).";
+  }
+
+  const odds = Number(runner.fixedWin || runner.nswTabWin || 0);
+  const formStr = (runner.form || "").trim();
+  const lastStartWon = formStr.endsWith("1") || formStr.endsWith("1x");
+  const lastStartPlaced = formStr.endsWith("2") || formStr.endsWith("3");
+  const isFirming = flucData?.marketSupport === "Firming";
+  const isDrifting = flucData?.marketSupport === "Drifting";
+
+  if (odds > 0 && odds <= 2.2) {
+    if (isFirming) return "Heavily backed odds-on elect. Top winning strike rate; clear standout.";
+    return "Short-priced favourite. Ultra consistent and sets the benchmark here.";
+  }
+  if (isFirming && odds <= 5.5) {
+    return "Well supported in early betting. Strong market push; maps right on speed.";
+  }
+  if (lastStartWon && (speedMapPos === "Leader" || speedMapPos === "On Pace")) {
+    return "Impressive last-start winner. Possesses early dash; tough to reel in.";
+  }
+  if (lastStartWon) {
+    return "Back in winning form last start. Finished strongly and primed to repeat.";
+  }
+  if (lastStartPlaced && odds <= 8.5) {
+    return "Solid placing last time out. Honest type; reliable each-way candidate.";
+  }
+  if (speedMapPos === "Leader") {
+    return "Likely front-runner. Will cross from barrier and control tempo from the lead.";
+  }
+  if (speedMapPos === "On Pace" && odds <= 12.0) {
+    return "Handy racing pattern. Settles in box seat with a trailing run into the straight.";
+  }
+  if (isDrifting && odds >= 9.0) {
+    return "Drifting in fixed odds. Capable at best but faces a competitive assignment.";
+  }
+  if (odds > 0 && odds <= 7.0) {
+    return "Consistent metro competitor. Proven at distance with strong place claims.";
+  }
+  if (odds > 7.0 && odds <= 18.0) {
+    return "Genuine each-way value. Capable of storming into the frame with clear running.";
+  }
+  return "Outside chance at longer odds; requires luck in running to challenge.";
+}
+
 export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
   meetings,
   activeMeetingId,
@@ -281,7 +335,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     }));
   };
 
-  const [selectionViewMode, setSelectionViewMode] = useState<"stepper" | "table">("stepper");
+  const [selectionViewMode, setSelectionViewMode] = useState<"cards" | "stepper" | "table">("cards");
   const [activeRacePerMeeting, setActiveRacePerMeeting] = useState<Record<string, number>>({});
   const [expandedHarvilleRaces, setExpandedHarvilleRaces] = useState<Record<string, boolean>>({});
 
@@ -1237,20 +1291,32 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   <div className="flex items-center gap-0.5 bg-[#0B110E] p-0.5 rounded-lg border border-[#1F2D26]">
                     <button
                       type="button"
+                      onClick={() => setSelectionViewMode("cards")}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                        selectionViewMode === "cards"
+                          ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
+                          : "text-[#8A9990] hover:text-[#F3F4F0]"
+                      }`}
+                    >
+                      <LayoutList className="w-3.5 h-3.5" />
+                      <span>All Race Cards</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setSelectionViewMode("stepper")}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
                         selectionViewMode === "stepper"
                           ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
                           : "text-[#8A9990] hover:text-[#F3F4F0]"
                       }`}
                     >
                       <Zap className="w-3.5 h-3.5" />
-                      <span>Essential Stepper</span>
+                      <span>Race Focus</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectionViewMode("table")}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
                         selectionViewMode === "table"
                           ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
                           : "text-[#8A9990] hover:text-[#F3F4F0]"
@@ -1391,12 +1457,20 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     <button
                       key={r.raceNumber}
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
                         setActiveRacePerMeeting((prev) => ({
                           ...prev,
                           [meetingCard.id]: r.raceNumber,
-                        }))
-                      }
+                        }));
+                        if (selectionViewMode === "cards") {
+                          const el = document.getElementById(
+                            `race-card-${meetingCard.id}-${r.raceNumber}`
+                          );
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-lg border font-mono text-xs tabular-nums shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                         isCurrentActive
                           ? "bg-[#262010] border-[#D4AF37] text-[#D4AF37] font-bold shadow-sm"
@@ -1425,8 +1499,534 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
               </div>
             </div>
 
-            {/* View Mode Switching: Stepper (Default) vs Table */}
-            {selectionViewMode === "stepper" ? (
+            {/* View Mode Switching: Cards (Default) vs Stepper vs Table */}
+            {selectionViewMode === "cards" ? (
+              <div className="p-3 sm:p-4 space-y-4">
+                {meetingCard.races.map((race) => {
+                  const rawTrio = cardSelections[race.raceNumber];
+                  const { effectiveTrio: trio } = resolveAutoSubForRaceTrio(
+                    race,
+                    rawTrio,
+                    true
+                  );
+                  const isJokerRace = activeJokerRaceNo === race.raceNumber;
+                  const isFeature = featureRaceNo === race.raceNumber;
+                  const evaluated = evaluateRaceTrio(
+                    race,
+                    trio,
+                    meetingCard.date,
+                    isJokerRace
+                  );
+                  const speedAndFlucs = computeRaceSpeedMapAndFlucs(race);
+                  const pickCount = [
+                    trio?.firstPref,
+                    trio?.secondPref,
+                    trio?.thirdPref,
+                  ].filter(Boolean).length;
+
+                  const sel1Runner = race.runners.find(
+                    (r) => r.tabNumber === trio?.firstPref
+                  );
+                  const sel2Runner = race.runners.find(
+                    (r) => r.tabNumber === trio?.secondPref
+                  );
+                  const sel3Runner = race.runners.find(
+                    (r) => r.tabNumber === trio?.thirdPref
+                  );
+
+                  return (
+                    <div
+                      key={race.raceNumber}
+                      id={`race-card-${meetingCard.id}-${race.raceNumber}`}
+                      className={`rounded-xl border transition-all overflow-hidden ${
+                        isJokerRace
+                          ? "border-[#D4AF37]/70 bg-[#0F1713] shadow-[0_4px_24px_rgba(212,175,55,0.08)] ring-1 ring-[#D4AF37]/30"
+                          : "border-[#1F2D26] bg-[#0E1612] hover:border-[#2E4237]"
+                      }`}
+                    >
+                      {/* Race Card Header */}
+                      <div className="px-4 py-3 bg-[#080E0B] border-b border-[#1F2D26] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="px-2.5 py-1 rounded-md bg-[#192620] border border-[#2A3F33] text-[#F3F4F0] font-mono font-black text-sm tracking-wide">
+                            R{race.raceNumber}
+                          </span>
+                          <span className="font-display font-bold text-base text-[#F3F4F0]">
+                            {race.raceName}
+                          </span>
+
+                          {isFeature && (
+                            <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-mono font-bold uppercase tracking-wider">
+                              ★ FEATURE RACE
+                            </span>
+                          )}
+
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                              evaluated.isRaceResulted
+                                ? "bg-[#152920] text-[#10B981] border border-[#10B981]/40"
+                                : "bg-[#192620] text-[#D4AF37] border border-[#D4AF37]/40"
+                            }`}
+                          >
+                            {evaluated.isRaceResulted ? "OFFICIAL FINAL" : "UPCOMING"}
+                          </span>
+
+                          <span className="text-xs text-[#8A9990] font-mono">
+                            Jumps {race.startTime} · {race.distance}m · Track: {meetingCard.trackCondition || "Good 4"} · Rail: {meetingCard.railPosition || "True"}
+                          </span>
+                        </div>
+
+                        {/* Quick Controls & Joker Toggle */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Pick Count Badge */}
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F1B15] border border-[#23352C] text-xs font-mono">
+                            <span className="text-[#8A9990]">Picks:</span>
+                            {pickCount === 3 ? (
+                              <span className="text-[#10B981] font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>3/3 Complete</span>
+                              </span>
+                            ) : (
+                              <span className="text-[#D4AF37] font-semibold">
+                                {pickCount}/3 Selected
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Joker Toggle */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onToggleJokerRace?.(
+                                activePunter.id,
+                                meetingCard.id,
+                                isJokerRace ? null : race.raceNumber
+                              )
+                            }
+                            className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                              isJokerRace
+                                ? "bg-[#D4AF37] text-[#070B09] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+                                : "bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15"
+                            }`}
+                          >
+                            <span>🃏</span>
+                            <span>{isJokerRace ? "Joker 2× Active" : "Set Joker 2×"}</span>
+                          </button>
+
+                          {/* Auto Pick Top 3 Consensus */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleApplyStrategyToRace(
+                                activePunter.id,
+                                meetingCard.id,
+                                race,
+                                "market-consensus"
+                              )
+                            }
+                            className="px-2.5 py-1 rounded-lg text-xs font-mono text-[#8A9990] hover:text-[#D4AF37] bg-[#0B110E] border border-[#1F2D26] hover:border-[#D4AF37]/40 transition cursor-pointer"
+                            title="Auto-select top 3 market favourites"
+                          >
+                            Consensus
+                          </button>
+
+                          {/* Clear Picks for this race */}
+                          {pickCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleClearRacePicks(
+                                  activePunter.id,
+                                  meetingCard.id,
+                                  race.raceNumber
+                                )
+                              }
+                              className="px-2 py-1 rounded-lg text-xs font-mono text-[#8A9990] hover:text-rose-400 bg-[#0B110E] border border-[#1F2D26] hover:border-rose-500/40 transition cursor-pointer"
+                              title="Clear picks for this race"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selection Summary Pill Bar */}
+                      {pickCount > 0 && (
+                        <div className="px-4 py-2 bg-[#0B1410] border-b border-[#1A2820] flex items-center gap-2.5 text-xs font-mono overflow-x-auto">
+                          <span className="text-[#8A9990] shrink-0 font-medium">Your Selections:</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                                sel1Runner
+                                  ? "bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37]"
+                                  : "bg-[#14201A] text-[#6E8075]"
+                              }`}
+                            >
+                              <strong className="text-[#D4AF37]">1st:</strong>{" "}
+                              {sel1Runner
+                                ? `#${sel1Runner.tabNumber} ${sel1Runner.horseName}`
+                                : "—"}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                                sel2Runner
+                                  ? "bg-[#38BDF8]/15 border border-[#38BDF8]/40 text-[#38BDF8]"
+                                  : "bg-[#14201A] text-[#6E8075]"
+                              }`}
+                            >
+                              <strong className="text-[#38BDF8]">2nd:</strong>{" "}
+                              {sel2Runner
+                                ? `#${sel2Runner.tabNumber} ${sel2Runner.horseName}`
+                                : "—"}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                                sel3Runner
+                                  ? "bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981]"
+                                  : "bg-[#14201A] text-[#6E8075]"
+                              }`}
+                            >
+                              <strong className="text-[#10B981]">3rd:</strong>{" "}
+                              {sel3Runner
+                                ? `#${sel3Runner.tabNumber} ${sel3Runner.horseName}`
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Result Banner if resulted */}
+                      {evaluated.isRaceResulted && (
+                        <div className="px-4 py-2 bg-[#12221A] border-b border-[#10B981]/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                          <div className="flex items-center gap-2">
+                            <Trophy className="w-3.5 h-3.5 text-[#10B981]" />
+                            <span className="text-[#10B981] font-bold">Official Placings:</span>
+                            <span className="text-[#F3F4F0]">
+                              1st #{race.runners.find((r) => r.finishPosition === 1)?.tabNumber}{" "}
+                              {race.runners.find((r) => r.finishPosition === 1)?.horseName} ·{" "}
+                              2nd #{race.runners.find((r) => r.finishPosition === 2)?.tabNumber}{" "}
+                              {race.runners.find((r) => r.finishPosition === 2)?.horseName} ·{" "}
+                              3rd #{race.runners.find((r) => r.finishPosition === 3)?.tabNumber}{" "}
+                              {race.runners.find((r) => r.finishPosition === 3)?.horseName}
+                            </span>
+                          </div>
+                          <div className="text-right font-bold text-[#D4AF37]">
+                            {scoringMode === "dollars"
+                              ? formatDollarReturn(evaluated.raceDollarReturn)
+                              : `${evaluated.racePointsTally} pts`}
+                            {evaluated.jokerTriggered && " (🃏 2× Joker!)"}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Runners Table with 3 Selection Columns on Far Right */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-[#1F2D26] bg-[#0A120E] text-[11px] font-mono text-[#8A9990] uppercase tracking-wider">
+                              <th className="py-2.5 px-3 w-12 text-center">#</th>
+                              <th className="py-2.5 px-3 min-w-[170px]">Runner</th>
+                              <th className="py-2.5 px-3 min-w-[220px]">Form &amp; Brief Analysis</th>
+                              <th className="py-2.5 px-3 w-36 text-center">Odds &amp; Dynamics</th>
+                              <th className="py-2.5 px-2 w-24 text-center bg-[#16140C]/80 border-l border-[#262010]">
+                                <span className="text-[#D4AF37] font-bold block">1st Pref</span>
+                                <span className="text-[9px] text-[#A6882C] lowercase font-normal">Selection 1</span>
+                              </th>
+                              <th className="py-2.5 px-2 w-24 text-center bg-[#0B1520]/80 border-l border-[#142334]">
+                                <span className="text-[#38BDF8] font-bold block">2nd Pref</span>
+                                <span className="text-[9px] text-[#227299] lowercase font-normal">Selection 2</span>
+                              </th>
+                              <th className="py-2.5 px-2 w-24 text-center bg-[#0B1A14]/80 border-l border-[#132A22]">
+                                <span className="text-[#10B981] font-bold block">3rd Pref</span>
+                                <span className="text-[9px] text-[#0C805A] lowercase font-normal">Selection 3</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#17231D] text-xs">
+                            {race.runners.map((runner) => {
+                              const isScratched =
+                                runner.isScratched || runner.margin === "SCR";
+                              const fluc = speedAndFlucs.byTabNumber[runner.tabNumber];
+                              const speedMapPos =
+                                fluc?.speedMapPosition ||
+                                runner.speedMapPosition ||
+                                "Midfield";
+                              const comment = getRunnerBriefComment(
+                                runner,
+                                speedMapPos,
+                                fluc
+                              );
+
+                              const is1st = trio?.firstPref === runner.tabNumber;
+                              const is2nd = trio?.secondPref === runner.tabNumber;
+                              const is3rd = trio?.thirdPref === runner.tabNumber;
+                              const isSelected = is1st || is2nd || is3rd;
+
+                              const winOdds =
+                                Number(runner.fixedWin || runner.nswTabWin) || 0;
+                              const placeOdds =
+                                Number(runner.fixedPlace || runner.nswTabPlace) ||
+                                (winOdds > 1
+                                  ? Number((1 + (winOdds - 1) * 0.25).toFixed(2))
+                                  : 0);
+
+                              const finishPos = evaluated.isRaceResulted
+                                ? runner.finishPosition
+                                : 0;
+
+                              return (
+                                <tr
+                                  key={runner.tabNumber}
+                                  className={`transition-colors ${
+                                    isScratched
+                                      ? "opacity-40 bg-[#080D0B]"
+                                      : isSelected
+                                      ? is1st
+                                        ? "bg-[#211B0D]/70 hover:bg-[#282110]"
+                                        : is2nd
+                                        ? "bg-[#0F1D2A]/70 hover:bg-[#142537]"
+                                        : "bg-[#0E221B]/70 hover:bg-[#122A22]"
+                                      : "hover:bg-[#121B16]"
+                                  }`}
+                                >
+                                  {/* Tab Number Badge */}
+                                  <td className="py-3 px-3 text-center align-middle">
+                                    <span
+                                      className={`inline-flex items-center justify-center w-7 h-7 rounded font-mono font-black text-xs ${
+                                        isSelected
+                                          ? is1st
+                                            ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-black"
+                                            : is2nd
+                                            ? "bg-[#38BDF8] text-[#070B09] shadow-sm font-black"
+                                            : "bg-[#10B981] text-[#070B09] shadow-sm font-black"
+                                          : "bg-[#15221B] text-[#D5DDD8] border border-[#23352C]"
+                                      }`}
+                                    >
+                                      {runner.tabNumber}
+                                    </span>
+                                  </td>
+
+                                  {/* Runner Info */}
+                                  <td className="py-3 px-3 align-middle">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span
+                                        className={`font-display font-bold text-sm ${
+                                          isSelected
+                                            ? "text-[#F3F4F0]"
+                                            : "text-[#E1E7E3]"
+                                        }`}
+                                      >
+                                        {runner.horseName}
+                                      </span>
+                                      {isScratched && (
+                                        <span className="px-1.5 py-0.2 rounded bg-rose-950/80 border border-rose-500/50 text-rose-300 font-mono text-[9px] font-bold">
+                                          SCR
+                                        </span>
+                                      )}
+                                      {finishPos === 1 && (
+                                        <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold">
+                                          1st 🏆
+                                        </span>
+                                      )}
+                                      {finishPos === 2 && (
+                                        <span className="px-1.5 py-0.2 rounded bg-slate-500/20 text-slate-300 font-mono text-[10px] font-bold">
+                                          2nd 🥈
+                                        </span>
+                                      )}
+                                      {finishPos === 3 && (
+                                        <span className="px-1.5 py-0.2 rounded bg-amber-700/20 text-amber-400 font-mono text-[10px] font-bold">
+                                          3rd 🥉
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-[#8A9990] font-mono mt-0.5">
+                                      <span>
+                                        B{runner.barrier} ·{" "}
+                                        {runner.weight ? `${runner.weight}kg · ` : ""}
+                                        {runner.jockey || "Jockey TBA"}
+                                      </span>
+                                      {runner.trainer && (
+                                        <span className="text-[#64756B]">
+                                          {" "}
+                                          (T: {runner.trainer})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+
+                                  {/* Form & Brief Analysis */}
+                                  <td className="py-3 px-3 align-middle">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="px-1.5 py-0.5 rounded bg-[#16231D] border border-[#26382F] font-mono text-[10px] font-semibold text-[#D5DDD8]">
+                                          Form: {runner.form || "—"}
+                                        </span>
+                                        <span
+                                          className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
+                                            speedMapPos === "Leader"
+                                              ? "bg-amber-950/60 text-amber-300 border border-amber-600/30"
+                                              : speedMapPos === "On Pace"
+                                              ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/30"
+                                              : speedMapPos === "Midfield"
+                                              ? "bg-sky-950/60 text-sky-300 border border-sky-600/30"
+                                              : "bg-purple-950/60 text-purple-300 border border-purple-600/30"
+                                          }`}
+                                        >
+                                          {speedMapPos}
+                                        </span>
+                                      </div>
+                                      <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
+                                        {comment}
+                                      </p>
+                                    </div>
+                                  </td>
+
+                                  {/* Odds Dynamics & Current Price */}
+                                  <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
+                                    <div className="font-mono">
+                                      <div className="flex items-center justify-center gap-1.5">
+                                        <span className="font-bold text-sm text-[#F3F4F0]">
+                                          {winOdds > 0 ? `$${winOdds.toFixed(2)}` : "—"}
+                                        </span>
+                                        {placeOdds > 0 && (
+                                          <span className="text-[10px] text-[#8A9990]">
+                                            / ${placeOdds.toFixed(2)}
+                                          </span>
+                                        )}
+                                        <OddsTrendIndicator
+                                          currentOdds={winOdds}
+                                          previousOdds={runner.previousOdds}
+                                          openingOdds={runner.openingOdds || fluc?.openingOdds}
+                                          marketSupport={fluc?.marketSupport || runner.marketSupport}
+                                          flucs={runner.flucs}
+                                          size="xs"
+                                          showLabel={false}
+                                        />
+                                      </div>
+                                      <div className="mt-1 flex items-center justify-center">
+                                        <TactileOddsFlucBadge
+                                          openingOdds={runner.openingOdds || fluc?.openingOdds}
+                                          previousOdds={runner.previousOdds}
+                                          currentOdds={winOdds}
+                                          marketSupport={fluc?.marketSupport || runner.marketSupport}
+                                          flucs={runner.flucs}
+                                          size="sm"
+                                        />
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* Selection 1 Column Checkbox */}
+                                  <td className="py-3 px-2 text-center align-middle bg-[#16140C]/50 border-l border-[#262010]">
+                                    <button
+                                      type="button"
+                                      disabled={isScratched}
+                                      onClick={() =>
+                                        handleTogglePreferenceChip(
+                                          activePunter.id,
+                                          meetingCard.id,
+                                          race.raceNumber,
+                                          1,
+                                          runner.tabNumber
+                                        )
+                                      }
+                                      aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 1`}
+                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                        isScratched
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          : is1st
+                                          ? "bg-[#D4AF37] text-[#070B09] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.5)] scale-105"
+                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#1A180E]"
+                                      }`}
+                                    >
+                                      {is1st ? (
+                                        <>
+                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <span>1st</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[11px] text-[#55695D]">1st</span>
+                                      )}
+                                    </button>
+                                  </td>
+
+                                  {/* Selection 2 Column Checkbox */}
+                                  <td className="py-3 px-2 text-center align-middle bg-[#0B1520]/50 border-l border-[#142334]">
+                                    <button
+                                      type="button"
+                                      disabled={isScratched}
+                                      onClick={() =>
+                                        handleTogglePreferenceChip(
+                                          activePunter.id,
+                                          meetingCard.id,
+                                          race.raceNumber,
+                                          2,
+                                          runner.tabNumber
+                                        )
+                                      }
+                                      aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 2`}
+                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                        isScratched
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          : is2nd
+                                          ? "bg-[#38BDF8] text-[#070B09] border-[#38BDF8] shadow-[0_0_12px_rgba(56,189,248,0.5)] scale-105"
+                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#38BDF8] hover:text-[#38BDF8] hover:bg-[#0E1A26]"
+                                      }`}
+                                    >
+                                      {is2nd ? (
+                                        <>
+                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <span>2nd</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[11px] text-[#55695D]">2nd</span>
+                                      )}
+                                    </button>
+                                  </td>
+
+                                  {/* Selection 3 Column Checkbox */}
+                                  <td className="py-3 px-2 text-center align-middle bg-[#0B1A14]/50 border-l border-[#132A22]">
+                                    <button
+                                      type="button"
+                                      disabled={isScratched}
+                                      onClick={() =>
+                                        handleTogglePreferenceChip(
+                                          activePunter.id,
+                                          meetingCard.id,
+                                          race.raceNumber,
+                                          3,
+                                          runner.tabNumber
+                                        )
+                                      }
+                                      aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 3`}
+                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                        isScratched
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          : is3rd
+                                          ? "bg-[#10B981] text-[#070B09] border-[#10B981] shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105"
+                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#10B981] hover:text-[#10B981] hover:bg-[#0E1E18]"
+                                      }`}
+                                    >
+                                      {is3rd ? (
+                                        <>
+                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <span>3rd</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[11px] text-[#55695D]">3rd</span>
+                                      )}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : selectionViewMode === "stepper" ? (
               (() => {
                 const curActiveRaceNo =
                   activeRacePerMeeting[meetingCard.id] ??

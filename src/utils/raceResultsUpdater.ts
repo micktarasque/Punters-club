@@ -406,6 +406,22 @@ function mergeRunnerData(
       ? incomingRunner.fixedPlace
       : existingRunner.fixedPlace;
 
+  const oldPrice = Number(existingRunner?.fixedWin || existingRunner?.nswTabWin || 0);
+  const newPrice = Number(fixedWin || nswTabWin || 0);
+  let previousOdds = existingRunner?.previousOdds;
+  let oddsTrend = existingRunner?.oddsTrend || "steady";
+  let lastOddsChange = existingRunner?.lastOddsChange;
+
+  if (oldPrice > 0 && newPrice > 0 && Math.abs(oldPrice - newPrice) >= 0.01) {
+    previousOdds = oldPrice;
+    lastOddsChange = Number((newPrice - oldPrice).toFixed(2));
+    if (newPrice < oldPrice) {
+      oddsTrend = "shortening";
+    } else if (newPrice > oldPrice) {
+      oddsTrend = "drifting";
+    }
+  }
+
   return {
     ...existingRunner,
     ...incomingRunner,
@@ -430,6 +446,9 @@ function mergeRunnerData(
     nswTabPlace,
     fixedWin,
     fixedPlace,
+    previousOdds,
+    oddsTrend,
+    lastOddsChange,
     openingOdds:
       incomingRunner.openingOdds && incomingRunner.openingOdds > 0
         ? incomingRunner.openingOdds

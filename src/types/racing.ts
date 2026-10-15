@@ -26,6 +26,9 @@ export interface RaceRunner {
   fixedWin: number;
   fixedPlace?: number;
   openingOdds?: number;
+  previousOdds?: number;
+  oddsTrend?: "shortening" | "drifting" | "steady";
+  lastOddsChange?: number;
   flucs?: string[];
   marketSupport?: "Firming" | "Drifting" | "Steady";
   sectional600m?: string;

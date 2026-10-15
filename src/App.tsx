@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Sparkles,
   Table2,
+  Target,
   Trophy,
   Volume2,
   VolumeX,
@@ -54,13 +55,8 @@ import {
 } from "./components/AllUsersSelectionsResults";
 import { CombinedTrifectaTracker } from "./components/CombinedTrifectaTracker";
 import { CombinedQuaddieTracker } from "./components/CombinedQuaddieTracker";
+import { ExoticsBentoStudio } from "./components/ExoticsBentoStudio";
 import { RaceReportSheet } from "./components/RaceReportSheet";
-import {
-  ChangeLogSheet,
-  OFFICIAL_CHANGELOG_ENTRIES,
-} from "./components/ChangeLogSheet";
-import { AdvancedBettingStrategyModule } from "./components/AdvancedBettingStrategyModule";
-import { LiveOddsAndResultsCenter } from "./components/LiveOddsAndResultsCenter";
 import { OfflineIndicator } from "./components/PWAInstallControl";
 import {
   UpdaterDownloadModal,
@@ -187,11 +183,9 @@ interface RacePushNotificationItem {
 
 export type ActiveTab =
   | "overview"
-  | "strategy"
-  | "live-odds"
   | "selections"
-  | "results"
-  | "changelog";
+  | "exotics"
+  | "results";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
@@ -869,11 +863,16 @@ export default function App() {
           isJokerRace
         );
         const hasParticipated = evaluated.hasAnySelection;
+        const hasPlacedOrWon = evaluated.picks.some(
+          (p) => p.tabNumber !== null && p.finishPosition >= 1 && p.finishPosition <= 3
+        );
         const won =
           hasParticipated &&
-          (evaluated.racePointsTally > 0 || evaluated.raceDollarReturn > 0);
+          (hasPlacedOrWon ||
+            evaluated.racePointsTally > 0 ||
+            evaluated.raceDollarReturn > 0);
         const hitPicks = evaluated.picks
-          .filter((p) => p.points > 0 && p.runner)
+          .filter((p) => (p.points > 0 || (p.finishPosition >= 1 && p.finishPosition <= 3)) && p.runner)
           .map(
             (p) =>
               `#${p.tabNumber} ${p.runner?.horseName} (${
@@ -932,8 +931,6 @@ export default function App() {
           if (isTrifectaHit) {
             triggerConfetti();
           }
-        } else {
-          playCashRegisterSound();
         }
       }
 
@@ -1789,18 +1786,18 @@ export default function App() {
           <span>TurfSheet - Punters club</span>
         </a>
 
-        {/* Primary 3-Tab Navigation (Overview | Betting Selections | Results) */}
+        {/* Primary 4-Tab Navigation (Overview | Selections | Exotics | Results) */}
         <nav
           role="tablist"
           aria-label="Primary App Tabs"
-          className="hidden md:flex items-center gap-1.5 rounded-xl border border-[#1F2D26] bg-[#121A16] p-1 text-xs font-semibold"
+          className="hidden md:flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-[#0E1512]/90 backdrop-blur-md p-1.5 text-xs font-semibold"
         >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "overview"}
             onClick={() => switchTab("overview")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
               activeTab === "overview"
                 ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
                 : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#D4AF37]"
@@ -1812,58 +1809,10 @@ export default function App() {
               className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
                 activeTab === "overview"
                   ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#8A9990]"
+                  : "bg-[#080D0B] text-[#8A9990]"
               }`}
             >
-              {visibleMeetings.length} Venues
-            </span>
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "strategy"}
-            onClick={() => switchTab("strategy")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
-              activeTab === "strategy"
-                ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Strategy Lab</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
-                activeTab === "strategy"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#10B981]"
-              }`}
-            >
-              +EV
-            </span>
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "live-odds"}
-            onClick={() => switchTab("live-odds")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
-              activeTab === "live-odds"
-                ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
-            }`}
-          >
-            <DollarSign className="h-3.5 w-3.5" />
-            <span>Live Odds &amp; Results</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
-                activeTab === "live-odds"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
-              }`}
-            >
-              5 Bookies
+              {visibleMeetings.length} Cards
             </span>
           </button>
 
@@ -1872,22 +1821,46 @@ export default function App() {
             role="tab"
             aria-selected={activeTab === "selections"}
             onClick={() => switchTab("selections")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
               activeTab === "selections"
                 ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
                 : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#D4AF37]"
             }`}
           >
             <Table2 className="h-3.5 w-3.5" />
-            <span>Betting Selections</span>
+            <span>Selections</span>
             <span
               className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
                 activeTab === "selections"
                   ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
+                  : "bg-[#080D0B] text-[#D4AF37]"
               }`}
             >
-              {activePunter.name}
+              {activePunter.name.split(" ")[0]}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "exotics"}
+            onClick={() => switchTab("exotics")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
+              activeTab === "exotics"
+                ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
+                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
+            }`}
+          >
+            <Target className="h-3.5 w-3.5" />
+            <span>Exotics</span>
+            <span
+              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
+                activeTab === "exotics"
+                  ? "bg-[#070B09]/20 text-[#070B09]"
+                  : "bg-[#080D0B] text-[#10B981]"
+              }`}
+            >
+              Trifecta &amp; Quaddie
             </span>
           </button>
 
@@ -1896,7 +1869,7 @@ export default function App() {
             role="tab"
             aria-selected={activeTab === "results"}
             onClick={() => switchTab("results")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
               activeTab === "results"
                 ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
                 : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
@@ -1909,7 +1882,7 @@ export default function App() {
                 className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
                   activeTab === "results"
                     ? "bg-[#070B09]/20 text-[#070B09]"
-                    : "bg-[#0B110E] text-emerald-400"
+                    : "bg-[#080D0B] text-emerald-400"
                 }`}
               >
                 {
@@ -1920,30 +1893,6 @@ export default function App() {
                 /{activeMeeting.races.length} Final
               </span>
             )}
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "changelog"}
-            onClick={() => switchTab("changelog")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition cursor-pointer ${
-              activeTab === "changelog"
-                ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#D4AF37]"
-            }`}
-          >
-            <History className="h-3.5 w-3.5" />
-            <span>Change Log</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
-                activeTab === "changelog"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
-              }`}
-            >
-              {OFFICIAL_CHANGELOG_ENTRIES[0].version}
-            </span>
           </button>
         </nav>
 
@@ -2339,11 +2288,56 @@ export default function App() {
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === "exotics"}
+            onClick={() => switchTab("exotics")}
+            className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition cursor-pointer ${
+              activeTab === "exotics"
+                ? "bg-[#10B981] text-[#070B09] shadow-md font-bold"
+                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Target
+                className={`h-4 w-4 shrink-0 ${
+                  activeTab === "exotics"
+                    ? "text-[#070B09]"
+                    : "text-[#10B981]"
+                }`}
+              />
+              <div>
+                <div className="text-xs sm:text-sm font-bold">
+                  Exotics Studio
+                </div>
+                <div
+                  className={`text-[11px] ${
+                    activeTab === "exotics"
+                      ? "text-[#070B09]/80 font-medium"
+                      : "text-[#8A9990]"
+                  }`}
+                >
+                  Trifectas &amp; Quaddies · Flexi Calculations &amp; Sweat Matrix
+                </div>
+              </div>
+            </div>
+            <span
+              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
+                activeTab === "exotics"
+                  ? "bg-[#070B09]/15 text-[#070B09]"
+                  : "bg-[#0B110E] text-[#10B981]"
+              }`}
+            >
+              Bento
+            </span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === "results"}
             onClick={() => switchTab("results")}
-            className={`flex items-center justify-between rounded-lg px-4 py-3 text-left transition cursor-pointer ${
+            className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition cursor-pointer ${
               activeTab === "results"
-                ? "bg-[#10B981] text-[#070B09] shadow-md"
+                ? "bg-[#10B981] text-[#070B09] shadow-md font-bold"
                 : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
             }`}
           >
@@ -2366,7 +2360,7 @@ export default function App() {
                       : "text-[#8A9990]"
                   }`}
                 >
-                  Standings · Pot Ledger · Banker Trifecta &amp; Sweat
+                  Official Standings · Points &amp; Returns · Report Generator
                 </div>
               </div>
             </div>
@@ -2384,51 +2378,6 @@ export default function App() {
                     ).length
                   }/${activeMeeting.races.length} Final`
                 : "Live"}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "changelog"}
-            onClick={() => switchTab("changelog")}
-            className={`flex items-center justify-between rounded-lg px-4 py-3 text-left transition cursor-pointer ${
-              activeTab === "changelog"
-                ? "bg-[#D4AF37] text-[#070B09] shadow-md"
-                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <History
-                className={`h-4 w-4 shrink-0 ${
-                  activeTab === "changelog"
-                    ? "text-[#070B09]"
-                    : "text-[#D4AF37]"
-                }`}
-              />
-              <div>
-                <div className="text-xs sm:text-sm font-bold">
-                  Change Log
-                </div>
-                <div
-                  className={`text-[11px] ${
-                    activeTab === "changelog"
-                      ? "text-[#070B09]/80 font-medium"
-                      : "text-[#8A9990]"
-                  }`}
-                >
-                  Updates Since Friday Last Week · Feature Audit
-                </div>
-              </div>
-            </div>
-            <span
-              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                activeTab === "changelog"
-                  ? "bg-[#070B09]/15 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
-              }`}
-            >
-              {OFFICIAL_CHANGELOG_ENTRIES[0].version}
             </span>
           </button>
         </div>
@@ -2473,7 +2422,7 @@ export default function App() {
           </div>
         )}
 
-        {visibleMeetings.length === 0 && activeTab !== "changelog" && (
+        {visibleMeetings.length === 0 && (
           <div className="bg-[#121A16] border border-[#1F2D26] rounded-lg p-8 text-center space-y-3">
             <div className="text-base font-semibold text-[#F3F4F0]">
               No Scheduled Racing Found for{" "}
@@ -2621,65 +2570,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ====================================================================
-            TAB: STRATEGY LAB (ADVANCED FORM, JOCKEY STATS & VALUE FINDER)
-           ==================================================================== */}
-        {activeTab === "strategy" && (
-          <section
-            id="section-strategy"
-            role="tabpanel"
-            aria-label="Advanced Betting Strategy Tab"
-            className="space-y-4 pb-24"
-          >
-            <AdvancedBettingStrategyModule
-              meetings={visibleMeetings}
-              activePunter={activePunter}
-              onSetPunterPreference={(meetingId, raceNo, rank, tabNo) => {
-                handleUpdateRaceSelection(
-                  activePunter.id,
-                  meetingId,
-                  raceNo,
-                  rank,
-                  tabNo
-                );
-                triggerToast(
-                  `Set #${tabNo} as Pref ${rank} in Race ${raceNo} for ${activePunter.name}`
-                );
-              }}
-              onOpenTrifectaCustomiser={() => switchTab("results")}
-              onRefreshScraperData={() =>
-                handleScrapeNswTab(selectedDate, endDate, trackFilter, {
-                  forceRefresh: true,
-                })
-              }
-              isRefreshing={isScraping}
-            />
-          </section>
-        )}
-
-        {/* ====================================================================
-            TAB: LIVE ODDS & RACE RESULTS DESK (5 BOOKIES + OFFICIAL OUTCOMES)
-           ==================================================================== */}
-        {activeTab === "live-odds" && (
-          <section
-            id="section-live-odds"
-            role="tabpanel"
-            aria-label="Live Odds & Results Tab"
-            className="space-y-4 pb-24"
-          >
-            <LiveOddsAndResultsCenter
-              meetings={visibleMeetings}
-              punters={punters}
-              onRefreshScraperData={() =>
-                handleScrapeNswTab(selectedDate, endDate, trackFilter, {
-                  forceRefresh: true,
-                })
-              }
-              isRefreshing={isScraping}
-              onOpenTrifectaCustomiser={() => switchTab("results")}
-            />
-          </section>
-        )}
 
         {/* ====================================================================
             TAB: BETTING SELECTIONS (STEVE F & MARK S + JOKER ROUND 2×)
@@ -2754,6 +2644,50 @@ export default function App() {
               lastSyncedTime={lastSyncedTime}
               onManualCloudSync={() => persistPuntersToCloud(punters, true)}
               onNavigateToResults={() => switchTab("results")}
+            />
+          </section>
+        )}
+
+        {/* ====================================================================
+            TAB: EXOTICS BENTO STUDIO (TRIFECTAS & QUADDIES REVIEW & SELECTION)
+           ==================================================================== */}
+        {activeTab === "exotics" && activeMeeting && (
+          <section
+            id="section-exotics"
+            role="tabpanel"
+            aria-label="Exotics Bento Studio Tab"
+            className="space-y-4 pb-24"
+          >
+            <ExoticsBentoStudio
+              meetings={visibleMeetings}
+              selectedMeetingId={activeMeeting.id}
+              onSelectMeeting={setSelectedMeetingId}
+              selectedMeetingIds={selectedMeetingIds}
+              onChangeSelectedMeetingIds={handleUpdateSelectedMeetingIds}
+              punters={punters}
+              activePunterId={activePunter.id}
+              onSelectPunter={setActivePunterId}
+              trifectaBetAmount={trifectaBetAmount}
+              onChangeTrifectaBetAmount={setTrifectaBetAmount}
+              quaddieBuyInPerUser={quaddieBuyInPerUser}
+              onChangeQuaddieBuyInPerUser={setQuaddieBuyInPerUser}
+              quaddieExtraByMeeting={quaddieExtraByMeeting}
+              onToggleQuaddieExtraRunner={handleToggleQuaddieExtraRunner}
+              onClearQuaddieExtrasForLeg={handleClearQuaddieExtrasForLeg}
+              onJumpToSelections={(punterId, meetingId) => {
+                if (punterId) setActivePunterId(punterId);
+                if (meetingId) {
+                  setSelectedMeetingId(meetingId);
+                  if (!selectedMeetingIds.includes(meetingId)) {
+                    handleUpdateSelectedMeetingIds([
+                      ...selectedMeetingIds,
+                      meetingId,
+                    ]);
+                  }
+                }
+                switchTab("selections");
+              }}
+              onTriggerToast={triggerToast}
             />
           </section>
         )}
@@ -3001,66 +2935,27 @@ export default function App() {
           </div>
         )}
 
-        {/* ====================================================================
-            TAB 4: CHANGE LOG (IMPORTANT CHANGES SINCE FRIDAY LAST WEEK)
-           ==================================================================== */}
-        {activeTab === "changelog" && (
-          <ChangeLogSheet
-            onNavigateToTab={(tab) => switchTab(tab)}
-            onTriggerToast={triggerToast}
-          />
-        )}
       </main>
 
       {/* Mobile / Tablet Fixed Bottom 4-Tab Navigation Bar */}
       <nav
         role="tablist"
         aria-label="Mobile Tab Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B110E]/95 backdrop-blur-md border-t border-[#1F2D26] grid grid-cols-6 items-center h-14 px-1 gap-0.5"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B110E]/95 backdrop-blur-md border-t border-[#1F2D26] grid grid-cols-4 items-center h-14 px-2 gap-1"
       >
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === "overview"}
           onClick={() => switchTab("overview")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
             activeTab === "overview"
-              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40"
+              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-bold"
               : "text-[#9BA8A1]"
           }`}
         >
-          <Flame className="w-3.5 h-3.5" />
-          <span className="mt-0.5">Cards</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "strategy"}
-          onClick={() => switchTab("strategy")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
-            activeTab === "strategy"
-              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="mt-0.5">Strategy</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "live-odds"}
-          onClick={() => switchTab("live-odds")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
-            activeTab === "live-odds"
-              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <DollarSign className="w-3.5 h-3.5" />
-          <span className="mt-0.5">Odds</span>
+          <Flame className="w-4 h-4" />
+          <span className="mt-0.5">Overview</span>
         </button>
 
         <button
@@ -3068,14 +2963,29 @@ export default function App() {
           role="tab"
           aria-selected={activeTab === "selections"}
           onClick={() => switchTab("selections")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
             activeTab === "selections"
-              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40"
+              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-bold"
               : "text-[#9BA8A1]"
           }`}
         >
-          <Table2 className="w-3.5 h-3.5" />
-          <span className="mt-0.5">Picks</span>
+          <Table2 className="w-4 h-4" />
+          <span className="mt-0.5">Selections</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "exotics"}
+          onClick={() => switchTab("exotics")}
+          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
+            activeTab === "exotics"
+              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 font-bold"
+              : "text-[#9BA8A1]"
+          }`}
+        >
+          <Target className="w-4 h-4" />
+          <span className="mt-0.5">Exotics</span>
         </button>
 
         <button
@@ -3083,29 +2993,14 @@ export default function App() {
           role="tab"
           aria-selected={activeTab === "results"}
           onClick={() => switchTab("results")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
             activeTab === "results"
-              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40"
+              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 font-bold"
               : "text-[#9BA8A1]"
           }`}
         >
-          <Trophy className="w-3.5 h-3.5" />
+          <Trophy className="w-4 h-4" />
           <span className="mt-0.5">Results</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "changelog"}
-          onClick={() => switchTab("changelog")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[9px] font-semibold transition cursor-pointer ${
-            activeTab === "changelog"
-              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <History className="w-3.5 h-3.5" />
-          <span className="mt-0.5">Logs</span>
         </button>
       </nav>
     </div>

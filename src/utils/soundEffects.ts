@@ -270,40 +270,46 @@ function buildSynthesizedWav(type: SoundEffectType | "keepalive"): string {
     return url;
   }
 
-  // "wrong" ("Dun-Dun!" Game Show Buzzer)
-  const duration = 0.92;
-  const totalSamples = Math.floor(sampleRate * duration);
-  const samples = new Float32Array(totalSamples);
+  if (type === "wrong") {
+    // "wrong" ("Dun-Dun!" Game Show Buzzer)
+    const duration = 0.92;
+    const totalSamples = Math.floor(sampleRate * duration);
+    const samples = new Float32Array(totalSamples);
 
-  for (let i = 0; i < totalSamples; i++) {
-    const t = i / sampleRate;
-    let val = 0;
+    for (let i = 0; i < totalSamples; i++) {
+      const t = i / sampleRate;
+      let val = 0;
 
-    // Note 1: "DUN" (0.00s - 0.23s, G3 ~ 196Hz)
-    if (t >= 0 && t <= 0.23) {
-      const nt = t;
-      const f = 196.0 - (6.0 * nt) / 0.23;
-      const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 8.5);
-      const brass =
-        Math.sin(2 * Math.PI * f * nt) +
-        0.55 * Math.sin(4 * Math.PI * f * nt) +
-        0.3 * Math.sin(6 * Math.PI * f * nt);
-      val += brass * 0.36 * env;
+      // Note 1: "DUN" (0.00s - 0.23s, G3 ~ 196Hz)
+      if (t >= 0 && t <= 0.23) {
+        const nt = t;
+        const f = 196.0 - (6.0 * nt) / 0.23;
+        const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 8.5);
+        const brass =
+          Math.sin(2 * Math.PI * f * nt) +
+          0.55 * Math.sin(4 * Math.PI * f * nt) +
+          0.3 * Math.sin(6 * Math.PI * f * nt);
+        val += brass * 0.36 * env;
+      }
+
+      // Note 2: "DUNNNN" (0.26s - 0.88s, C#3 138.59Hz -> C3 128Hz)
+      if (t >= 0.26 && t <= 0.88) {
+        const nt = t - 0.26;
+        const f = 138.59 - (10.59 * nt) / 0.62;
+        const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 4.2);
+        const brass =
+          Math.sin(2 * Math.PI * f * nt) +
+          0.6 * Math.sin(4 * Math.PI * f * nt) +
+          0.35 * Math.sin(6 * Math.PI * f * nt);
+        val += brass * 0.4 * env;
+      }
+
+      samples[i] = Math.max(-0.98, Math.min(0.98, val));
     }
 
-    // Note 2: "DUNNNN" (0.26s - 0.88s, C#3 138.59Hz -> C3 128Hz)
-    if (t >= 0.26 && t <= 0.88) {
-      const nt = t - 0.26;
-      const f = 138.59 - (10.59 * nt) / 0.62;
-      const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 4.2);
-      const brass =
-        Math.sin(2 * Math.PI * f * nt) +
-        0.6 * Math.sin(4 * Math.PI * f * nt) +
-        0.35 * Math.sin(6 * Math.PI * f * nt);
-      val += brass * 0.4 * env;
-    }
-
-    samples[i] = Math.max(-0.98, Math.min(0.98, val));
+    const url = encodeWavFromSamples(samples, sampleRate);
+    wavDataUrlCache[type] = url;
+    return url;
   }
 
   if (type === "dingding") {
@@ -344,9 +350,7 @@ function buildSynthesizedWav(type: SoundEffectType | "keepalive"): string {
     return url;
   }
 
-  const url = encodeWavFromSamples(samples, sampleRate);
-  wavDataUrlCache[type] = url;
-  return url;
+  return "";
 }
 
 function getAudioContext(): AudioContext | null {
