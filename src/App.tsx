@@ -57,6 +57,7 @@ import { CombinedTrifectaTracker } from "./components/CombinedTrifectaTracker";
 import { CombinedQuaddieTracker } from "./components/CombinedQuaddieTracker";
 import { ExoticsBentoStudio } from "./components/ExoticsBentoStudio";
 import { RaceReportSheet } from "./components/RaceReportSheet";
+import { PunterLeaderboard } from "./components/PunterLeaderboard";
 import { OfflineIndicator } from "./components/PWAInstallControl";
 import {
   UpdaterDownloadModal,
@@ -168,6 +169,7 @@ interface RacePushNotificationItem {
   raceName: string;
   isWinner: boolean;
   isTrifectaHit?: boolean;
+  placedCount?: number;
   headline: string;
   podiumText: string;
   userOutcomes: Array<{
@@ -921,15 +923,37 @@ export default function App() {
       );
       const isTrifectaHit = trifectaEval.isCombinedBoxedTrifectaHit;
 
-      // Play browser sound effects when race results are confirmed:
-      // 1. "Ding-ding" chime is played once a result from a race that was participated by a user comes in.
-      // 2. Followed by either cash register ("Ka-Ching!") if a positive result occurred (selected horse won or placed),
-      //    or if not, play "dun-dun" sound.
+      // Count how many selections placed (1st, 2nd, 3rd) or won across participated users
+      const allPlacedOrWonRunners = new Set<number>();
+      currentPunters.forEach((punter) => {
+        const mSelections = punter.selectionsByMeeting?.[targetMeeting.id];
+        const trio = mSelections?.[race.raceNumber];
+        if (trio) {
+          [trio.firstPref, trio.secondPref, trio.thirdPref].forEach((tab) => {
+            if (tab) {
+              const r = race.runners.find((runner) => runner.tabNumber === tab);
+              if (r && r.finishPosition >= 1 && r.finishPosition <= 3) {
+                allPlacedOrWonRunners.add(tab);
+              }
+            }
+          });
+        }
+      });
+      const placedOrWonCount = allPlacedOrWonRunners.size;
+
+      // Play high-quality sound alerts:
+      // 1. If Trifecta is successful -> play "Show me the money" (Cuba Gooding Jr from Jerry Maguire)
+      // 2. If runners place or win -> play "cha ching" cash register sound as a multiple of occurrence (2 horses = 2x, 3 horses = 3x)
+      // 3. If NO runners win or place -> play game show "dun dun" sound!
       if (soundEnabled) {
         if (participatedUsers.length > 0) {
-          playRaceParticipatedResultSound(anyParticipatedUserWon || isTrifectaHit);
           if (isTrifectaHit) {
+            playShowMeTheMoneySound();
             triggerConfetti();
+          } else if (placedOrWonCount > 0) {
+            playCashRegisterSound(placedOrWonCount);
+          } else {
+            playWrongAnswerSound();
           }
         }
       }
@@ -942,8 +966,8 @@ export default function App() {
         ? `Race ${race.raceNumber} Confirmed — Official Winner #${
             winner?.tabNumber ?? "-"
           } ${winner?.horseName ?? ""}`
-        : anyParticipatedUserWon
-        ? `KA-CHING! Winning Result in Race ${race.raceNumber}`
+        : placedOrWonCount > 0
+        ? `CHA-CHING! (${placedOrWonCount}× Hits) Winning Result in Race ${race.raceNumber}`
         : `DUN-DUN! No Winning Return in Race ${race.raceNumber}`;
 
       const item: RacePushNotificationItem = {
@@ -951,8 +975,9 @@ export default function App() {
         venue: targetMeeting.venue,
         raceNumber: race.raceNumber,
         raceName: race.raceName,
-        isWinner: isTrifectaHit || anyParticipatedUserWon,
+        isWinner: isTrifectaHit || placedOrWonCount > 0,
         isTrifectaHit,
+        placedCount: placedOrWonCount,
         headline,
         podiumText,
         userOutcomes,
@@ -1705,11 +1730,15 @@ export default function App() {
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() =>
-                      item.isTrifectaHit
-                        ? playTrifectaSirenSound()
-                        : playRaceParticipatedResultSound(item.isWinner)
-                    }
+                    onClick={() => {
+                      if (item.isTrifectaHit) {
+                        playShowMeTheMoneySound();
+                      } else if (item.isWinner) {
+                        playCashRegisterSound(item.placedCount || 1);
+                      } else {
+                        playWrongAnswerSound();
+                      }
+                    }}
                     className="p-1 rounded bg-[#0B110E]/60 hover:bg-[#0B110E] text-xs text-[#D4AF37] cursor-pointer"
                     title="Replay Notification Sound"
                   >
@@ -1898,19 +1927,6 @@ export default function App() {
 
         {/* Actions: Cross-Device Cloud Save Status + PWA Install + Points/$ Toggle + Sound + Sync */}
         <div className="flex items-center gap-2">
-          {typeof window !== "undefined" &&
-            (window.location.hostname.endsWith(".run.app") ||
-              window.location.hostname === "localhost") && (
-              <button
-                type="button"
-                onClick={() => setShowDownloadHubModal(true)}
-                className="min-h-[36px] px-2.5 py-1.5 text-xs font-bold rounded-md bg-[#D4AF37] text-[#0B110E] hover:bg-[#e3be42] transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5 shadow-sm"
-                title="Download Zero-JSON-Error Website Updater Files (Visible only in AI Studio Preview)"
-              >
-                <span>↓ Updater Files</span>
-              </button>
-            )}
-
           <button
             type="button"
             onClick={() => persistPuntersToCloud(punters, true)}
@@ -2061,19 +2077,6 @@ export default function App() {
           >
             <Bell className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span className="hidden xl:inline">R{nextPushRaceCursor} Alert</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              playShowMeTheMoneySound();
-              triggerConfetti();
-            }}
-            className="min-h-[36px] px-2.5 py-1.5 text-xs font-mono font-bold rounded-md bg-[#121A16] border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/20 transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
-            title="Test 'Show Me The Money!' Winning Trifecta Sound & Confetti"
-          >
-            <span>💰</span>
-            <span className="hidden xl:inline">&ldquo;Show Me The Money!&rdquo;</span>
           </button>
 
           <button
@@ -2326,7 +2329,7 @@ export default function App() {
                   : "bg-[#0B110E] text-[#10B981]"
               }`}
             >
-              Bento
+              Studio
             </span>
           </button>
 
@@ -2655,7 +2658,7 @@ export default function App() {
           <section
             id="section-exotics"
             role="tabpanel"
-            aria-label="Exotics Bento Studio Tab"
+            aria-label="Exotics Studio Tab"
             className="space-y-4 pb-24"
           >
             <ExoticsBentoStudio
@@ -2701,6 +2704,27 @@ export default function App() {
             aria-label="Results Tab"
             className="space-y-8"
           >
+            {/* Registered Punters Leaderboard Component */}
+            <PunterLeaderboard
+              meetings={visibleMeetings}
+              selectedMeetingId={activeMeeting.id}
+              onSelectMeeting={setSelectedMeetingId}
+              punters={punters}
+              scoringMode={scoringMode}
+              onToggleScoringMode={setScoringMode}
+              onJumpToSelections={(punterId, meetingId) => {
+                setActivePunterId(punterId);
+                setSelectedMeetingId(meetingId);
+                if (!selectedMeetingIds.includes(meetingId)) {
+                  handleUpdateSelectedMeetingIds([
+                    ...selectedMeetingIds,
+                    meetingId,
+                  ]);
+                }
+                switchTab("selections");
+              }}
+            />
+
             <section id="section-results" className="scroll-mt-24 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#23352C] bg-[#0E1813] px-4 py-3">
                 <div>

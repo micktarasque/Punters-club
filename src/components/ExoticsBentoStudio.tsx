@@ -156,10 +156,67 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
     return computeQuaddieLeg4SweatScenarios(quaddieEval);
   }, [quaddieEval]);
 
-  // Trifecta mode customization state for active race
-  const [customTrifectaMode, setCustomTrifectaMode] = useState<TrifectaBetType>("flexi_standout");
+  // Collect all distinct horse selections made by registered syndicate members for the active race
+  const allUsersTipsForRace = useMemo(() => {
+    if (!activeMeeting || !activeRace) return [];
+    const set = new Set<number>();
+    punters.forEach((punter) => {
+      const trio = punter.selectionsByMeeting?.[activeMeeting.id]?.[activeRace.raceNumber];
+      if (trio) {
+        if (trio.firstPref) set.add(trio.firstPref);
+        if (trio.secondPref) set.add(trio.secondPref);
+        if (trio.thirdPref) set.add(trio.thirdPref);
+      }
+    });
+    return Array.from(set);
+  }, [punters, activeMeeting?.id, activeRace?.raceNumber]);
+
+  // Trifecta mode customization state for active race (Default: flexi_combined)
+  const [customTrifectaMode, setCustomTrifectaMode] =
+    useState<TrifectaBetType>("flexi_combined");
   const [standoutTab, setStandoutTab] = useState<number | null>(null);
   const [flexiTabs, setFlexiTabs] = useState<number[]>([]);
+
+  // Apply Flexi Combined selections with auto sub-$1.90 standard banker rule
+  const applyFlexiCombined = React.useCallback(() => {
+    if (!activeRace) return;
+    const sorted = [...activeRace.runners]
+      .filter((r) => !isRunnerScratched(r))
+      .sort((a, b) => {
+        const oA = Number(a.fixedWin || a.nswTabWin) || 99;
+        const oB = Number(b.fixedWin || b.nswTabWin) || 99;
+        return oA - oB;
+      });
+
+    const sub19 = sorted.find((r) => {
+      const w = Number(r.fixedWin || r.nswTabWin);
+      return Number.isFinite(w) && w > 0 && w < 1.9;
+    });
+
+    const tips =
+      allUsersTipsForRace.length >= 2
+        ? allUsersTipsForRace
+        : sorted.slice(0, 4).map((r) => r.tabNumber);
+
+    if (sub19) {
+      // TRIGGER AUTO SELECTION OF THE STANDARD BANKER RULE
+      setStandoutTab(sub19.tabNumber);
+      const remaining = tips.filter((t) => t !== sub19.tabNumber);
+      const safeRemaining =
+        remaining.length >= 2
+          ? remaining
+          : sorted
+              .filter((r) => r.tabNumber !== sub19.tabNumber)
+              .slice(0, 3)
+              .map((r) => r.tabNumber);
+      setFlexiTabs(safeRemaining);
+    } else {
+      setStandoutTab(null);
+      setFlexiTabs(
+        tips.length >= 3 ? tips : sorted.slice(0, 4).map((r) => r.tabNumber)
+      );
+    }
+  }, [activeRace, allUsersTipsForRace]);
 
   // Synchronize initial trifecta selections when active race changes
   React.useEffect(() => {
@@ -178,22 +235,23 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
       return Number.isFinite(w) && w > 0 && w < 1.9;
     });
 
-    if (sub19) {
-      setCustomTrifectaMode("flexi_standout");
+    if (customTrifectaMode === "flexi_combined") {
+      applyFlexiCombined();
+    } else if (sub19) {
+      // Auto-trigger standard banker rule
       setStandoutTab(sub19.tabNumber);
       const others = sorted
         .filter((r) => r.tabNumber !== sub19.tabNumber)
         .slice(0, 3)
         .map((r) => r.tabNumber);
       setFlexiTabs(others);
-    } else {
-      setCustomTrifectaMode("flexi_standout");
+    } else if (customTrifectaMode === "flexi_standout") {
       if (sorted[0]) {
         setStandoutTab(sorted[0].tabNumber);
         setFlexiTabs(sorted.slice(1, 4).map((r) => r.tabNumber));
       }
     }
-  }, [activeRace?.raceNumber, activeMeeting?.id]);
+  }, [activeRace?.raceNumber, activeMeeting?.id, customTrifectaMode, applyFlexiCombined]);
 
   if (!activeMeeting) {
     return (
@@ -231,7 +289,7 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
             <div className="flex items-center gap-2 mb-1.5">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono font-bold tracking-wider uppercase">
                 <Target className="w-3.5 h-3.5" />
-                Exotics Bento Studio
+                Exotics Studio
               </span>
               <span className="text-xs text-[#8A9990] font-mono">
                 Pari-Mutuel &amp; Flexi Suite
@@ -453,6 +511,21 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                   <div className="flex items-center gap-1 bg-[#080D0B] p-1 rounded-xl border border-[#1E2E25]">
                     <button
                       type="button"
+                      onClick={() => {
+                        setCustomTrifectaMode("flexi_combined");
+                        applyFlexiCombined();
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                        customTrifectaMode === "flexi_combined"
+                          ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
+                          : "text-[#8A9990] hover:text-[#F3F4F0]"
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Flexi Combined</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setCustomTrifectaMode("flexi_standout")}
                       className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer ${
                         customTrifectaMode === "flexi_standout"
@@ -460,7 +533,7 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                           : "text-[#8A9990] hover:text-[#F3F4F0]"
                       }`}
                     >
-                      Standout Flexi
+                      Standout Banker
                     </button>
                     <button
                       type="button"
@@ -494,22 +567,48 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                     .sort((a, b) => (Number(a.fixedWin || a.nswTabWin) || 99) - (Number(b.fixedWin || b.nswTabWin) || 99));
                   const fav = sorted[0];
                   const favOdds = Number(fav?.fixedWin || fav?.nswTabWin || 0);
-                  if (favOdds > 0 && favOdds < 1.9) {
+                  const isSub19 = favOdds > 0 && favOdds < 1.9;
+
+                  if (isSub19) {
                     return (
-                      <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center gap-2.5 text-xs text-[#D5DDD8]">
-                        <Flame className="w-4 h-4 text-[#D4AF37] shrink-0" />
-                        <div>
-                          <strong className="text-[#D4AF37]">Standout Banker Rule Triggered:</strong>{" "}
-                          #{fav.tabNumber} {fav.horseName} is paying ${favOdds.toFixed(2)} (&lt; $1.90). Automatically anchored as Standout Banker with remaining selections as Flexi legs.
+                      <div className="p-3.5 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-start gap-3 text-xs text-[#D5DDD8] shadow-[0_4px_16px_rgba(212,175,55,0.08)]">
+                        <Flame className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <strong className="text-[#D4AF37]">
+                              Standard Banker Rule Auto-Triggered:
+                            </strong>
+                            <span className="px-1.5 py-0.2 rounded bg-[#D4AF37] text-[#070B09] font-mono font-black text-[10px]">
+                              FAV &lt; $1.90
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
+                            #{fav.tabNumber} <strong>{fav.horseName}</strong> is paying <strong>${favOdds.toFixed(2)}</strong> (&lt; $1.90). Automatically anchored in 1st place as Standard Banker, with all remaining syndicate picks ({flexiTabs.length} runners: #{flexiTabs.join(", #")}) boxed for 2nd and 3rd legs to maximize Flexi return!
+                          </p>
                         </div>
                       </div>
                     );
                   }
+
+                  if (customTrifectaMode === "flexi_combined") {
+                    return (
+                      <div className="p-3 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center gap-2.5 text-xs text-[#D5DDD8]">
+                        <Users className="w-4 h-4 text-[#10B981] shrink-0" />
+                        <div>
+                          <strong className="text-[#10B981]">Flexi Combined (All Users Tips):</strong>{" "}
+                          Pooling {flexiTabs.length} distinct selections across registered syndicate members ({punters.map((p) => p.name).join(", ")}) into a unified TAB Flexi ticket.
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return null;
                 })()}
 
                 <p className="text-xs text-[#8A9990]">
-                  {customTrifectaMode === "flexi_standout"
+                  {customTrifectaMode === "flexi_combined"
+                    ? "Flexi Combined pools all syndicate members' tips. If there is a favourite with odds under $1.90, the Standard Banker rule automatically locks them in 1st place with remaining selections filling 2nd & 3rd."
+                    : customTrifectaMode === "flexi_standout"
                     ? "Standout Banker locks 1st place to your top pick; flexi legs complete 2nd & 3rd in any order for maximum dividend leverage."
                     : customTrifectaMode === "flexi_boxed"
                     ? "Boxed Trifecta hits if your chosen runners finish 1st, 2nd, and 3rd in any order across all permutations."
@@ -767,16 +866,22 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
 
                 {/* Live Combinations & Flexi calculation */}
                 {(() => {
-                  const combos =
-                    customTrifectaMode === "flexi_standout"
-                      ? standoutTab && flexiTabs.length >= 2
-                        ? flexiTabs.length * (flexiTabs.length - 1)
-                        : 0
-                      : customTrifectaMode === "flexi_boxed"
-                      ? flexiTabs.length >= 3
-                        ? flexiTabs.length * (flexiTabs.length - 1) * (flexiTabs.length - 2)
-                        : 0
-                      : flexiTabs.length * (flexiTabs.length - 1) * 3;
+                  const isStandoutStyle =
+                    customTrifectaMode === "flexi_standout" ||
+                    (customTrifectaMode === "flexi_combined" && standoutTab !== null);
+                  const isBoxedStyle =
+                    customTrifectaMode === "flexi_boxed" ||
+                    (customTrifectaMode === "flexi_combined" && standoutTab === null);
+
+                  const combos = isStandoutStyle
+                    ? standoutTab && flexiTabs.length >= 2
+                      ? flexiTabs.length * (flexiTabs.length - 1)
+                      : 0
+                    : isBoxedStyle
+                    ? flexiTabs.length >= 3
+                      ? flexiTabs.length * (flexiTabs.length - 1) * (flexiTabs.length - 2)
+                      : 0
+                    : flexiTabs.length * (flexiTabs.length - 1) * 3;
 
                   const metrics = computeTabFlexiBetMetrics(
                     combos || 1,

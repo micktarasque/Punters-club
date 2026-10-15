@@ -598,6 +598,7 @@ export interface UserTrifectaPickEntry {
 }
 
 export type TrifectaBetType =
+  | "flexi_combined" // Flexi bet combination of all users' tips (with auto sub-$1.90 banker trigger)
   | "flexi_standout" // Standout 1st + Flexi 2nd & 3rd
   | "standout_placing" // Standout for 2nd or 3rd place
   | "flexi_positions" // Multiple: Position-by-Position (1st / 2nd / 3rd)
@@ -1415,7 +1416,50 @@ export function evaluateCombinedTrifectaForRace(
       ? race.runners.find((r) => r.tabNumber === sTab) ?? null
       : null;
 
-    if (betType === "flexi_standout") {
+    if (betType === "flexi_combined") {
+      const allTips = combinedRunners.map((c) => c.tabNumber);
+      // If there is a favourite with odds below 1.9 trigger auto selection of the standard banker rule
+      if (sub19Fav) {
+        isStandoutTriggered = true;
+        standoutRunner = sub19Fav;
+        standoutPosition = 1;
+        const favTab = sub19Fav.tabNumber;
+        const otherSelectedTabs = allTips.filter((t) => t !== favTab);
+        const safeOtherTabs =
+          otherSelectedTabs.length >= 2
+            ? otherSelectedTabs
+            : Array.from(
+                new Set([
+                  ...otherSelectedTabs,
+                  ...sortedField
+                    .map((f) => f.runner.tabNumber)
+                    .filter((t) => t !== favTab),
+                ])
+              ).slice(0, 3);
+        positionPicks = {
+          first: [favTab],
+          second: safeOtherTabs,
+          third: safeOtherTabs,
+        };
+        betTypeLabel = `Flexi Combined (Auto Banker #${favTab} < $1.90)`;
+      } else {
+        const safeTabs =
+          allTips.length >= 3
+            ? allTips
+            : Array.from(
+                new Set([
+                  ...allTips,
+                  ...sortedField.map((f) => f.runner.tabNumber),
+                ])
+              ).slice(0, 4);
+        positionPicks = {
+          first: safeTabs,
+          second: safeTabs,
+          third: safeTabs,
+        };
+        betTypeLabel = `Flexi Combined (${safeTabs.length}H Users Tips)`;
+      }
+    } else if (betType === "flexi_standout") {
       const anchor =
         standoutRunner?.tabNumber ??
         combinedRunners[0]?.tabNumber ??

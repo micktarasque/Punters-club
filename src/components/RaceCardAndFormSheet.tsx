@@ -21,6 +21,7 @@ import { generateRaceAutoPickTrio } from "../utils/autoPick";
 import { TanStackVirtualRunnersTable } from "./TanStackVirtualRunnersTable";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
+import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
 
 interface RaceCardAndFormSheetProps {
   meetings: RaceMeeting[];
@@ -973,8 +974,16 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
 
                       {/* Runner Name, Form & Age/Sex */}
                       <td className="py-2.5 px-3">
-                        <div className="font-semibold text-[#F3F4F0] text-sm">
-                          {runner.horseName}
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="font-semibold text-[#F3F4F0] text-sm">
+                            {runner.horseName}
+                          </div>
+                          <RunnerAiAnalysisButton
+                            runner={runner}
+                            race={activeRace || undefined}
+                            meeting={activeMeeting || undefined}
+                            size="xs"
+                          />
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-[#8A9990] mt-0.5">
                           <span className="font-mono text-[#D4AF37]">
@@ -1254,13 +1263,19 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                       seed={runner.tabNumber}
                     />
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-sm font-semibold text-[#F3F4F0]">
                           #{runner.tabNumber} {runner.horseName}
                         </span>
                         <span className="font-mono text-xs text-[#8A9990]">
                           (Bar {runner.barrier})
                         </span>
+                        <RunnerAiAnalysisButton
+                          runner={runner}
+                          race={activeRace || undefined}
+                          meeting={activeMeeting || undefined}
+                          size="xs"
+                        />
                       </div>
                       <div className="text-xs text-[#8A9990] mt-0.5">
                         J: {runner.jockey} · T: {runner.trainer} ·{" "}

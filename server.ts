@@ -2236,6 +2236,107 @@ app.post("/api/trifecta/sms-draft", async (req, res) => {
   }
 });
 
+/**
+ * AI-powered Runner Performance Analysis endpoint.
+ * Returns a short, one-sentence summary of the horse's performance based on form guide data.
+ */
+app.post("/api/ai/runner-analysis", async (req, res) => {
+  try {
+    const { runner, raceContext } = req.body || {};
+    if (!runner || !runner.horseName) {
+      res.status(400).json({ ok: false, error: "Missing runner information." });
+      return;
+    }
+
+    const horseName = String(runner.horseName).trim();
+    const barrier = runner.barrier ? `Barrier ${runner.barrier}` : "Unspecified barrier";
+    const weight = runner.weight ? `${runner.weight}kg` : "";
+    const jockey = runner.jockey || "Jockey TBA";
+    const trainer = runner.trainer || "Trainer TBA";
+    const form = runner.form || "—";
+    const career = runner.careerRecord || "";
+    const speedRating = runner.speedRating ? `Speed Rating ${runner.speedRating}` : "";
+    const speedPos = runner.speedMapPosition || "Midfield";
+    const sec600 = runner.sectional600m ? `Last 600m ${runner.sectional600m}` : "";
+    const odds = Number(runner.fixedWin || runner.nswTabWin || runner.currentOdds || 0);
+    const comment = runner.comment || "";
+    const raceName = raceContext?.raceName || "Feature Race";
+    const distance = raceContext?.distance ? `${raceContext.distance}m` : "Distance";
+    const trackCondition = raceContext?.trackCondition || "Good 4";
+
+    let analysis = "";
+
+    // Try Gemini API if API key is present
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      try {
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI();
+        const prompt = `Horse: ${horseName} (${barrier}, ${weight})
+Jockey: ${jockey} | Trainer: ${trainer}
+Form: ${form} | Career: ${career}
+${speedRating} | Map Position: ${speedPos} | ${sec600}
+Win Odds: $${odds > 0 ? odds.toFixed(2) : "N/A"}
+Form Guide Comment: ${comment}
+Race: ${raceName} over ${distance} on ${trackCondition} track.
+
+Write a crisp, single-sentence summary (under 25 words) of this horse's performance and race prospects based on the provided form guide data.`;
+
+        const response = await ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents: prompt,
+          config: {
+            systemInstruction:
+              "You are an expert Australian thoroughbred form analyst. Write a concise, single-sentence summary (under 25 words) of the horse's performance and winning chances based on its form guide data. Do not include introductory phrases, quotes, or conversational filler.",
+            temperature: 0.2,
+          },
+        });
+
+        if (response.text) {
+          analysis = response.text.trim().replace(/^["']|["']$/g, "");
+        }
+      } catch (aiErr: any) {
+        console.warn("Gemini API call failed, using rule-based analyst fallback:", aiErr?.message);
+      }
+    }
+
+    if (!analysis) {
+      // Deterministic fallback based on genuine form guide data
+      const lastDigits = form.replace(/[^0-9]/g, "");
+      const lastRun = lastDigits ? lastDigits[lastDigits.length - 1] : "";
+      const isWinnerLast = lastRun === "1";
+      const isPlacedLast = lastRun === "2" || lastRun === "3";
+      const isLeader = speedPos === "Leader" || speedPos === "On Pace";
+
+      if (odds > 0 && odds < 2.5) {
+        analysis = `${horseName} is a commanding favourite with dominant recent form (${form}) and tactical gate speed to control this ${distance} contest from the jump.`;
+      } else if (isWinnerLast) {
+        analysis = `Arrives in peak winning form after an authoritative last-start victory and maps favorably from ${barrier} to contend strongly here.`;
+      } else if (isPlacedLast) {
+        analysis = `Consistent placegetter with strong sectional splits (${sec600 || "sharp closing speed"}); represents high-percentage exotic and podium value.`;
+      } else if (isLeader) {
+        analysis = `Natural front-runner who will press forward early from ${barrier} to dictate tempo over ${distance} and take catching in the straight.`;
+      } else if (odds > 12) {
+        analysis = `Knocking on the door at generous odds; needs genuine pace on offer from ${barrier} to unleash a storming late finish.`;
+      } else {
+        analysis = `${horseName} boasts solid credentials at this distance with ${jockey} booked to give every chance from a workable draw.`;
+      }
+    }
+
+    res.json({
+      ok: true,
+      horseName,
+      tabNumber: runner.tabNumber,
+      analysis,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      ok: false,
+      error: err?.message || "Failed to generate AI form analysis.",
+    });
+  }
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");

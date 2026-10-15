@@ -20,6 +20,7 @@ import {
 import { RaceEvent, RaceRunner, RaceSelectionTrio } from "../types/racing";
 import { JockeySilkSvg } from "./JockeySilkSvg";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
+import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
 
 export interface TanStackVirtualRunnersTableProps {
   race: RaceEvent;
@@ -162,6 +163,11 @@ export const TanStackVirtualRunnersTable: React.FC<
                     {runner.speedMapPosition}
                   </span>
                 )}
+                <RunnerAiAnalysisButton
+                  runner={runner}
+                  race={race}
+                  size="xs"
+                />
               </div>
               <div className="text-[11px] text-[#8A9990] flex items-center gap-2">
                 <span>{runner.jockey}</span>

@@ -13,6 +13,7 @@ import {
   Sliders,
   Sparkles,
   TrendingUp,
+  Users,
   X,
   Zap,
 } from "lucide-react";
@@ -27,6 +28,7 @@ import {
 } from "../utils/scoring";
 import { JockeySilkSvg } from "./JockeySilkSvg";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
+import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
 
 export interface InteractiveTrifectaCustomiserProps {
   race: RaceEvent;
@@ -176,7 +178,18 @@ export const InteractiveTrifectaCustomiser: React.FC<
     let p2: number[] = [];
     let p3: number[] = [];
 
-    if (mode === "flexi_standout") {
+    if (mode === "flexi_combined") {
+      if (standoutTab) {
+        p1 = [standoutTab];
+        const others = standoutFlexiOthers.filter((t) => t !== standoutTab);
+        p2 = others;
+        p3 = others;
+      } else {
+        p1 = boxedTabs;
+        p2 = boxedTabs;
+        p3 = boxedTabs;
+      }
+    } else if (mode === "flexi_standout") {
       p1 = [standoutTab];
       p2 = standoutFlexiOthers.filter((t) => t !== standoutTab);
       p3 = standoutFlexiOthers.filter((t) => t !== standoutTab);
@@ -401,7 +414,31 @@ export const InteractiveTrifectaCustomiser: React.FC<
             <label className="block text-xs font-mono uppercase tracking-wider text-[#8A9990] mb-2 font-semibold">
               Select Trifecta Bet Structure (Sportsbet &amp; TAB Standard):
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("flexi_combined");
+                  if (sub19Fav) {
+                    setStandoutTab(sub19Fav.tabNumber);
+                    setStandoutPosition(1);
+                  }
+                }}
+                className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                  mode === "flexi_combined"
+                    ? "bg-[#152B20] border-[#D4AF37] text-[#F3F4F0] shadow-md shadow-[#D4AF37]/10"
+                    : "bg-[#101814] border-[#1F2D26] text-[#8A9990] hover:border-[#D4AF37]/50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#D4AF37]">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Flexi Combined</span>
+                </div>
+                <div className="text-[11px] text-[#8A9990] mt-0.5">
+                  All Users Tips
+                </div>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {

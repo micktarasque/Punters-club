@@ -54,6 +54,7 @@ import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { StickySyndicateDock } from "./StickySyndicateDock";
 import { TactileOddsFlucBadge, OddsTrendIndicator } from "./TactileOddsFlucBadge";
+import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
 
 interface BettingLedgerSheetProps {
   meetings: RaceMeeting[];
@@ -1837,6 +1838,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           3rd 🥉
                                         </span>
                                       )}
+                                      <RunnerAiAnalysisButton
+                                        runner={runner}
+                                        race={race}
+                                        meeting={meetingCard}
+                                        size="xs"
+                                      />
                                     </div>
                                     <div className="text-[11px] text-[#8A9990] font-mono mt-0.5">
                                       <span>
@@ -1873,6 +1880,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         >
                                           {speedMapPos}
                                         </span>
+                                        <RunnerAiAnalysisButton
+                                          runner={runner}
+                                          race={race}
+                                          meeting={meetingCard}
+                                          size="xs"
+                                        />
                                       </div>
                                       <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
                                         {comment}
@@ -2395,6 +2408,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         {mapShort}
                                       </span>
                                     )}
+                                    <RunnerAiAnalysisButton
+                                      runner={runner}
+                                      race={activeRace}
+                                      meeting={meetingCard}
+                                      size="xs"
+                                    />
                                   </div>
                                   <div className="text-[11px] text-[#8A9990] font-mono">
                                     J: {runner.jockey} · {runner.weight}kg · T:{" "}

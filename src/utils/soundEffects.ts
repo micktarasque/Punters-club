@@ -10,6 +10,13 @@
 // - Auto-unlock on pointermove/mousemove/scroll/wheel/touchstart/keydown/focus + Pending Sound Queue (no button click required)
 // - Web Worker unthrottled background timer so background tab polling & sound triggers fire on schedule
 
+import {
+  DUN_DUN_LOCAL_MP3_URL,
+  DUN_DUN_MP3_DATA_URI,
+  DUN_DUN_VOICEMOD_MP3_URL,
+  DUN_DUN_VOICEMOD_PAGE_URL,
+} from "./dunDunSoundAsset";
+
 export type SoundEffectType =
   | "trifecta"
   | "cash"
@@ -24,6 +31,54 @@ let keepAliveAudio: HTMLAudioElement | null = null;
 const wavDataUrlCache: Partial<Record<SoundEffectType | "keepalive", string>> = {};
 const audioElementPool: Partial<Record<SoundEffectType, HTMLAudioElement[]>> = {};
 const pendingSoundQueue: Array<{ type: SoundEffectType; queuedAt: number }> = [];
+
+let dunDunAudioPool: HTMLAudioElement[] | null = null;
+let dunDunAudioBuffer: AudioBuffer | null = null;
+let isDecodingDunDun = false;
+
+function playVoicemodDunDunAudio(): boolean {
+  if (typeof window === "undefined" || typeof Audio === "undefined") {
+    return false;
+  }
+  try {
+    if (!dunDunAudioPool) {
+      dunDunAudioPool = [
+        new Audio(DUN_DUN_MP3_DATA_URI),
+        new Audio(DUN_DUN_MP3_DATA_URI),
+        new Audio(DUN_DUN_LOCAL_MP3_URL),
+      ];
+      dunDunAudioPool.forEach((a) => {
+        a.preload = "auto";
+        a.volume = 0.95;
+      });
+    }
+
+    const player =
+      dunDunAudioPool.find((a) => a.paused || a.ended) || dunDunAudioPool[0];
+    player.currentTime = 0;
+    player.volume = 0.95;
+    const playPromise = player.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise
+        .then(() => {
+          audioUnlockedOnce = true;
+          ensureBackgroundKeepAlive();
+        })
+        .catch(() => {
+          try {
+            const fallback = new Audio(DUN_DUN_VOICEMOD_MP3_URL);
+            fallback.volume = 0.95;
+            fallback.play().catch(() => {});
+          } catch {
+            // ignore
+          }
+        });
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function encodeWavFromSamples(samples: Float32Array, sampleRate = 22050): string {
   const numSamples = samples.length;
@@ -271,45 +326,10 @@ function buildSynthesizedWav(type: SoundEffectType | "keepalive"): string {
   }
 
   if (type === "wrong") {
-    // "wrong" ("Dun-Dun!" Game Show Buzzer)
-    const duration = 0.92;
-    const totalSamples = Math.floor(sampleRate * duration);
-    const samples = new Float32Array(totalSamples);
-
-    for (let i = 0; i < totalSamples; i++) {
-      const t = i / sampleRate;
-      let val = 0;
-
-      // Note 1: "DUN" (0.00s - 0.23s, G3 ~ 196Hz)
-      if (t >= 0 && t <= 0.23) {
-        const nt = t;
-        const f = 196.0 - (6.0 * nt) / 0.23;
-        const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 8.5);
-        const brass =
-          Math.sin(2 * Math.PI * f * nt) +
-          0.55 * Math.sin(4 * Math.PI * f * nt) +
-          0.3 * Math.sin(6 * Math.PI * f * nt);
-        val += brass * 0.36 * env;
-      }
-
-      // Note 2: "DUNNNN" (0.26s - 0.88s, C#3 138.59Hz -> C3 128Hz)
-      if (t >= 0.26 && t <= 0.88) {
-        const nt = t - 0.26;
-        const f = 138.59 - (10.59 * nt) / 0.62;
-        const env = nt < 0.015 ? nt / 0.015 : Math.exp(-(nt - 0.015) * 4.2);
-        const brass =
-          Math.sin(2 * Math.PI * f * nt) +
-          0.6 * Math.sin(4 * Math.PI * f * nt) +
-          0.35 * Math.sin(6 * Math.PI * f * nt);
-        val += brass * 0.4 * env;
-      }
-
-      samples[i] = Math.max(-0.98, Math.min(0.98, val));
-    }
-
-    const url = encodeWavFromSamples(samples, sampleRate);
-    wavDataUrlCache[type] = url;
-    return url;
+    // Official Voicemod Tuna "Wrong Buzzer" / Dun-Dun Meme Sound Effect
+    // https://tuna.voicemod.net/sound/c428d6bc-f0aa-4b49-972b-d771dd05863f
+    wavDataUrlCache[type] = DUN_DUN_MP3_DATA_URI;
+    return DUN_DUN_MP3_DATA_URI;
   }
 
   if (type === "dingding") {
@@ -726,136 +746,192 @@ export function playTrifectaSirenSound(): void {
 }
 
 /**
- * Plays a realistic Cash Register "Ka-Ching!" sound effect:
- * - Mechanical drawer latch click ("Ka-")
- * - Dual-harmonic high brass bell ring ("-Ching!")
+ * Plays a realistic, high-fidelity Cash Register "Cha-Ching!" sound effect.
+ * If multiple selections place or win, plays the "cha ching" sound as a multiple of the occurrence
+ * (e.g., 2 horses placed -> played twice with 400ms cadence; 3 horses placed -> played 3 times).
  */
-export function playCashRegisterSound(): void {
-  playWebAudioSynthesizer("cash", (ctx) => {
-    try {
-      const now = ctx.currentTime + 0.01;
+export function playCashRegisterSound(occurrences: number = 1): void {
+  const times = Math.max(1, Math.min(5, Math.floor(occurrences || 1)));
 
-      const clickOsc = ctx.createOscillator();
-      const clickGain = ctx.createGain();
-      clickOsc.type = "triangle";
-      clickOsc.frequency.setValueAtTime(920, now);
-      clickOsc.frequency.exponentialRampToValueAtTime(1480, now + 0.065);
+  const playSingleChing = (index: number) => {
+    playWebAudioSynthesizer("cash", (ctx) => {
+      try {
+        const now = ctx.currentTime + 0.01;
 
-      clickGain.gain.setValueAtTime(0.32, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+        // 1. Mechanical slide & drawer latch ("Cha-")
+        const clickOsc = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        clickOsc.type = "triangle";
+        clickOsc.frequency.setValueAtTime(880, now);
+        clickOsc.frequency.exponentialRampToValueAtTime(1520, now + 0.065);
 
-      clickOsc.connect(clickGain);
-      clickGain.connect(ctx.destination);
-      clickOsc.start(now);
-      clickOsc.stop(now + 0.08);
+        clickGain.gain.setValueAtTime(0.38, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
 
-      const bellStart = now + 0.085;
-      const bellFreqs = [2637.02, 3951.07, 5274.04];
+        clickOsc.connect(clickGain);
+        clickGain.connect(ctx.destination);
+        clickOsc.start(now);
+        clickOsc.stop(now + 0.08);
 
-      bellFreqs.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        // 2. High-precision dual-harmonic bell ring ("-Ching!")
+        const bellStart = now + 0.082;
+        // Pitch ascends slightly with successive hits for auditory thrill!
+        const pitchMultiplier = 1 + index * 0.04;
+        const bellFreqs = [2637.02 * pitchMultiplier, 3951.07 * pitchMultiplier, 5274.04 * pitchMultiplier];
 
-        osc.type = idx === 1 ? "triangle" : "sine";
-        osc.frequency.setValueAtTime(freq, bellStart);
+        bellFreqs.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
 
-        const peakGain = idx === 0 ? 0.36 : idx === 1 ? 0.2 : 0.15;
-        const duration = idx === 0 ? 0.95 : 0.7;
+          osc.type = idx === 1 ? "triangle" : "sine";
+          osc.frequency.setValueAtTime(freq, bellStart);
 
-        gain.gain.setValueAtTime(0.0001, bellStart);
-        gain.gain.linearRampToValueAtTime(peakGain, bellStart + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.0008, bellStart + duration);
+          const peakGain = idx === 0 ? 0.38 : idx === 1 ? 0.22 : 0.16;
+          const duration = idx === 0 ? 0.98 : 0.72;
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(bellStart);
-        osc.stop(bellStart + duration + 0.02);
-      });
+          gain.gain.setValueAtTime(0.0001, bellStart);
+          gain.gain.linearRampToValueAtTime(peakGain, bellStart + 0.007);
+          gain.gain.exponentialRampToValueAtTime(0.0008, bellStart + duration);
 
-      const coinStart = now + 0.16;
-      const coinOsc = ctx.createOscillator();
-      const coinGain = ctx.createGain();
-      coinOsc.type = "sine";
-      coinOsc.frequency.setValueAtTime(3135.96, coinStart);
-      coinOsc.frequency.setValueAtTime(4186.01, coinStart + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(bellStart);
+          osc.stop(bellStart + duration + 0.02);
+        });
 
-      coinGain.gain.setValueAtTime(0.22, coinStart);
-      coinGain.gain.exponentialRampToValueAtTime(0.001, coinStart + 0.55);
+        // 3. Shimmering brass coin cascade overtone
+        const coinStart = now + 0.15;
+        const coinOsc = ctx.createOscillator();
+        const coinGain = ctx.createGain();
+        coinOsc.type = "sine";
+        coinOsc.frequency.setValueAtTime(3135.96 * pitchMultiplier, coinStart);
+        coinOsc.frequency.setValueAtTime(4186.01 * pitchMultiplier, coinStart + 0.05);
 
-      coinOsc.connect(coinGain);
-      coinGain.connect(ctx.destination);
-      coinOsc.start(coinStart);
-      coinOsc.stop(coinStart + 0.58);
-    } catch {
-      // ignore
-    }
-  });
+        coinGain.gain.setValueAtTime(0.24, coinStart);
+        coinGain.gain.exponentialRampToValueAtTime(0.001, coinStart + 0.58);
+
+        coinOsc.connect(coinGain);
+        coinGain.connect(ctx.destination);
+        coinOsc.start(coinStart);
+        coinOsc.stop(coinStart + 0.6);
+      } catch {
+        // ignore audio errors
+      }
+    });
+  };
+
+  for (let i = 0; i < times; i++) {
+    setTimeout(() => {
+      playSingleChing(i);
+    }, i * 420);
+  }
 }
 
 /**
- * Plays the classic Game Show Wrong Answer "Dun-Dun!" sound effect:
- * - Note 1 ("DUN"): Low brass/buzzer G3
- * - Note 2 ("DUNNNN"): Descending C#3 -> C3 tritone drop
+ * Plays the official "Dun-Dun" / Wrong Answer sound effect:
+ * Replaced with Voicemod Tuna: https://tuna.voicemod.net/sound/c428d6bc-f0aa-4b49-972b-d771dd05863f
+ * Direct MP3: https://us-tuna-sounds-files.voicemod.net/c428d6bc-f0aa-4b49-972b-d771dd05863f-1641626284572.mp3
+ * (Includes embedded base64 Data URI + local /sounds/dun_dun_wrong.mp3 + Web Audio buffer for instant zero-latency playback)
  */
 export function playWrongAnswerSound(): void {
+  // 1. Play the exact Voicemod Tuna "Wrong Buzzer" / Dun-Dun audio
+  const played = playVoicemodDunDunAudio();
+
+  // 2. Also decode & play through Web Audio API for maximum punchiness if context is active
   playWebAudioSynthesizer("wrong", (ctx) => {
     try {
-      const now = ctx.currentTime + 0.01;
-
-      const playNote = (
-        startTime: number,
-        duration: number,
-        startFreq: number,
-        endFreq: number,
-        volume: number
-      ) => {
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const filter = ctx.createBiquadFilter();
+      if (dunDunAudioBuffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = dunDunAudioBuffer;
         const gain = ctx.createGain();
-
-        osc1.type = "sawtooth";
-        osc2.type = "square";
-
-        osc1.frequency.setValueAtTime(startFreq, startTime);
-        osc1.frequency.linearRampToValueAtTime(endFreq, startTime + duration);
-
-        osc2.frequency.setValueAtTime(startFreq * 0.994, startTime);
-        osc2.frequency.linearRampToValueAtTime(
-          endFreq * 0.994,
-          startTime + duration
-        );
-
-        filter.type = "lowpass";
-        filter.frequency.setValueAtTime(980, startTime);
-        filter.frequency.exponentialRampToValueAtTime(
-          420,
-          startTime + duration
-        );
-
-        gain.gain.setValueAtTime(0.0001, startTime);
-        gain.gain.linearRampToValueAtTime(volume, startTime + 0.018);
-        gain.gain.setValueAtTime(
-          volume * 0.85,
-          startTime + Math.max(0.04, duration - 0.12)
-        );
-        gain.gain.exponentialRampToValueAtTime(0.0008, startTime + duration);
-
-        osc1.connect(filter);
-        osc2.connect(filter);
-        filter.connect(gain);
+        gain.gain.value = 0.95;
+        source.connect(gain);
         gain.connect(ctx.destination);
-
-        osc1.start(startTime);
-        osc2.start(startTime);
-        osc1.stop(startTime + duration + 0.02);
-        osc2.stop(startTime + duration + 0.02);
-      };
-
-      playNote(now, 0.22, 196.0, 190.0, 0.34);
-      playNote(now + 0.26, 0.58, 138.59, 128.0, 0.38);
+        source.start(0);
+        return;
+      } else if (!isDecodingDunDun) {
+        isDecodingDunDun = true;
+        fetch(DUN_DUN_MP3_DATA_URI)
+          .then((r) => r.arrayBuffer())
+          .then((b) => ctx.decodeAudioData(b))
+          .then((decoded) => {
+            dunDunAudioBuffer = decoded;
+            const source = ctx.createBufferSource();
+            source.buffer = decoded;
+            const gain = ctx.createGain();
+            gain.gain.value = 0.95;
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            source.start(0);
+          })
+          .catch(() => {})
+          .finally(() => {
+            isDecodingDunDun = false;
+          });
+      }
     } catch {
       // ignore
+    }
+
+    // Fallback if HTML5 audio and buffer decoding could not fire
+    if (!played) {
+      try {
+        const now = ctx.currentTime + 0.01;
+        const playNote = (
+          startTime: number,
+          duration: number,
+          startFreq: number,
+          endFreq: number,
+          volume: number
+        ) => {
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const filter = ctx.createBiquadFilter();
+          const gain = ctx.createGain();
+
+          osc1.type = "sawtooth";
+          osc2.type = "square";
+
+          osc1.frequency.setValueAtTime(startFreq, startTime);
+          osc1.frequency.linearRampToValueAtTime(endFreq, startTime + duration);
+
+          osc2.frequency.setValueAtTime(startFreq * 0.992, startTime);
+          osc2.frequency.linearRampToValueAtTime(
+            endFreq * 0.992,
+            startTime + duration
+          );
+
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(1100, startTime);
+          filter.frequency.exponentialRampToValueAtTime(
+            380,
+            startTime + duration
+          );
+
+          gain.gain.setValueAtTime(0.0001, startTime);
+          gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+          gain.gain.setValueAtTime(
+            volume * 0.88,
+            startTime + Math.max(0.04, duration - 0.12)
+          );
+          gain.gain.exponentialRampToValueAtTime(0.0008, startTime + duration);
+
+          osc1.connect(filter);
+          osc2.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc1.start(startTime);
+          osc2.start(startTime);
+          osc1.stop(startTime + duration + 0.02);
+          osc2.stop(startTime + duration + 0.02);
+        };
+
+        playNote(now, 0.24, 196.0, 185.0, 0.42);
+        playNote(now + 0.28, 0.65, 138.59, 116.0, 0.46);
+      } catch {
+        // ignore
+      }
     }
   });
 }
@@ -910,21 +986,44 @@ export function playDingDingChime(): void {
 }
 
 /**
- * Plays the official race outcome sound sequence for a race participated by a user:
- * 1. "Ding-Ding" chime is played immediately once the race result comes in.
- * 2. Followed (after 600ms) by either:
- *    - Cash register ("Ka-Ching!") if a positive result occurred (a selected horse won or placed: 1st, 2nd, or 3rd)
- *    - "Dun-Dun" sound if not (unplaced)
+ * Plays the official race outcome sound sequence for a race participated by user(s):
+ * 1. If a trifecta is successful:
+ *    -> Plays "SHOW ME THE MONEY!" from Cuba Gooding Jr in Jerry Maguire!
+ * 2. If runners place or win:
+ *    -> Plays "cha-ching" cash register sound as a multiple of the occurrence!
+ *       (e.g., 2 horses placed/won -> played twice; 3 horses placed/won -> played 3 times)
+ * 3. When NO runners win or place:
+ *    -> Plays a dramatic "dun-dun" game show wrong sound!
  */
-export function playRaceParticipatedResultSound(positiveResult: boolean): void {
-  playDingDingChime();
-  setTimeout(() => {
-    if (positiveResult) {
-      playCashRegisterSound();
+export function playRaceParticipatedResultSound(
+  outcome:
+    | boolean
+    | {
+        trifectaHit?: boolean;
+        placedOrWonCount?: number;
+      },
+  legacyOccurrences: number = 1
+): void {
+  if (typeof outcome === "object" && outcome !== null) {
+    if (outcome.trifectaHit) {
+      playShowMeTheMoneySound();
+      return;
+    }
+    const count = outcome.placedOrWonCount ?? 0;
+    if (count > 0) {
+      playCashRegisterSound(count);
     } else {
       playWrongAnswerSound();
     }
-  }, 620);
+    return;
+  }
+
+  // Legacy boolean signature
+  if (outcome) {
+    playCashRegisterSound(legacyOccurrences);
+  } else {
+    playWrongAnswerSound();
+  }
 }
 
 /**
