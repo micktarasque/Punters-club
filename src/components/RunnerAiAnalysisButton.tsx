@@ -135,7 +135,7 @@ export const RunnerAiAnalysisButton: React.FC<RunnerAiAnalysisButtonProps> = ({
         ) : (
           <Sparkles className="w-3 h-3 text-[#D4AF37]" />
         )}
-        <span>{isLoading ? "Analyzing..." : "Show Analysis"}</span>
+        <span>{isLoading ? "Analyzing..." : isOpen ? "Hide Analysis" : "Show Analysis"}</span>
         {analysisText && !isLoading && (
           isOpen ? (
             <ChevronUp className="w-2.5 h-2.5 opacity-70" />
@@ -149,7 +149,7 @@ export const RunnerAiAnalysisButton: React.FC<RunnerAiAnalysisButtonProps> = ({
       {showCardBelow && isOpen && analysisText && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-30 left-0 mt-1.5 w-72 sm:w-84 max-w-[90vw] p-3 rounded-xl bg-[#09110D]/95 backdrop-blur-md border border-[#D4AF37]/40 shadow-[0_8px_24px_rgba(0,0,0,0.6)] text-left animate-in fade-in zoom-in-95 duration-150"
+          className="absolute z-50 left-0 sm:left-auto sm:right-0 mt-1.5 w-72 sm:w-84 max-w-[calc(100vw-32px)] p-3 rounded-xl bg-[#09110D]/98 backdrop-blur-md border border-[#D4AF37]/50 shadow-[0_12px_32px_rgba(0,0,0,0.7)] text-left animate-in fade-in zoom-in-95 duration-150"
         >
           <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#1C2C23]">
             <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#D4AF37]">
@@ -182,7 +182,7 @@ export const RunnerAiAnalysisButton: React.FC<RunnerAiAnalysisButtonProps> = ({
 
           <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-[#8A9990] pt-1.5 border-t border-[#1C2C23]">
             <span>#{runner.tabNumber} {runner.horseName}</span>
-            <span className="text-[#10B981]">Gemini 3.8 Flash</span>
+            <span className="text-[#10B981]">Form Analyst Summary</span>
           </div>
         </div>
       )}

@@ -1185,9 +1185,17 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                             {/* Column 2: Analyst Form Comment & Past Runs */}
                             <div className="lg:col-span-7 flex flex-col justify-between space-y-2">
                               <div>
-                                <span className="text-[#D4AF37] font-semibold">
-                                  Form Analyst Note:{" "}
-                                </span>
+                                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                                  <span className="text-[#D4AF37] font-semibold">
+                                    Form Analyst Note:{" "}
+                                  </span>
+                                  <RunnerAiAnalysisButton
+                                    runner={runner}
+                                    race={activeRace || undefined}
+                                    meeting={activeMeeting || undefined}
+                                    size="xs"
+                                  />
+                                </div>
                                 <span className="text-[#F3F4F0] leading-relaxed">
                                   {runner.formComment ||
                                     "Competitive NSW TAB runner suited to current track conditions and distance."}
@@ -1399,7 +1407,18 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                       · Flucs ${openPrice.toFixed(2)} → $
                       {runner.fixedWin.toFixed(2)}
                     </div>
-                    <p className="text-[#F3F4F0] leading-relaxed pt-1 border-t border-[#1F2D26]">
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1F2D26]">
+                      <span className="text-[#D4AF37] font-semibold text-[11px]">
+                        Form Analyst Note:
+                      </span>
+                      <RunnerAiAnalysisButton
+                        runner={runner}
+                        race={activeRace || undefined}
+                        meeting={activeMeeting || undefined}
+                        size="xs"
+                      />
+                    </div>
+                    <p className="text-[#F3F4F0] leading-relaxed">
                       {runner.formComment ||
                         "Competitive NSW TAB runner suited to current track rating and distance."}
                     </p>

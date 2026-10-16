@@ -825,7 +825,8 @@ export default function App() {
     (
       raceNumber: number,
       targetMeeting: RaceMeeting | null = activeMeeting,
-      currentPunters: PunterProfile[] = punters
+      currentPunters: PunterProfile[] = punters,
+      isManualTrigger: boolean = false
     ) => {
       if (!targetMeeting) return;
       const race =
@@ -834,9 +835,11 @@ export default function App() {
       if (!race) return;
 
       if (!isRaceOfficialOrCompleted(race, targetMeeting.date)) {
-        triggerToast(
-          `${targetMeeting.venue} Race ${race.raceNumber} (${race.startTime}) is not yet complete — awaiting official result.`
-        );
+        if (isManualTrigger) {
+          triggerToast(
+            `${targetMeeting.venue} Race ${race.raceNumber} (${race.startTime}) is not yet complete — awaiting official result.`
+          );
+        }
         return;
       }
 
@@ -910,6 +913,17 @@ export default function App() {
       });
 
       const participatedUsers = userOutcomes.filter((u) => u.hasParticipated);
+
+      // Ensure sound and result alerts only get pushed for races participated in by users (users select runners)
+      if (participatedUsers.length === 0) {
+        if (isManualTrigger) {
+          triggerToast(
+            `Result alert skipped for ${targetMeeting.venue} R${race.raceNumber}: No registered users have selected runners for this race.`
+          );
+        }
+        return;
+      }
+
       const anyParticipatedUserWon = participatedUsers.some((u) => u.won);
 
       // Evaluate whether the Combined Syndicate Trifecta hit on this confirmed race
@@ -941,20 +955,18 @@ export default function App() {
       });
       const placedOrWonCount = allPlacedOrWonRunners.size;
 
-      // Play high-quality sound alerts:
-      // 1. If Trifecta is successful -> play "Show me the money" (Cuba Gooding Jr from Jerry Maguire)
+      // Play high-quality sound alerts for participated races:
+      // 1. If Trifecta is successful -> play "Show me the money"
       // 2. If runners place or win -> play "cha ching" cash register sound as a multiple of occurrence (2 horses = 2x, 3 horses = 3x)
       // 3. If NO runners win or place -> play game show "dun dun" sound!
       if (soundEnabled) {
-        if (participatedUsers.length > 0) {
-          if (isTrifectaHit) {
-            playShowMeTheMoneySound();
-            triggerConfetti();
-          } else if (placedOrWonCount > 0) {
-            playCashRegisterSound(placedOrWonCount);
-          } else {
-            playWrongAnswerSound();
-          }
+        if (isTrifectaHit) {
+          playShowMeTheMoneySound();
+          triggerConfetti();
+        } else if (placedOrWonCount > 0) {
+          playCashRegisterSound(placedOrWonCount);
+        } else {
+          playWrongAnswerSound();
         }
       }
 
@@ -962,10 +974,6 @@ export default function App() {
         ? `🚨💰 "SHOW ME THE MONEY!" Syndicate Boxed Trifecta Hit in Race ${race.raceNumber} (+${formatDollarReturn(
             trifectaEval.customBetFlexiReturn
           )})`
-        : participatedUsers.length === 0
-        ? `Race ${race.raceNumber} Confirmed — Official Winner #${
-            winner?.tabNumber ?? "-"
-          } ${winner?.horseName ?? ""}`
         : placedOrWonCount > 0
         ? `CHA-CHING! (${placedOrWonCount}× Hits) Winning Result in Race ${race.raceNumber}`
         : `DUN-DUN! No Winning Return in Race ${race.raceNumber}`;
@@ -2067,7 +2075,7 @@ export default function App() {
             onClick={() => {
               if (!activeMeeting) return;
               const raceToPush = nextPushRaceCursor;
-              triggerRaceResultPushNotification(raceToPush, activeMeeting, punters);
+              triggerRaceResultPushNotification(raceToPush, activeMeeting, punters, true);
               setNextPushRaceCursor((prev) =>
                 prev < activeMeeting.races.length ? prev + 1 : 1
               );
@@ -2792,7 +2800,7 @@ export default function App() {
                 quaddieBuyInPerUser={quaddieBuyInPerUser}
                 quaddieExtraByMeeting={quaddieExtraByMeeting}
                 onPushRaceResultNotification={(raceNo) =>
-                  triggerRaceResultPushNotification(raceNo, activeMeeting, punters)
+                  triggerRaceResultPushNotification(raceNo, activeMeeting, punters, true)
                 }
                 onRefreshResultsNow={() =>
                   handleScrapeNswTab(selectedDate, endDate, trackFilter, {

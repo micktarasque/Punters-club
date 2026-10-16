@@ -664,11 +664,17 @@ export const InteractiveTrifectaCustomiser: React.FC<
                           </div>
                         </div>
 
-                        {/* Essential Live Odds */}
-                        <div className="shrink-0 text-right font-mono">
+                        {/* Essential Live Odds & AI Form Analysis Button */}
+                        <div className="shrink-0 flex items-center gap-1.5 font-mono">
                           <span className={`text-xs font-bold ${isSub19 ? "text-[#10B981]" : "text-[#D4AF37]"}`}>
                             ${odds > 0 ? odds.toFixed(2) : "-"}
                           </span>
+                          <RunnerAiAnalysisButton
+                            runner={runner}
+                            race={race}
+                            meeting={{ venue: meetingVenue }}
+                            size="xs"
+                          />
                         </div>
                       </div>
 
@@ -813,7 +819,13 @@ export const InteractiveTrifectaCustomiser: React.FC<
                           </div>
                         </div>
 
-                        <div className="ml-auto sm:ml-2 font-mono text-xs">
+                        <div className="ml-auto sm:ml-2 font-mono text-xs flex items-center gap-2">
+                          <RunnerAiAnalysisButton
+                            runner={runner}
+                            race={race}
+                            meeting={{ venue: meetingVenue }}
+                            size="xs"
+                          />
                           <TactileOddsFlucBadge currentOdds={odds > 0 ? odds : undefined} size="sm" />
                         </div>
                       </div>

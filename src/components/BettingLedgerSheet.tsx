@@ -1880,12 +1880,6 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         >
                                           {speedMapPos}
                                         </span>
-                                        <RunnerAiAnalysisButton
-                                          runner={runner}
-                                          race={race}
-                                          meeting={meetingCard}
-                                          size="xs"
-                                        />
                                       </div>
                                       <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
                                         {comment}
