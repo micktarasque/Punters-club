@@ -1426,27 +1426,31 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {upfrontParagraphs.map((paragraph, idx) => {
               const titles = [
-                "1 · Standings & Preference Precision",
-                "2 · Combined Boxed Trifecta Verdict",
-                "3 · Combined 4-Leg Quaddie Verdict",
+                "1 · Trackside Dispatch & $1 EW Benchmark",
+                "2 · Combined Trifecta Autopsy",
+                "3 · 4-Leg Quaddie Review",
+                "4 · Market Psychology & Favourite Tendency",
+                "5 · Track Bias & Jockey Intelligence",
               ];
               const accents = [
                 "border-[#D4AF37]",
                 "border-[#10B981]",
                 "border-[#38BDF8]",
+                "border-[#F59E0B]",
+                "border-[#A855F7]",
               ];
               return (
                 <div
                   key={idx}
-                  className={`p-3 rounded-lg bg-[#0B110E] border-l-2 ${
+                  className={`p-3.5 rounded-xl bg-[#0B110E] border-l-4 ${
                     accents[idx % accents.length]
-                  } border border-[#1F2D26] space-y-1`}
+                  } border border-[#1F2D26] space-y-1.5 shadow-sm`}
                 >
-                  <div className="text-[10px] font-mono font-bold uppercase text-[#D4AF37]">
-                    {titles[idx] || `Insight ${idx + 1}`}
+                  <div className="text-[11px] font-mono font-bold uppercase text-[#D4AF37] flex items-center justify-between">
+                    <span>{titles[idx] || `Insight ${idx + 1}`}</span>
                   </div>
                   <p className="text-xs text-[#F3F4F0] leading-relaxed">
                     {paragraph}

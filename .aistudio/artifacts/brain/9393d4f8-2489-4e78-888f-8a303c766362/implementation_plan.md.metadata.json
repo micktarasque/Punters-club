@@ -1,6 +1,6 @@
 {
-  "summary": "Comprehensive implementation plan to optimize content density, simplify data-heavy visuals, redesign the syndicate betting selection module with tactile quick-pick runner cards and a sticky dock, and implement three polish features (Consensus indicator, Smart Strategy auto-picks, and live odds fluc glow).",
-  "updatedAt": "2026-10-13T08:39:27.706727191Z",
+  "summary": "Implementation plan for adding manual collapsibility to races in the selections screen once all 3 tips (1st, 2nd, 3rd) are entered, showing a clean, simplified view with race number, race name, jump time, and selections.",
+  "updatedAt": "2026-10-18T08:36:28.385733818Z",
   "requestFeedback": true,
   "userFacing": true
 }

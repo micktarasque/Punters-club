@@ -72,6 +72,7 @@ export interface CompiledSportsbetTrifectaDraft {
     fixedWin: number;
     pickedBy: string[];
   }>;
+  combinationsCount: number;
   boxedCombinationsCount: number;
   flexiPercentage: number;
   estimatedBaseDividend: number;
@@ -157,20 +158,23 @@ function compileSportsbetTrifectaDraftForRace(
       : "None";
 
   const effectiveStake = evalData.trifectaBetAmount || stakeAmount;
-  const isBanker =
+  const isStandoutOrFlexiCombined =
     evalData.betType === "flexi_standout" ||
-    (evalData.betType === "flexi_combined" && evalData.isStandoutTriggered);
+    evalData.betType === "flexi_combined" ||
+    evalData.isStandoutTriggered;
   const positionsText =
-    isBanker
-      ? `1st (Banker): #${evalData.positionPicks.first.join(", ")} | 2nd & 3rd: ${evalData.positionPicks.second.map((t) => `#${t}`).join(", ")}`
+    isStandoutOrFlexiCombined && evalData.positionPicks.first.length > 0
+      ? `1st (${evalData.isStandoutTriggered ? "Auto-Banker" : "Consensus"}): #${evalData.positionPicks.first.join(", ")} | 2nd & 3rd: ${evalData.positionPicks.second.map((t) => `#${t}`).join(", ")}`
       : evalData.betType === "flexi_positions"
       ? `1st: ${evalData.positionPicks.first.map((t) => `#${t}`).join(", ")} | 2nd: ${evalData.positionPicks.second.map((t) => `#${t}`).join(", ")} | 3rd: ${evalData.positionPicks.third.map((t) => `#${t}`).join(", ")}`
-      : `Boxed: ${numbersCsv}`;
+      : `Flexi: ${numbersCsv}`;
+
+  const actualCombos = evalData.combinationsCount || evalData.boxedCombinationsCount;
 
   const smsBodyText = [
     `🏇 TURFSHEET T-5M TRIFECTA DRAFT`,
     `${meeting.venue} (${meeting.state}) · R${race.raceNumber} (${race.startTime})`,
-    `Bet Type: ${evalData.betTypeLabel || "Flexi Trifecta"} (${evalData.combinationsCount || evalData.boxedCombinationsCount} Combos · ${evalData.flexiPercentage}% Flexi)`,
+    `Bet Type: ${evalData.betTypeLabel || "Consensus Flexi"} (${actualCombos} Combos · ${evalData.flexiPercentage}% Flexi)`,
     `Selections: ${positionsText}`,
     `Runners: ${runnersListLines}`,
     `Stake: $${effectiveStake.toFixed(2)} (${evalData.participatingUserCount || 1} Active Users × $${evalData.buyInPerUser} · Est. Collect $${estReturn.toFixed(2)})`,
@@ -190,6 +194,7 @@ function compileSportsbetTrifectaDraftForRace(
     stakeAmount: effectiveStake,
     runnerNumbers,
     runnerDetails,
+    combinationsCount: actualCombos,
     boxedCombinationsCount: evalData.boxedCombinationsCount,
     flexiPercentage: evalData.flexiPercentage,
     estimatedBaseDividend: estDiv,
@@ -213,7 +218,8 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
   onChangeTrifectaBetAmount,
   onTriggerToast,
 }) => {
-  const [filterMode, setFilterMode] = useState<"ALL" | "SELECTED_ONLY">("ALL");
+  const [filterMode, setFilterMode] =
+    useState<"ALL" | "SELECTED_ONLY">("SELECTED_ONLY");
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([
     selectedMeetingId,
   ]);
@@ -303,6 +309,23 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
     return {};
   });
 
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem("turfsheet_custom_trifecta_configs_v1");
+        setCustomConfigs(saved ? JSON.parse(saved) : {});
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener("turfsheet_trifecta_configs_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("turfsheet_trifecta_configs_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
+
   const [activeCustomisingRace, setActiveCustomisingRace] = useState<{
     race: RaceEvent;
     meeting: RaceMeeting;
@@ -326,6 +349,12 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
           "turfsheet_custom_trifecta_configs_v1",
           JSON.stringify(next)
         );
+        window.dispatchEvent(
+          new CustomEvent("turfsheet_trifecta_configs_updated", {
+            detail: { raceKey, config },
+          })
+        );
+        window.dispatchEvent(new Event("storage"));
       } catch {
         // ignore
       }
@@ -393,8 +422,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
       const evaluations = sortedRaces.map((race) => {
         const raceKey = `${m.id}_R${race.raceNumber}`;
         const raceConfig =
-          customConfigs[raceKey] ||
-          (isFlexiCombined ? { mode: "flexi_combined" } : undefined);
+          customConfigs[raceKey] || { mode: "flexi_combined" };
         return {
           race,
           raceKey,
@@ -414,7 +442,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
         evaluations,
       };
     });
-  }, [selectedMeetingsList, punters, activeBetAmount, customConfigs, isFlexiCombined]);
+  }, [selectedMeetingsList, punters, activeBetAmount, customConfigs]);
 
   // Combined KPI summary across all checked race cards
   const summaryStats = useMemo(() => {
@@ -457,7 +485,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                 ).toFixed(2)
               );
             }
-            if (evalData.isCombinedBoxedTrifectaHit) {
+            if (evalData.isTrifectaHit) {
               boxedTrifectaHits += 1;
               capturedBookmakerTrifectaValue = Number(
                 (
@@ -829,37 +857,17 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Flexi Combined Mode Toggle */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isFlexiCombined}
-              onClick={handleToggleFlexiCombined}
-              className={`min-h-[36px] px-3.5 py-1.5 rounded-md border text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
-                isFlexiCombined
-                  ? "bg-[#152920] border-[#10B981] text-[#10B981] ring-1 ring-[#10B981]/50"
-                  : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:border-[#3A4D42] hover:text-[#D5DDD8]"
-              }`}
-              title="Flexi Combined Toggle: Combines aggregate selections of all registered users into a unified flexi-bet, applying the auto-banker rule if any runner has odds below 1.9."
+            {/* Consensus Flexi Mode Status */}
+            <div
+              className="min-h-[36px] px-3.5 py-1.5 rounded-md border border-[#10B981] bg-[#152920] text-[#10B981] ring-1 ring-[#10B981]/50 text-xs font-mono font-bold flex items-center gap-2 shadow-sm"
+              title="Consensus Flexi: Combines syndicate selections into a unified Flexi ticket (not boxed), anchoring the <$1.90 favourite as Standout Banker or top consensus pick in 1st."
             >
-              <Zap
-                className={`w-3.5 h-3.5 ${
-                  isFlexiCombined
-                    ? "text-[#10B981] fill-[#10B981]/20"
-                    : "text-[#8A9990]"
-                }`}
-              />
-              <span>Flexi Combined:</span>
-              <span
-                className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-mono font-extrabold transition-colors ${
-                  isFlexiCombined
-                    ? "bg-[#10B981] text-[#0B110E]"
-                    : "bg-[#192620] text-[#8A9990]"
-                }`}
-              >
-                {isFlexiCombined ? "ON (Auto-Banker <1.9)" : "OFF"}
+              <Zap className="w-3.5 h-3.5 text-[#10B981] fill-[#10B981]/20" />
+              <span>Consensus Flexi:</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-mono font-extrabold bg-[#10B981] text-[#0B110E]">
+                Active (Auto-Banker &lt; 1.9)
               </span>
-            </button>
+            </div>
 
             <button
               type="button"
@@ -868,11 +876,15 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                   prev === "ALL" ? "SELECTED_ONLY" : "ALL"
                 )
               }
-              className="min-h-[36px] px-3 py-1.5 rounded-md bg-[#0B110E] border border-[#1F2D26] text-xs font-mono text-[#D5DDD8] hover:border-[#D4AF37] transition-colors cursor-pointer"
+              className={`min-h-[36px] px-3.5 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
+                filterMode === "SELECTED_ONLY"
+                  ? "bg-[#152920] border border-[#10B981]/60 text-[#10B981] font-bold"
+                  : "bg-[#0B110E] border border-[#1F2D26] text-[#D4AF37] hover:border-[#D4AF37]"
+              }`}
             >
               {filterMode === "ALL"
-                ? `Filter: Showing All Races`
-                : `Filter: Showing Selected Races (${summaryStats.racesWithSelections})`}
+                ? `Showing All Scheduled Races · Filter to Tipped`
+                : `Filter: Participated Races Only (${summaryStats.racesWithSelections}) · Show All`}
             </button>
             <button
               type="button"
@@ -898,7 +910,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
               </span>
             </div>
             <p className="text-[11px] text-[#8A9990]">
-              Calculates exact Boxed Flexi Trifecta odds &amp; payouts per race
+              Calculates exact Consensus Flexi Trifecta odds &amp; payouts per race
               based on a{" "}
               <strong className="text-[#F3F4F0]">$20 default bet</strong> (or
               customise your syndicate Trifecta bet stake below):
@@ -976,47 +988,16 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
           </div>
         </div>
 
-        {/* Flexi Combined Mode Info Banner */}
-        <div
-          className={`p-3 rounded-lg border text-xs font-mono flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition-colors ${
-            isFlexiCombined
-              ? "bg-[#0E1F18] border-[#10B981]/40 text-[#D5DDD8]"
-              : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990]"
-          }`}
-        >
-          <div className="flex items-start md:items-center gap-2.5">
-            <Zap
-              className={`w-4 h-4 shrink-0 mt-0.5 md:mt-0 ${
-                isFlexiCombined ? "text-[#10B981]" : "text-[#8A9990]"
-              }`}
-            />
-            <div>
-              <span
-                className={`font-bold ${
-                  isFlexiCombined ? "text-[#10B981]" : "text-[#F3F4F0]"
-                }`}
-              >
-                Flexi Combined {isFlexiCombined ? "Active" : "Disabled"}:
-              </span>{" "}
-              <span>
-                {isFlexiCombined
-                  ? `Combines aggregate selections of all registered users (${punters.length} punters) into a unified flexi-bet. If any runner has odds below 1.9, the Standard Banker Rule (1st Standout Banker) auto-triggers.`
-                  : "Standard mode active without automatic pooling. Toggle 'Flexi Combined' ON to pool all users' tips and trigger the auto-banker rule on runners under $1.90."}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleToggleFlexiCombined}
-              className={`px-3 py-1 rounded text-[11px] font-mono font-bold border cursor-pointer transition-colors ${
-                isFlexiCombined
-                  ? "bg-[#152920] border-[#10B981] text-[#10B981] hover:bg-[#1E3A2E]"
-                  : "bg-[#121A16] border-[#3A4D42] text-[#D5DDD8] hover:border-[#10B981] hover:text-[#10B981]"
-              }`}
-            >
-              {isFlexiCombined ? "Disable Flexi Combined" : "Enable Flexi Combined"}
-            </button>
+        {/* Consensus Flexi Mode Info Banner */}
+        <div className="p-3 rounded-lg border bg-[#0E1F18] border-[#10B981]/40 text-xs font-mono text-[#D5DDD8] flex items-start md:items-center gap-2.5 transition-colors">
+          <Zap className="w-4 h-4 shrink-0 text-[#10B981] mt-0.5 md:mt-0" />
+          <div>
+            <span className="font-bold text-[#10B981]">
+              Consensus Flexi Active:
+            </span>{" "}
+            <span>
+              Combines aggregate selections of all registered users ({punters.length} punters) into an optimized TAB Flexi ticket (not boxed). The #1 Consensus pick is anchored in 1st with remaining selections in 2nd &amp; 3rd. If any runner has odds below $1.90, the Standard Banker Rule automatically locks that runner into 1st.
+            </span>
           </div>
         </div>
 
@@ -1188,7 +1169,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="font-mono font-bold text-[#D4AF37]">
-                    COMPILED SPORTSBET BOXED FLEXI TRIFECTA SLIP:
+                    COMPILED SPORTSBET CONSENSUS FLEXI TRIFECTA SLIP:
                   </span>
                   <span className="font-semibold text-[#F3F4F0]">
                     {compiledDraft.venue} ({compiledDraft.state}) · Race{" "}
@@ -1196,11 +1177,11 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                   </span>
                   {compiledDraft.runnerNumbers.length > 0 ? (
                     <span className="px-2 py-0.5 rounded bg-[#152920] border border-[#10B981]/50 text-[#10B981] font-mono text-[11px] font-bold">
-                      Box Numbers:{" "}
+                      Selections:{" "}
                       {compiledDraft.runnerNumbers
                         .map((n) => `#${n}`)
                         .join(", ")}{" "}
-                      ({compiledDraft.boxedCombinationsCount} Combos ·{" "}
+                      ({compiledDraft.combinationsCount || compiledDraft.boxedCombinationsCount} Combos ·{" "}
                       {compiledDraft.flexiPercentage}% Flexi on $
                       {compiledDraft.stakeAmount})
                     </span>
@@ -1247,7 +1228,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                         Text Draft Bet Now
                       </strong>
                       ), TurfSheet merges every runner picked by{" "}
-                      {punters.map((p) => p.name).join(" & ")} into a Boxed
+                      {punters.map((p) => p.name).join(" & ")} into a Consensus
                       Flexi Trifecta draft and texts the slip + direct Sportsbet
                       race link to your phone.
                       <br />
@@ -1257,17 +1238,9 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                       </strong>{" "}
                       link in the text message, select{" "}
                       <span className="font-mono text-[#F3F4F0]">
-                        Exotics → Trifecta → Boxed
+                        Exotics → Trifecta → Standout
                       </span>
-                      , tick{" "}
-                      <span className="font-mono text-[#10B981] font-bold">
-                        {compiledDraft.runnerNumbers.length > 0
-                          ? compiledDraft.runnerNumbers
-                              .map((n) => `#${n}`)
-                              .join(", ")
-                          : "your boxed numbers"}
-                      </span>
-                      , and enter{" "}
+                      , lock in the 1st anchor runner, select the 2nd/3rd runners, and enter{" "}
                       <span className="font-mono text-[#D4AF37] font-bold">
                         ${compiledDraft.stakeAmount}
                       </span>{" "}
@@ -1297,7 +1270,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
           {/* Card 1: Combined Trifecta Strike Rate */}
           <div className="p-3.5 rounded-lg bg-[#0B110E] border border-[#1F2D26] space-y-1">
             <div className="flex items-center justify-between text-[11px] font-mono uppercase text-[#8A9990]">
-              <span>Combined Trifecta Hits</span>
+              <span>Consensus Flexi Hits</span>
               <Target className="w-3.5 h-3.5 text-[#D4AF37]" />
             </div>
             <div className="flex items-baseline gap-2 font-mono tabular-nums">
@@ -1355,9 +1328,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
             <div className="text-[11px] text-[#8A9990]">
               Payout on a{" "}
               <strong className="text-[#F3F4F0]">${activeBetAmount}</strong>{" "}
-              {isFlexiCombined
-                ? "Flexi Combined Trifecta (all users' aggregate tips + auto-banker on < $1.90 favs)"
-                : "Flexi Trifecta (standard box / custom selections)"}
+              Consensus Flexi Trifecta (1st anchor + remaining tips 2nd/3rd, auto-banker on &lt; $1.90 favs)
             </div>
           </div>
 
@@ -1386,7 +1357,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
               </span>
             </div>
             <div className="text-[11px] text-[#8A9990]">
-              All-Users Boxed Net P/L:{" "}
+              Syndicate Flexi Net P/L:{" "}
               <strong
                 className={
                   summaryStats.netProfitOnBet >= 0
@@ -1448,14 +1419,14 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                       {cardMeeting.state || "TAB"}
                     </span>
                     <h3 className="text-sm font-semibold text-[#F3F4F0]">
-                      Combined Syndicate Trifecta Selections &amp; $
+                      Combined Syndicate Consensus Flexi Selections &amp; $
                       {activeBetAmount} Bet Odds/Return Per Race —{" "}
                       {cardMeeting.venue} ({cardMeeting.date})
                     </h3>
                   </div>
                   <p className="text-xs text-[#8A9990] mt-0.5">
                     All selections from {punters.map((p) => p.name).join(", ")}{" "}
-                    are merged per race into a Combined Boxed Trifecta Pool and
+                    are merged per race into a Combined Consensus Flexi Trifecta Pool and
                     calculated on a{" "}
                     <strong className="text-[#D4AF37]">
                       ${activeBetAmount}
@@ -1481,7 +1452,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                         Each User&apos;s Selections (1st / 2nd / 3rd)
                       </th>
                       <th className="py-2.5 px-3 whitespace-nowrap">
-                        Combined Syndicate Trifecta Pool
+                        Combined Syndicate Consensus Flexi Pool
                       </th>
                       <th className="py-2.5 px-3 whitespace-nowrap">
                         Official 1st–2nd–3rd &amp; Trifecta Combo
@@ -1732,13 +1703,15 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                                       <Zap className="w-3 h-3 text-[#10B981]" />
                                       <span>
                                         Auto-Banker Triggered (&lt;$1.90 Fav): #{evalData.standoutRunner?.tabNumber}{" "}
-                                        {evalData.standoutRunner?.horseName} locked as 1st Banker · Remaining tips boxed 2nd &amp; 3rd
+                                        {evalData.standoutRunner?.horseName} locked as 1st Banker · Remaining tips in 2nd &amp; 3rd
                                       </span>
                                     </div>
                                   ) : isFlexiCombined && evalData.hasCombinedSelections ? (
-                                    <div className="text-[10px] font-mono text-[#8A9990] flex items-center gap-1">
+                                    <div className="text-[10px] font-mono text-[#D4AF37] flex items-center gap-1 font-medium">
+                                      <Zap className="w-3 h-3 text-[#D4AF37]" />
                                       <span>
-                                        Flexi Combined: All registered users&apos; tips boxed flexi (No runner &lt; $1.90)
+                                        Consensus Flexi: #{evalData.standoutRunner?.tabNumber ?? evalData.combinedRunners[0]?.tabNumber}{" "}
+                                        {evalData.standoutRunner?.horseName ?? evalData.combinedRunners[0]?.runner?.horseName} locked in 1st · Remaining tips in 2nd &amp; 3rd
                                       </span>
                                     </div>
                                   ) : null}
@@ -1789,14 +1762,13 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#192620] border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[11px] font-semibold">
                                   <Sparkles className="w-3 h-3" />
                                   {combinedRunners.length >= 3
-                                    ? `Active (${boxedCombinationsCount} Combos · ${flexiPercentage}% Flexi)`
+                                    ? `Active (${evalData.combinationsCount || boxedCombinationsCount} Combos · ${flexiPercentage}% Flexi)`
                                     : `Need ${
                                         3 - combinedRunners.length
                                       } More Runner(s)`}
                                 </span>
                                 <div className="text-[10px] font-mono text-[#8A9990]">
-                                  ${activeBetAmount} Bet staked across boxed
-                                  pool
+                                  ${activeBetAmount} Stake across Consensus Flexi
                                 </div>
                               </div>
                             ) : isCombinedBoxedTrifectaHit ? (
@@ -1807,8 +1779,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                                   {combinedRunners.length} Horses)
                                 </span>
                                 <div className="text-[10px] font-mono text-[#D4AF37] font-semibold">
-                                  All 3 placegetters covered across{" "}
-                                  {boxedCombinationsCount} boxed combinations
+                                  All 3 placegetters covered ({evalData.combinationsCount || boxedCombinationsCount} flexi combinations)
                                 </div>
                               </div>
                             ) : (
@@ -1885,7 +1856,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                             ) : (
                               <div className="space-y-0.5">
                                 <div className="text-xs font-semibold text-[#D4AF37]">
-                                  ${activeBetAmount} Box Quote:{" "}
+                                  ${activeBetAmount} Bet Div:{" "}
                                   <strong>
                                     {formatDollarReturn(
                                       trifectaOddsOnBetAmount
@@ -2128,13 +2099,15 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                               <Zap className="w-3 h-3 text-[#10B981]" />
                               <span>
                                 Auto-Banker Triggered (&lt;$1.90 Fav): #{evalData.standoutRunner?.tabNumber}{" "}
-                                {evalData.standoutRunner?.horseName} locked in 1st · Remaining tips boxed 2nd &amp; 3rd
+                                {evalData.standoutRunner?.horseName} locked in 1st · Remaining tips in 2nd &amp; 3rd
                               </span>
                             </div>
                           ) : isFlexiCombined && evalData.hasCombinedSelections ? (
-                            <div className="text-[10px] font-mono text-[#8A9990] flex items-center gap-1">
+                            <div className="text-[10px] font-mono text-[#D4AF37] flex items-center gap-1 font-medium">
+                              <Zap className="w-3 h-3 text-[#D4AF37]" />
                               <span>
-                                Flexi Combined: All tips boxed flexi (No runner &lt; $1.90)
+                                Consensus Flexi: #{evalData.standoutRunner?.tabNumber ?? evalData.combinedRunners[0]?.tabNumber}{" "}
+                                {evalData.standoutRunner?.horseName ?? evalData.combinedRunners[0]?.runner?.horseName} locked in 1st · Remaining tips in 2nd &amp; 3rd
                               </span>
                             </div>
                           ) : null}

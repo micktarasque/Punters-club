@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Award,
   Check,
@@ -10,10 +10,13 @@ import {
   AlertCircle,
   RefreshCw,
   Target,
+  Layers,
+  Filter,
 } from "lucide-react";
 import { PunterProfile, RaceMeeting } from "../types/racing";
 import { isRaceOfficialOrCompleted } from "../data/seedNswTab";
 import {
+  CustomTrifectaRaceConfig,
   DEFAULT_QUADDIE_BUY_IN_PER_USER,
   DEFAULT_TRIFECTA_BUY_IN_PER_USER,
   EvaluatedRaceSelection,
@@ -34,6 +37,7 @@ import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { SyndicateSuccessTrendD3Chart } from "./SyndicateSuccessTrendD3Chart";
 import { PunterRoiD3BarChart } from "./PunterRoiD3BarChart";
 import { BklitResultsVisualizer } from "./bklit/BklitResultsVisualizer";
+import { InteractiveResultsSuite } from "./InteractiveResultsSuite";
 
 export type ScoringDisplayMode = "points" | "dollars";
 
@@ -217,13 +221,43 @@ export const AllUsersSelectionsResults: React.FC<
   nextRefreshCountdown,
 }) => {
   const [showUnselectedRaces, setShowUnselectedRaces] =
-    useState<boolean>(true);
+    useState<boolean>(false);
+  const [resultsViewMode, setResultsViewMode] =
+    useState<"interactive" | "classic">("interactive");
   const [trifectaStructureMode, setTrifectaStructureMode] =
-    useState<TrifectaStructureMode>("boxed");
+    useState<TrifectaStructureMode>("standout_banker");
   const [showPotSettlement, setShowPotSettlement] = useState<boolean>(true);
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([
     selectedMeetingId,
   ]);
+
+  const [customConfigs, setCustomConfigs] = useState<
+    Record<string, CustomTrifectaRaceConfig>
+  >(() => {
+    try {
+      const saved = localStorage.getItem("turfsheet_custom_trifecta_configs_v1");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem("turfsheet_custom_trifecta_configs_v1");
+        setCustomConfigs(saved ? JSON.parse(saved) : {});
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener("turfsheet_trifecta_configs_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("turfsheet_trifecta_configs_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
 
   const effectiveSelectedIds = useMemo(() => {
     const raw =
@@ -304,13 +338,15 @@ export const AllUsersSelectionsResults: React.FC<
       punters,
       DEFAULT_TRIFECTA_BUY_IN_PER_USER,
       quaddieBuyInPerUser,
-      quaddieExtraByMeeting
+      quaddieExtraByMeeting,
+      customConfigs
     );
   }, [
     selectedMeetingsList,
     punters,
     quaddieBuyInPerUser,
     quaddieExtraByMeeting,
+    customConfigs,
   ]);
 
   if (!activeMeeting) return null;
@@ -323,7 +359,66 @@ export const AllUsersSelectionsResults: React.FC<
       : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Official Results Mode Switcher: Interactive Suite vs Classic Matrix */}
+      <div className="p-3.5 rounded-2xl bg-[#0E1512] border border-[#23352B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse" />
+          <div>
+            <span className="font-display font-bold text-sm text-[#F3F4F0] block">
+              Official Results Experience
+            </span>
+            <span className="text-[11px] text-[#8A9990] font-mono">
+              {resultsViewMode === "interactive"
+                ? "Interactive Margins, Official TAB Dividends & Syndicate H2H"
+                : "Classic Points & Each-Way Settlement Matrix"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#09100D] border border-[#1E2E25]">
+          <button
+            type="button"
+            onClick={() => setResultsViewMode("interactive")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              resultsViewMode === "interactive"
+                ? "bg-[#10B981] text-[#070B09] shadow-sm font-black"
+                : "text-[#8A9990] hover:text-[#F3F4F0]"
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Interactive Results Suite</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setResultsViewMode("classic")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              resultsViewMode === "classic"
+                ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-black"
+                : "text-[#8A9990] hover:text-[#F3F4F0]"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Classic Points Matrix</span>
+          </button>
+        </div>
+      </div>
+
+      {/* When Interactive Mode Selected: Show Interactive Results Suite */}
+      {resultsViewMode === "interactive" && (
+        <InteractiveResultsSuite
+          meetings={meetings}
+          selectedMeetingId={activeMeeting.id}
+          onSelectMeeting={onSelectMeeting}
+          punters={punters}
+          scoringMode={scoringMode}
+          onToggleScoringMode={onToggleScoringMode}
+          onEditUserSelections={onEditUserSelections}
+          trifectaBetAmount={trifectaBetAmount}
+        />
+      )}
+
       {/* 1. Progressive Race-by-Race & Cumulative Results Chart at Top of Screen */}
       <SelectionResultsChart
         meeting={activeMeeting}
@@ -874,19 +969,27 @@ export const AllUsersSelectionsResults: React.FC<
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                  {cardAnySelections &&
-                    cardRacesWithSelections.length <
-                      cardMeeting.races.length && (
-                      <button
-                        type="button"
-                        onClick={() => setShowUnselectedRaces((prev) => !prev)}
-                        className="px-2.5 py-1 rounded bg-[#0B110E] border border-[#1F2D26] text-xs font-mono text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer"
-                      >
-                        {showUnselectedRaces
-                          ? `Show Only Selected Races (${cardRacesWithSelections.length})`
-                          : `Show All ${cardMeeting.races.length} Races`}
-                      </button>
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => setShowUnselectedRaces((prev) => !prev)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      !showUnselectedRaces
+                        ? "bg-[#152920] border border-[#10B981]/60 text-[#10B981] font-bold shadow-sm"
+                        : "bg-[#0B110E] border border-[#1F2D26] text-[#D4AF37] hover:border-[#D4AF37]"
+                    }`}
+                    title={
+                      showUnselectedRaces
+                        ? "Click to filter to races participated in by syndicate users"
+                        : "Click to reveal all scheduled races on the card"
+                    }
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>
+                      {showUnselectedRaces
+                        ? `Filter: Participated Only (${cardRacesWithSelections.length}/${cardMeeting.races.length})`
+                        : `Showing Participated (${cardRacesWithSelections.length} Races) · Show All`}
+                    </span>
+                  </button>
                   <div className="text-xs font-mono text-[#8A9990]">
                     Mode:{" "}
                     <span className="text-[#D4AF37] font-semibold">
@@ -995,9 +1098,9 @@ export const AllUsersSelectionsResults: React.FC<
                           >
                             {(
                               [
-                                { id: "boxed", label: "Boxed" },
-                                { id: "standout_banker", label: "1st Banker" },
+                                { id: "standout_banker", label: "Consensus Flexi" },
                                 { id: "roving_banker", label: "Roving" },
+                                { id: "boxed", label: "Full Boxed" },
                               ] as Array<{
                                 id: TrifectaStructureMode;
                                 label: string;
@@ -1022,6 +1125,32 @@ export const AllUsersSelectionsResults: React.FC<
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1F2D26] text-xs">
+                    {cardDisplayedRaces.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={cardSummaries.length + 2}
+                          className="py-10 text-center text-xs font-mono text-[#8A9990]"
+                        >
+                          <div className="max-w-md mx-auto space-y-2.5">
+                            <p className="text-[#F3F4F0] font-semibold text-sm">
+                              No syndicate tips found for {cardMeeting.venue}
+                            </p>
+                            <p className="text-xs text-[#8A9990]">
+                              Default filter is showing participated races only.
+                            </p>
+                            <div className="flex items-center justify-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setShowUnselectedRaces(true)}
+                                className="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0B110E] text-xs font-bold hover:bg-[#e3be42] transition cursor-pointer"
+                              >
+                                View All {cardMeeting.races.length} Scheduled Races
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                     {cardDisplayedRaces.map((race) => {
                       const isFinished = isRaceOfficialOrCompleted(
                         race,
@@ -1036,13 +1165,15 @@ export const AllUsersSelectionsResults: React.FC<
                       const thirdRunner =
                         race.runners.find((r) => r.finishPosition === 3) ||
                         null;
+                      const raceKey = `${cardMeeting.id}_R${race.raceNumber}`;
                       const combinedTrifecta = evaluateCombinedTrifectaForRace(
                         race,
                         punters,
                         cardMeeting.id,
                         cardMeeting.date,
                         trifectaBetAmount,
-                        cardMeeting.venue
+                        cardMeeting.venue,
+                        customConfigs[raceKey] || { mode: "flexi_combined" }
                       );
 
                       return (
@@ -1246,7 +1377,7 @@ export const AllUsersSelectionsResults: React.FC<
                             );
                           })}
 
-                          {/* Combined Boxed Trifecta Cell (All Users' Horses Combined) */}
+                          {/* Combined Consensus Flexi Trifecta Cell (All Users' Horses Combined) */}
                           <td className="py-3 px-4 border-l border-[#1F2D26] bg-[#0D1411] font-mono">
                             {!combinedTrifecta.hasCombinedSelections ? (
                               <div className="text-[11px] text-[#8A9990]">
@@ -1254,61 +1385,6 @@ export const AllUsersSelectionsResults: React.FC<
                               </div>
                             ) : (
                               <div className="space-y-1.5">
-                                <div className="flex flex-wrap gap-1">
-                                  {combinedTrifecta.combinedRunners.map(
-                                    (cr) => {
-                                      const isPodium =
-                                        cr.finishPosition >= 1 &&
-                                        cr.finishPosition <= 3;
-                                      const isShared =
-                                        new Set(
-                                          cr.pickedByUsers.map(
-                                            (u) => u.punterId
-                                          )
-                                        ).size >= 2;
-                                      return (
-                                        <span
-                                          key={cr.tabNumber}
-                                          title={`${
-                                            cr.runner?.horseName || "Runner"
-                                          } — Included in Boxed Trifecta (Picked by: ${cr.pickedByUsers
-                                            .map(
-                                              (u) =>
-                                                `${u.punterName} [${u.preferenceRank}${
-                                                  u.preferenceRank === 1
-                                                    ? "st"
-                                                    : u.preferenceRank === 2
-                                                    ? "nd"
-                                                    : "rd"
-                                                }]`
-                                            )
-                                            .join(", ")})`}
-                                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                                            cr.finishPosition === 1
-                                              ? "bg-[#152920] border-[#10B981] text-[#10B981]"
-                                              : isPodium
-                                              ? "bg-[#192620] border-[#D4AF37] text-[#D4AF37]"
-                                              : isShared
-                                              ? "bg-[#121A16] border-[#D4AF37]/50 text-[#F3F4F0]"
-                                              : "bg-[#121A16] border-[#1F2D26] text-[#D5DDD8]"
-                                          }`}
-                                        >
-                                          #{cr.tabNumber}
-                                          {cr.finishPosition > 0
-                                            ? ` (${cr.finishPosition}${
-                                                cr.finishPosition === 1
-                                                  ? "st"
-                                                  : cr.finishPosition === 2
-                                                  ? "nd"
-                                                  : "rd"
-                                              })`
-                                            : ""}
-                                        </span>
-                                      );
-                                    }
-                                  )}
-                                </div>
-
                                 {(() => {
                                   const structOpts =
                                     computeTrifectaStructureOptions(
@@ -1316,8 +1392,79 @@ export const AllUsersSelectionsResults: React.FC<
                                     );
                                   const activeStruct =
                                     structOpts[trifectaStructureMode];
+                                  const anchorTab = activeStruct.anchorRunner?.tabNumber;
+                                  const isAutoBanker = Boolean(
+                                    combinedTrifecta.isStandoutTriggered &&
+                                      combinedTrifecta.standoutRunner
+                                  );
+
                                   return (
                                     <>
+                                      <div className="flex flex-wrap gap-1">
+                                        {combinedTrifecta.combinedRunners.map(
+                                          (cr) => {
+                                            const isAnchor =
+                                              cr.tabNumber === anchorTab;
+                                            const isPodium =
+                                              cr.finishPosition >= 1 &&
+                                              cr.finishPosition <= 3;
+                                            const isShared =
+                                              new Set(
+                                                cr.pickedByUsers.map(
+                                                  (u) => u.punterId
+                                                )
+                                              ).size >= 2;
+                                            return (
+                                              <span
+                                                key={cr.tabNumber}
+                                                title={`${
+                                                  cr.runner?.horseName || "Runner"
+                                                } — ${
+                                                  isAnchor
+                                                    ? isAutoBanker
+                                                      ? "★ 1st Standout Auto-Banker (<$1.90 Fav)"
+                                                      : "★ 1st Consensus Banker"
+                                                    : "2nd/3rd Flexi Leg"
+                                                } (Picked by: ${cr.pickedByUsers
+                                                  .map(
+                                                    (u) =>
+                                                      `${u.punterName} [${u.preferenceRank}${
+                                                        u.preferenceRank === 1
+                                                          ? "st"
+                                                          : u.preferenceRank === 2
+                                                          ? "nd"
+                                                          : "rd"
+                                                      }]`
+                                                  )
+                                                  .join(", ")})`}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                                                  isAnchor
+                                                    ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] ring-1 ring-[#D4AF37]/40 shadow-sm"
+                                                    : cr.finishPosition === 1
+                                                    ? "bg-[#152920] border-[#10B981] text-[#10B981]"
+                                                    : isPodium
+                                                    ? "bg-[#192620] border-[#D4AF37] text-[#D4AF37]"
+                                                    : isShared
+                                                    ? "bg-[#121A16] border-[#D4AF37]/50 text-[#F3F4F0]"
+                                                    : "bg-[#121A16] border-[#1F2D26] text-[#D5DDD8]"
+                                                }`}
+                                              >
+                                                {isAnchor ? "★ " : ""}#{cr.tabNumber}
+                                                {cr.finishPosition > 0
+                                                  ? ` (${cr.finishPosition}${
+                                                      cr.finishPosition === 1
+                                                        ? "st"
+                                                        : cr.finishPosition === 2
+                                                        ? "nd"
+                                                        : "rd"
+                                                    })`
+                                                  : ""}
+                                              </span>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+
                                       <div className="text-[10px] text-[#8A9990]">
                                         {activeStruct.label} ·{" "}
                                         {activeStruct.combinationsCount} combos ·{" "}
@@ -1369,7 +1516,7 @@ export const AllUsersSelectionsResults: React.FC<
                                               /3 placed
                                               {combinedTrifecta.isCombinedBoxedTrifectaHit &&
                                               trifectaStructureMode !== "boxed"
-                                                ? " · Boxed Hit!"
+                                                ? " · (Podium covered)"
                                                 : ""}
                                               )
                                             </div>
@@ -1402,7 +1549,7 @@ export const AllUsersSelectionsResults: React.FC<
                                             /user)
                                           </div>
                                           <div className="text-[#8A9990]">
-                                            Box Range:{" "}
+                                            Flexi Range:{" "}
                                             {formatDollarReturn(
                                               combinedTrifecta.minFlexiPayout
                                             )}
@@ -1452,13 +1599,15 @@ export const AllUsersSelectionsResults: React.FC<
                           let hits = 0;
                           let totalReturn = 0;
                           for (const r of cardMeeting.races) {
+                            const rKey = `${cardMeeting.id}_R${r.raceNumber}`;
                             const ev = evaluateCombinedTrifectaForRace(
                               r,
                               punters,
                               cardMeeting.id,
                               cardMeeting.date,
                               trifectaBetAmount,
-                              cardMeeting.venue
+                              cardMeeting.venue,
+                              customConfigs[rKey] || { mode: "flexi_combined" }
                             );
                             if (ev.isCombinedBoxedTrifectaHit) {
                               hits += 1;
@@ -1665,6 +1814,23 @@ export const AllUsersSelectionsResults: React.FC<
 
               {/* Mobile Stacked View */}
               <div className="md:hidden divide-y divide-[#1F2D26]">
+                {cardDisplayedRaces.length === 0 && (
+                  <div className="p-6 text-center text-xs font-mono text-[#8A9990] space-y-2.5">
+                    <p className="text-[#F3F4F0] font-semibold">
+                      No syndicate tips found for {cardMeeting.venue}
+                    </p>
+                    <p className="text-[11px] text-[#8A9990]">
+                      Default filter is showing participated races only.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowUnselectedRaces(true)}
+                      className="mt-2 px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0B110E] text-xs font-bold hover:bg-[#e3be42] transition cursor-pointer"
+                    >
+                      Show All {cardMeeting.races.length} Scheduled Races
+                    </button>
+                  </div>
+                )}
                 {cardDisplayedRaces.map((race) => {
                   const isFinished = isRaceOfficialOrCompleted(
                     race,

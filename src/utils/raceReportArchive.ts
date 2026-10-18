@@ -894,37 +894,38 @@ export function buildTechnicalAndFunnyAssessment(
   const leaderMarginPts =
     leader && runnerUp ? leader.totalPoints - runnerUp.totalPoints : 0;
 
-  let headline = `${venue} (${raceDate}) — Punters Club Results, Trifecta & Quaddie Report`;
+  // Punchy, witty headline
+  let headline = `${venue} (${raceDate}) — Punters Club Trackside Dispatch & Exotics Autopsy`;
   if (trifectaSummary.trifectaHits > 0 && quaddieSummary?.isWon) {
-    headline = `${venue.toUpperCase()} EXOTICS DOUBLE: ${trifectaSummary.trifectaHits} Trifecta Hit(s) + Quaddie Landed (${formatDollarReturn(trifectaSummary.totalFlexiReturn + (quaddieSummary.flexiPayout || 0))} Collect)`;
+    headline = `🏆 THE BOOKIES CRY AT ${venue.toUpperCase()}: ${trifectaSummary.trifectaHits} Trifecta(s) Landed + Quaddie In The Bag (${formatDollarReturn(trifectaSummary.totalFlexiReturn + (quaddieSummary.flexiPayout || 0))} Collect)!`;
   } else if (trifectaSummary.trifectaHits > 0) {
-    headline = `TRIFECTA LANDED AT ${venue.toUpperCase()}: ${trifectaSummary.trifectaHits} Boxed Hit(s) (${formatDollarReturn(trifectaSummary.totalFlexiReturn)}) · ${leader?.punterName || "Syndicate"} Leads (${formatDollarReturn(leader?.eachWayDollarReturn || leader?.totalDollarReturn || 0)} EW / ${leader?.totalPoints || 0} pts)`;
+    headline = `🎯 TRIFECTA SWEET SPOT AT ${venue.toUpperCase()}: ${trifectaSummary.trifectaHits} Collect(s) (${formatDollarReturn(trifectaSummary.totalFlexiReturn)}) · ${leader?.punterName || "Syndicate"} Leads With ${formatDollarReturn(leader?.eachWayDollarReturn || 0)} EW (${leader?.totalPoints || 0} pts)`;
   } else if (quaddieSummary?.isWon) {
-    headline = `QUADDIE LANDED AT ${venue.toUpperCase()}: 4/4 Legs (${formatDollarReturn(quaddieSummary.flexiPayout)}) · ${leader?.punterName || "Syndicate"} Leads (${formatDollarReturn(leader?.eachWayDollarReturn || leader?.totalDollarReturn || 0)} EW / ${leader?.totalPoints || 0} pts)`;
+    headline = `🔥 QUADDIE LANDED AT ${venue.toUpperCase()}: 4/4 Legs Crushed (${formatDollarReturn(quaddieSummary.flexiPayout)}) · ${leader?.punterName || "Syndicate"} Tops The Ledger (${leader?.totalPoints || 0} pts)`;
   } else if (leader) {
-    headline = `${venue} (${raceDate}) Results: ${leader.punterName} Leads on ${formatDollarReturn(leader.eachWayDollarReturn)} ($1 EW vs ${leader.parScoreUnits}u Par) · ${leader.totalPoints} pts`;
+    headline = `👑 ${leader.punterName.toUpperCase()} TAKES THE CROWN AT ${venue.toUpperCase()}: ${formatDollarReturn(leader.eachWayDollarReturn)} ($1 EW vs ${leader.parScoreUnits}u Par) · ${leader.totalPoints} pts`;
   }
 
-  // 1. Short, punchy Leaderboard & $1 Each-Way Par Score Summary
+  // 1. Witty, human Trackside Dispatch & $1 Each-Way Par Telemetry
   const jokerUsersHit = standings.filter((u) => u.jokerTriggered);
   const jokerNote =
     jokerUsersHit.length > 0
-      ? `2× Joker converted by ${jokerUsersHit.map((u) => `${u.punterName} (R${u.jokerRaceNumber}, +${u.jokerBonusPoints} pts)`).join(" & ")}.`
-      : `No 2× Joker bonus converted across nominated races.`;
+      ? `🃏 Joker Conjurers: ${jokerUsersHit.map((u) => `${u.punterName} timed their 2× Joker to perfection in R${u.jokerRaceNumber} (+${u.jokerBonusPoints} bonus pts)`).join(" & ")}.`
+      : `🃏 Joker Gamble: No 2× Jokers caught fire today — nominations went wide on the home turn.`;
 
   const ntdNote =
     cardTrackAssessment && cardTrackAssessment.ntdRacesCount > 0
-      ? `Card Par Score adjusted to ${cardTrackAssessment.cardParScoreUnits}u ($${cardTrackAssessment.cardParScoreUnits.toFixed(2)}) across ${cardTrackAssessment.totalRacesOnCard} races due to ${cardTrackAssessment.ntdRacesCount} NTD (No Third Dividend, ≤7 runners) race(s) [R${cardTrackAssessment.ntdRaceNumbers.join(", R")}].`
-      : `Card $1 Each-Way Par Score: ${cardTrackAssessment?.cardParScoreUnits || raceRows.length * 6}u ($${(cardTrackAssessment?.cardParScoreUnits || raceRows.length * 6).toFixed(2)}) based on ${raceRows.length} races × 3 horses × 2u ($1W/$1P).`;
+      ? `Card Par adjusted to ${cardTrackAssessment.cardParScoreUnits}u ($${cardTrackAssessment.cardParScoreUnits.toFixed(2)}) across ${cardTrackAssessment.totalRacesOnCard} races (${cardTrackAssessment.ntdRacesCount} NTD field(s) with ≤7 runners [R${cardTrackAssessment.ntdRaceNumbers.join(", R")}])`
+      : `Card Par set at ${cardTrackAssessment?.cardParScoreUnits || raceRows.length * 6}u ($${(cardTrackAssessment?.cardParScoreUnits || raceRows.length * 6).toFixed(2)}) across ${raceRows.length} races (3 runners × 2u each-way)`;
+
+  const leaderBattleText = leader && runnerUp
+    ? `${leader.punterName} claimed the clubhouse crown with a commanding ${formatDollarReturn(leader.eachWayDollarReturn)} on the $1 Each-Way ledger (${leader.eachWayNetVsPar >= 0 ? "+" : ""}${leader.eachWayNetVsPar.toFixed(2)}u vs ${leader.parScoreUnits}u Par · ${leader.eachWayReturnRatePct}% return rate · ${leader.totalPoints} pts), ${leaderMarginPts === 0 ? "dead-heating on points with" : `holding a spirited +${leaderMarginPts} pt buffer over`} ${runnerUp.punterName} (${formatDollarReturn(runnerUp.eachWayDollarReturn)} EW vs ${runnerUp.parScoreUnits}u Par · ${runnerUp.totalPoints} pts).`
+    : "";
 
   const para1 =
-    `STANDINGS & $1 EACH-WAY PAR TELEMETRY (${raceRows.length} Races): ${ntdNote} Syndicate returned ${formatDollarReturn(totalEachWayAll)} on the $1 Each-Way model vs ${totalParAll}u combined Par (${formatDollarReturn(totalDollarsAll)} weighted TurfSheet return · ${totalPointsAll} pts · ${totalWinnersAll}W/${totalPodiumsAll}P). ` +
-    (leader && runnerUp
-      ? `${leader.punterName} finished #1 with ${formatDollarReturn(leader.eachWayDollarReturn)} $1 EW return (${leader.eachWayNetVsPar >= 0 ? "+" : ""}${leader.eachWayNetVsPar.toFixed(2)}u vs ${leader.parScoreUnits}u Par · ${leader.eachWayReturnRatePct}% Return Rate · ${formatDollarReturn(leader.totalDollarReturn)} weighted · ${leader.totalPoints} pts), ${leaderMarginPts === 0 ? "edging" : `+${leaderMarginPts} pts clear of`} ${runnerUp.punterName} (${formatDollarReturn(runnerUp.eachWayDollarReturn)} EW vs ${runnerUp.parScoreUnits}u Par · ${runnerUp.totalPoints} pts). `
-      : "") +
-    jokerNote;
+    `TRACKSIDE DISPATCH & THE $1 EW BENCHMARK: The bookies opened shop with confident smirks at ${venue}, but the syndicate arrived armed with formguides, calculators, and sheer audacity across the ${raceRows.length}-race card. Playing the disciplined $1 Each-Way benchmark (${ntdNote}), the syndicate harvested a collective ${formatDollarReturn(totalEachWayAll)} from the bookmakers' satchels vs ${totalParAll}u Par (${formatDollarReturn(totalDollarsAll)} weighted TurfSheet return · ${totalPointsAll} pts · ${totalWinnersAll} winners & ${totalPodiumsAll} podiums landed). ${leaderBattleText} ${jokerNote}`;
 
-  // 2. Short, punchy Combined Trifecta Commentary
+  // 2. Lighthearted & Analytical Trifecta Autopsy
   const hitRacesList = raceRows
     .filter((r) => r.trifecta.isHit)
     .map(
@@ -934,67 +935,82 @@ export function buildTechnicalAndFunnyAssessment(
 
   const para2 =
     trifectaSummary.trifectaHits > 0
-      ? `TRIFECTA RESULTS ($${trifectaBetAmount}/Race All-Users Box): Landed ${trifectaSummary.trifectaHits}/${trifectaSummary.racesEvaluated} boxed Trifectas [${hitRacesList.join("; ")}] with ${trifectaSummary.nearMisses2Of3} additional 2/3 near-misses. Total Flexi return: ${formatDollarReturn(trifectaSummary.totalFlexiReturn)} on ${formatDollarReturn(trifectaSummary.totalOutlay)} outlay (Net: ${trifectaSummary.netProfit >= 0 ? "+" : "-"}${formatDollarReturn(Math.abs(trifectaSummary.netProfit))}).`
-      : `TRIFECTA RESULTS ($${trifectaBetAmount}/Race All-Users Box): 0/${trifectaSummary.racesEvaluated} full boxed collects (${formatDollarReturn(trifectaSummary.totalOutlay)} outlay), with ${trifectaSummary.nearMisses2Of3} race(s) hitting 2 of the top 3 podium finishers across all combined user selections.`;
+      ? `TRIFECTA AUTOPSY ($${trifectaBetAmount}/Race Syndicate Box): Sweet vindication on the exotics front! The collective brain trust nailed ${trifectaSummary.trifectaHits}/${trifectaSummary.racesEvaluated} Trifectas [${hitRacesList.join("; ")}], extracting ${formatDollarReturn(trifectaSummary.totalFlexiReturn)} in Flexi dividends on ${formatDollarReturn(trifectaSummary.totalOutlay)} staked (Net: ${trifectaSummary.netProfit >= 0 ? "+" : "-"}${formatDollarReturn(Math.abs(trifectaSummary.netProfit))}). We also registered ${trifectaSummary.nearMisses2Of3} gut-wrenching 2-out-of-3 near-misses where the third placegetter got pipped by a flared nostril. When the syndicate combines, bookies sweat!`
+      : `TRIFECTA AUTOPSY ($${trifectaBetAmount}/Race Syndicate Box): A spirited battle against the turf variance gods. Zero full clean-sweeps landed from ${trifectaSummary.racesEvaluated} races (${formatDollarReturn(trifectaSummary.totalOutlay)} staked), though ${trifectaSummary.nearMisses2Of3} races produced agonizing 2-out-of-3 podium finishes where an uninvited roughie snuck into third. The combination logic was immaculate; the photo-finish camera was just feeling uncharitable.`;
 
-  // 3. Short, punchy Combined Quaddie Commentary
-  let para3 = `QUADDIE RESULTS: Less than 4 races evaluated on this card.`;
+  // 3. Entertaining & Punchy Quaddie Review
+  let para3 = `4-LEG QUADDIE REVIEW: Less than 4 races evaluated on this card.`;
   if (quaddieSummary && quaddieSummary.legs.length > 0) {
     const legBreakdown = quaddieSummary.legs
       .map(
         (l) =>
           `L${l.legIndex} R${l.raceNumber}: ${
             l.isResulted
-              ? `${l.winnerText} (${l.isHit ? "HIT" : "MISS"})`
-              : "Pending"
+              ? `${l.winnerText} (${l.isHit ? "✓ HIT" : "✗ MISSED"})`
+              : "Upcoming"
           }`
       )
-      .join(" | ");
+      .join(" · ");
 
-    const buyInTag = `$${quaddieSummary.buyInPerUser || DEFAULT_QUADDIE_BUY_IN_PER_USER}/user buy-in · $${quaddieSummary.betAmount} pool`;
+    const buyInTag = `$${quaddieSummary.buyInPerUser || DEFAULT_QUADDIE_BUY_IN_PER_USER}/punter buy-in · $${quaddieSummary.betAmount} pool`;
     if (quaddieSummary.isWon) {
-      para3 = `QUADDIE RESULTS (${buyInTag} · ${quaddieSummary.totalCombinations} Combos @ ${quaddieSummary.flexiPercentage}%): WON (4/4 Legs Landed — ${quaddieSummary.combinationString}). $1 Dividend: $${quaddieSummary.officialOrEstimatedDividend.toFixed(2)} → Flexi Collect: ${formatDollarReturn(quaddieSummary.flexiPayout)} (${formatDollarReturn(quaddieSummary.flexiPayoutPerUser || quaddieSummary.flexiPayout / Math.max(1, quaddieSummary.participatingUsersCount || 2))}/user · Net: +${formatDollarReturn(quaddieSummary.netProfit)}). Legs: ${legBreakdown}.`;
+      para3 = `THE 4-LEG QUADDIE MASTERCLASS (${buyInTag} · ${quaddieSummary.totalCombinations} Combos @ ${quaddieSummary.flexiPercentage}%): POP THE BUBBLY! All 4 legs survived the home-straight sweats and photo finishes (${quaddieSummary.combinationString}). Paying an official/estimated $1 dividend of $${quaddieSummary.officialOrEstimatedDividend.toFixed(2)}, our Flexi ticket hauled home ${formatDollarReturn(quaddieSummary.flexiPayout)} (+${formatDollarReturn(quaddieSummary.netProfit)} net profit), putting a glorious ${formatDollarReturn(quaddieSummary.flexiPayoutPerUser || quaddieSummary.flexiPayout / Math.max(1, quaddieSummary.participatingUsersCount || 2))} directly into every syndicate member's back pocket! Leg journey: ${legBreakdown}.`;
     } else {
-      para3 = `QUADDIE RESULTS (${buyInTag} · ${quaddieSummary.totalCombinations} Combos @ ${quaddieSummary.flexiPercentage}%): ${quaddieSummary.hitLegsCount}/${quaddieSummary.legs.length} Legs Landed (${quaddieSummary.combinationString}; $1 Div $${quaddieSummary.officialOrEstimatedDividend.toFixed(2)}). Legs: ${legBreakdown}.`;
+      para3 = `THE 4-LEG QUADDIE SWEAT (${buyInTag} · ${quaddieSummary.totalCombinations} Combos @ ${quaddieSummary.flexiPercentage}%): High drama in the quadrella trenches. The syndicate navigated ${quaddieSummary.hitLegsCount}/${quaddieSummary.legs.length} legs before the turf gods intervened (${quaddieSummary.combinationString}; $1 Div $${quaddieSummary.officialOrEstimatedDividend.toFixed(2)}). ${quaddieSummary.hitLegsCount >= 3 ? "Cruising into the final leg with alive tickets before a sneaky outsider broke our hearts." : "Early leg speed scrambles kept the loot locked safely in the TAB vault for next time."} Leg breakdown: ${legBreakdown}.`;
     }
   }
 
-  // 4. Users' Tendency to Select Favourites Commentary
+  // 4. Witty Favourite Tendency & Market Psychology
   const favTendencyParts = standings.map(
     (u) =>
-      `${u.punterName} [${u.favouriteTendencyLabel}: picked race favourite in ${u.favouritesSelectedCount}/${u.racesParticipated} races (${u.favouriteSelectionRatePct}%), 1st-Pref Fav ${u.favouriteFirstPrefCount}×, Top-3 Market ${u.top3MarketSharePct}%, Avg Selection Odds $${u.avgSelectedRunnerOdds.toFixed(2)}]`
+      `${u.punterName} [${u.favouriteTendencyLabel}: backed favourite in ${u.favouritesSelectedCount}/${u.racesParticipated} races (${u.favouriteSelectionRatePct}%), 1st-Pref Fav ${u.favouriteFirstPrefCount}×, Top-3 Market Share ${u.top3MarketSharePct}%, Avg Selection Odds $${u.avgSelectedRunnerOdds.toFixed(2)}]`
   );
-  const para4 = `FAVOURITE SELECTION TENDENCY: ${favTendencyParts.join(" · ")}.`;
+  const para4 = `MARKET PSYCHOLOGY & THE FAVOURITE TENDENCY: ${favTendencyParts.join(" · ")}. Some members clung to the warm safety blanket of short-priced market elects, while our bold adventurers went bushwalking in search of juicy double-figure roughies!`;
 
-  // 5. Card Track, Barrier, Jockey & Trainer Assessment Commentary
+  // 5. Track Bias, Barrier, Jockey & Trainer Intelligence
   const para5 = cardTrackAssessment
-    ? `CARD TRACK & MARKET ASSESSMENT (${venue}): Favourites won ${cardTrackAssessment.favouriteWinsCount}/${cardTrackAssessment.completedRacesCount} (${cardTrackAssessment.favouriteWinRatePct}%) and placed ${cardTrackAssessment.favouritePlacedCount}/${cardTrackAssessment.completedRacesCount} (${cardTrackAssessment.favouritePlaceRatePct}%), with winners averaging $${cardTrackAssessment.avgWinningOdds.toFixed(2)}. ${cardTrackAssessment.barrierBiasVerdict} ${cardTrackAssessment.jockeyAssessmentText} ${cardTrackAssessment.trainerAssessmentText}`
+    ? `TRACK BIAS & JOCKEY RECONNAISSANCE (${venue}): Market favouritessaluted in ${cardTrackAssessment.favouriteWinsCount}/${cardTrackAssessment.completedRacesCount} races (${cardTrackAssessment.favouriteWinRatePct}%) and placed in ${cardTrackAssessment.favouritePlacedCount}/${cardTrackAssessment.completedRacesCount} (${cardTrackAssessment.favouritePlaceRatePct}%), with the average winner paying $${cardTrackAssessment.avgWinningOdds.toFixed(2)}. ${cardTrackAssessment.barrierBiasVerdict} ${cardTrackAssessment.jockeyAssessmentText} ${cardTrackAssessment.trainerAssessmentText}`
     : "";
 
   const upfrontParagraphs = [para1, para2, para3, para4, para5].filter(Boolean);
   const executiveSummary = para1;
 
+  // Witty, human Punter Roasts & Praises with personality awards
   const punterRoastsAndPraises = standings.map((u, idx) => {
     const jokerStatus =
       u.jokerRaceNumber !== null
         ? u.jokerTriggered
-          ? `2× Joker R${u.jokerRaceNumber} HIT (+${u.jokerBonusPoints} pts)`
-          : `2× Joker R${u.jokerRaceNumber} missed`
-        : `No Joker nominated`;
+          ? `🃏 Joker R${u.jokerRaceNumber} HIT (+${u.jokerBonusPoints} pts)! Pure timing wizardry.`
+          : `🃏 Joker R${u.jokerRaceNumber} missed — got caught in trackside traffic.`
+        : `No Joker nominated.`;
 
-    const badge =
-      idx === 0
-        ? "🥇 #1 Card Leader"
-        : u.eachWayNetVsPar >= 0
-        ? "💰 Above $1 EW Par"
-        : u.strikeRatePct >= 35
-        ? "🎯 High Strike Rate"
-        : `📊 ${u.favouriteTendencyLabel}`;
+    let badge = "📊 Trackside Operator";
+    let roastPraise = "";
+
+    if (idx === 0) {
+      badge = "👑 The Trackside Maestro";
+      roastPraise = `Put on an absolute masterclass! Walked away as the card's undisputed #1 with ${formatDollarReturn(u.eachWayDollarReturn)} on the $1 EW model (${u.eachWayNetVsPar >= 0 ? "+" : ""}${u.eachWayNetVsPar.toFixed(2)}u vs ${u.parScoreUnits}u Par, ${u.eachWayReturnRatePct}% return rate · ${u.totalPoints} pts). Landed ${u.winnersPicked} winners and ${u.podiumsPicked} podiums (${u.strikeRatePct}% strike rate). Favorite appetite: ${u.favouriteSelectionRatePct}% (avg odds $${u.avgSelectedRunnerOdds.toFixed(2)}). The stewards had no inquiries into sheer tactical genius! ${jokerStatus}`;
+    } else if (u.eachWayNetVsPar >= 0) {
+      badge = "💰 The Bankroll Expander";
+      roastPraise = `Disciplined, lethal, and profitable! Cleared Par with a crisp ${formatDollarReturn(u.eachWayDollarReturn)} EW return (+${u.eachWayNetVsPar.toFixed(2)}u above the ${u.parScoreUnits}u benchmark · ${u.eachWayReturnRatePct}% return rate · ${u.totalPoints} pts). Struck with ${u.winnersPicked} winners and ${u.podiumsPicked} placegetters (${u.strikeRatePct}% SR, avg odds $${u.avgSelectedRunnerOdds.toFixed(2)}). Handled the bookmakers like a seasoned pro. ${jokerStatus}`;
+    } else if (u.strikeRatePct >= 35) {
+      badge = "🎯 The Formguide Sniper";
+      roastPraise = `Sharp eye for the podium! Generated a rock-solid ${u.strikeRatePct}% strike rate with ${u.podiumsPicked} podiums across ${u.racesParticipated} races (${u.winnersPicked} winners · ${u.totalPoints} pts · ${formatDollarReturn(u.eachWayDollarReturn)} EW). Kept the ledger ticking over with an average ticket price of $${u.avgSelectedRunnerOdds.toFixed(2)}. ${jokerStatus}`;
+    } else if (u.favouriteSelectionRatePct >= 60) {
+      badge = "🛡️ The Chalk-Eater Supreme";
+      roastPraise = `Safety first! Trusted the market favourites in ${u.favouritesSelectedCount}/${u.racesParticipated} races (${u.favouriteSelectionRatePct}% Fav rate · avg odds $${u.avgSelectedRunnerOdds.toFixed(2)}). Collected ${formatDollarReturn(u.eachWayDollarReturn)} EW vs ${u.parScoreUnits}u Par (${u.totalPoints} pts · ${u.winnersPicked}W/${u.podiumsPicked}P). A few more bold roughies and the bookies would have been waving white flags. ${jokerStatus}`;
+    } else if (u.avgSelectedRunnerOdds >= 8.0) {
+      badge = "🤠 The Roughie Archaeologist";
+      roastPraise = `Hunting the big game in the deep bush! Averaged a daring $${u.avgSelectedRunnerOdds.toFixed(2)} across all selections, seeking that one seismic dividend. Finished with ${formatDollarReturn(u.eachWayDollarReturn)} EW (${u.totalPoints} pts · ${u.winnersPicked}W/${u.podiumsPicked}P). When those double-figure roughies drop, they'll be erecting statues in your honor. ${jokerStatus}`;
+    } else {
+      badge = "⚡ The Tenacious Battler";
+      roastPraise = `Fought hard through every turn of the card. Recorded ${formatDollarReturn(u.eachWayDollarReturn)} on the $1 EW ledger vs ${u.parScoreUnits}u Par (${u.eachWayReturnRatePct}% return rate · ${u.totalPoints} pts · ${u.winnersPicked}W/${u.podiumsPicked}P). With an average runner price of $${u.avgSelectedRunnerOdds.toFixed(2)}, wallet CPR was administered in the straight, but the fighting spirit remains primed for the next meeting. ${jokerStatus}`;
+    }
 
     return {
       punterName: u.punterName,
       badge,
-      commentary: `$1 EW Return: ${formatDollarReturn(u.eachWayDollarReturn)} vs ${u.parScoreUnits}u Par (${u.eachWayNetVsPar >= 0 ? "+" : ""}${u.eachWayNetVsPar.toFixed(2)}u · ${u.eachWayReturnRatePct}% Return Rate) · Weighted Return: ${formatDollarReturn(u.totalDollarReturn)} · ${u.totalPoints} pts · ${u.winnersPicked}W/${u.podiumsPicked}P (${u.strikeRatePct}% SR). Fav Tendency: ${u.favouritesSelectedCount}/${u.racesParticipated} races (${u.favouriteSelectionRatePct}% Fav rate, Avg Odds $${u.avgSelectedRunnerOdds.toFixed(2)}) · ${jokerStatus}.`,
+      commentary: roastPraise,
     };
   });
 
@@ -1004,7 +1020,7 @@ export function buildTechnicalAndFunnyAssessment(
   const totalExoticNet =
     trifectaSummary.netProfit + (quaddieSummary?.netProfit || 0);
   const stewardsFunnyConclusion =
-    `EXECUTIVE VERDICT: ${leader?.punterName || "Syndicate"} topped ${venue} with ${formatDollarReturn(leader?.eachWayDollarReturn || 0)} on the $1 Each-Way Par model (${leader?.parScoreUnits || 60}u Par · ${formatDollarReturn(leader?.totalDollarReturn || 0)} weighted · ${leader?.totalPoints || 0} pts), Combined Trifectas hit ${trifectaSummary.trifectaHits}/${trifectaSummary.racesEvaluated} (${trifectaSummary.nearMisses2Of3} near-misses), and the Quaddie landed ${quaddieSummary?.hitLegsCount ?? 0}/${quaddieSummary?.legs.length ?? 4} legs (${totalExoticNet >= 0 ? "+" : "-"}${formatDollarReturn(Math.abs(totalExoticNet))} net exotics).`;
+    `CHIEF STEWARD'S OFFICIAL BANTER RULING: Following an exhaustive post-race inquiry at ${venue}, the stewards confirmed that ${leader?.punterName || "the syndicate"} displayed exemplary turfcraft with ${formatDollarReturn(leader?.eachWayDollarReturn || 0)} on the $1 Each-Way Par model (${leader?.totalPoints || 0} pts). Exotics concluded with ${trifectaSummary.trifectaHits}/${trifectaSummary.racesEvaluated} Trifecta hits (${trifectaSummary.nearMisses2Of3} near-misses) and ${quaddieSummary?.hitLegsCount ?? 0}/${quaddieSummary?.legs.length ?? 4} Quaddie legs survived (${totalExoticNet >= 0 ? "+" : "-"}${formatDollarReturn(Math.abs(totalExoticNet))} net exotics). All punters are cleared of foul play and ordered to enjoy an ice-cold beverage at the bar!`;
 
   const nextMajorMeetsPreview = buildNextMajorMeetsPreview(raceDate);
 

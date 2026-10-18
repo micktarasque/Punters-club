@@ -56,6 +56,7 @@ import {
 import { CombinedTrifectaTracker } from "./components/CombinedTrifectaTracker";
 import { CombinedQuaddieTracker } from "./components/CombinedQuaddieTracker";
 import { ExoticsBentoStudio } from "./components/ExoticsBentoStudio";
+import { PersistentRaceRibbon } from "./components/PersistentRaceRibbon";
 import { RaceReportSheet } from "./components/RaceReportSheet";
 import { PunterLeaderboard } from "./components/PunterLeaderboard";
 import { OfflineIndicator } from "./components/PWAInstallControl";
@@ -722,6 +723,30 @@ export default function App() {
       }
     }, 80);
   }, []);
+
+  const handleJumpToRace = useCallback(
+    (
+      tab: "overview" | "selections" | "exotics" | "results",
+      raceNumber: number,
+      meetingId?: string
+    ) => {
+      if (meetingId && meetingId !== selectedMeetingId) {
+        setSelectedMeetingId(meetingId);
+      }
+      setSelectedRaceNumber(raceNumber);
+      switchTab(tab);
+      setTimeout(() => {
+        const raceEl =
+          document.getElementById(`race-row-${raceNumber}`) ||
+          document.getElementById(`race-card-${raceNumber}`) ||
+          document.getElementById(`observed-race-${raceNumber}`);
+        if (raceEl) {
+          raceEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 80);
+    },
+    [selectedMeetingId, switchTab]
+  );
 
   // All actual meetings racing on the selected date (or date range), prioritized with Main Metro sites at the top
   const allMeetingsOnSelectedDate = useMemo(() => {
@@ -2139,7 +2164,7 @@ export default function App() {
       </header>
 
       {/* Main Tabbed Container */}
-      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 pt-4 space-y-6 flex-1">
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 pt-4 pb-28 md:pb-20 space-y-6 flex-1">
         {/* Hero Banner — Only shows TurfSheet - Punters club over the glamour race day imagery */}
         <section className="relative rounded-xl overflow-hidden border border-[#1F2D26] bg-[#121A16]">
           <div className="relative h-48 sm:h-60 md:h-64 w-full overflow-hidden bg-gradient-to-r from-[#0E1E16] via-[#132A1F] to-[#0B110E]">
@@ -2968,6 +2993,20 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Persistent Race Venue & Race Number Ribbon across all screens */}
+      {activeMeeting && (
+        <PersistentRaceRibbon
+          meetings={visibleMeetings}
+          activeMeeting={activeMeeting}
+          onSelectMeeting={(id) => setSelectedMeetingId(id)}
+          selectedRaceNumber={selectedRaceNumber}
+          onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+          activeTab={activeTab}
+          onJumpTo={handleJumpToRace}
+          punters={punters}
+        />
+      )}
 
       {/* Mobile / Tablet Fixed Bottom 4-Tab Navigation Bar */}
       <nav

@@ -40,6 +40,8 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Flame,
   Swords,
   BarChart3,
@@ -346,6 +348,38 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  // State to track manually collapsed race cards (once all 3 picks are chosen)
+  const [collapsedRaces, setCollapsedRaces] = useState<Record<string, boolean>>({});
+
+  const toggleRaceCollapse = (meetingId: string, raceNumber: number) => {
+    const key = `${meetingId}_R${raceNumber}`;
+    setCollapsedRaces((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const collapseAllCompletedRaces = (meetingCard: RaceMeeting) => {
+    const cardSelections = activePunter.selectionsByMeeting[meetingCard.id] || {};
+    const updates: Record<string, boolean> = {};
+    meetingCard.races.forEach((race) => {
+      const rawTrio = cardSelections[race.raceNumber];
+      const pickCount = [rawTrio?.firstPref, rawTrio?.secondPref, rawTrio?.thirdPref].filter(Boolean).length;
+      if (pickCount === 3) {
+        updates[`${meetingCard.id}_R${race.raceNumber}`] = true;
+      }
+    });
+    setCollapsedRaces((prev) => ({ ...prev, ...updates }));
+  };
+
+  const expandAllRaces = (meetingCard: RaceMeeting) => {
+    const updates: Record<string, boolean> = {};
+    meetingCard.races.forEach((race) => {
+      updates[`${meetingCard.id}_R${race.raceNumber}`] = false;
+    });
+    setCollapsedRaces((prev) => ({ ...prev, ...updates }));
   };
 
   const triggerHaptic = (pattern: number | number[] = 15) => {
@@ -1328,6 +1362,42 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     </button>
                   </div>
 
+                  {/* Batch Collapse/Expand for completed races */}
+                  {selectionViewMode === "cards" && (() => {
+                    const cardSels = activePunter.selectionsByMeeting[meetingCard.id] || {};
+                    const completedCount = meetingCard.races.filter((r) => {
+                      const trio = cardSels[r.raceNumber];
+                      return [trio?.firstPref, trio?.secondPref, trio?.thirdPref].filter(Boolean).length === 3;
+                    }).length;
+                    const anyCollapsed = meetingCard.races.some(
+                      (r) => collapsedRaces[`${meetingCard.id}_R${r.raceNumber}`]
+                    );
+
+                    if (completedCount === 0) return null;
+
+                    return anyCollapsed ? (
+                      <button
+                        type="button"
+                        onClick={() => expandAllRaces(meetingCard)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0] hover:border-[#D4AF37] text-xs font-mono font-medium transition cursor-pointer"
+                        title="Expand all race cards"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>Expand All</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => collapseAllCompletedRaces(meetingCard)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#102017] border border-[#10B981]/50 text-[#10B981] hover:bg-[#162a1f] text-xs font-mono font-medium transition cursor-pointer shadow-sm"
+                        title="Collapse all fully tipped races into simplified summary cards"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        <span>Collapse Completed ({completedCount})</span>
+                      </button>
+                    );
+                  })()}
+
                   <span className="px-2 py-1 rounded bg-[#0B110E] border border-[#10B981]/40 text-[11px] font-mono text-[#10B981]">
                     ✓ TAB Auto-Sub Active
                   </span>
@@ -1535,6 +1605,192 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     (r) => r.tabNumber === trio?.thirdPref
                   );
 
+                  const isRaceCollapsed = Boolean(
+                    collapsedRaces[`${meetingCard.id}_R${race.raceNumber}`] &&
+                      pickCount === 3
+                  );
+
+                  // Simplified Collapsed View (once all 3 tips entered)
+                  if (isRaceCollapsed) {
+                    return (
+                      <div
+                        key={race.raceNumber}
+                        id={`race-card-${meetingCard.id}-${race.raceNumber}`}
+                        className={`rounded-xl border transition-all overflow-hidden ${
+                          isJokerRace
+                            ? "border-[#D4AF37]/70 bg-[#0F1713] shadow-[0_4px_24px_rgba(212,175,55,0.08)] ring-1 ring-[#D4AF37]/30"
+                            : "border-[#1F2D26] bg-[#0E1612] hover:border-[#2E4237]"
+                        }`}
+                      >
+                        <div className="p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+                          {/* Left: Race Badge, Name, Jump Time, Distance, Track */}
+                          <div className="flex items-start sm:items-center gap-3">
+                            <span className="px-2.5 py-1 rounded-md bg-[#192620] border border-[#2A3F33] text-[#F3F4F0] font-mono font-black text-sm tracking-wide shrink-0">
+                              R{race.raceNumber}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-display font-bold text-base text-[#F3F4F0]">
+                                  {race.raceName}
+                                </span>
+                                {isFeature && (
+                                  <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-mono font-bold uppercase tracking-wider">
+                                    ★ FEATURE
+                                  </span>
+                                )}
+                                {isJokerRace && (
+                                  <span className="px-2 py-0.5 rounded bg-[#D4AF37] text-[#070B09] text-[10px] font-mono font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                    <span>🃏</span>
+                                    <span>2× Joker Active</span>
+                                  </span>
+                                )}
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                    evaluated.isRaceResulted
+                                      ? "bg-[#152920] text-[#10B981] border border-[#10B981]/40"
+                                      : "bg-[#192620] text-[#D4AF37] border border-[#D4AF37]/40"
+                                  }`}
+                                >
+                                  {evaluated.isRaceResulted
+                                    ? "OFFICIAL FINAL"
+                                    : "UPCOMING"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-[#8A9990] font-mono mt-1 flex-wrap">
+                                <span className="text-[#F3F4F0] font-medium">
+                                  Jumps {race.startTime}
+                                </span>
+                                <span>·</span>
+                                <span>{race.distance}m</span>
+                                <span>·</span>
+                                <span>
+                                  Track: {meetingCard.trackCondition || "Good 4"}
+                                </span>
+                                {evaluated.isRaceResulted && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="text-[#D4AF37] font-bold">
+                                      Result:{" "}
+                                      {scoringMode === "dollars"
+                                        ? formatDollarReturn(
+                                            evaluated.raceDollarReturn
+                                          )
+                                        : `${evaluated.racePointsTally} pts`}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Center: The 3 Selections */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* 1st Selection */}
+                            <div className="px-3 py-1.5 rounded-lg bg-[#18150B] border border-[#D4AF37]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
+                              <span className="px-1.5 py-0.5 rounded bg-[#D4AF37] text-[#070B09] font-black text-[10px] tracking-wider">
+                                1ST
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-[#F3F4F0]">
+                                  #{sel1Runner?.tabNumber}{" "}
+                                  {sel1Runner?.horseName}
+                                </span>
+                                {(sel1Runner?.fixedWin ||
+                                  sel1Runner?.nswTabWin) && (
+                                  <span className="text-[#D4AF37] font-semibold">
+                                    $
+                                    {Number(
+                                      sel1Runner.fixedWin ||
+                                        sel1Runner.nswTabWin
+                                    ).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 2nd Selection */}
+                            <div className="px-3 py-1.5 rounded-lg bg-[#0C1720] border border-[#38BDF8]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
+                              <span className="px-1.5 py-0.5 rounded bg-[#38BDF8] text-[#070B09] font-black text-[10px] tracking-wider">
+                                2ND
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-[#F3F4F0]">
+                                  #{sel2Runner?.tabNumber}{" "}
+                                  {sel2Runner?.horseName}
+                                </span>
+                                {(sel2Runner?.fixedWin ||
+                                  sel2Runner?.nswTabWin) && (
+                                  <span className="text-[#38BDF8] font-semibold">
+                                    $
+                                    {Number(
+                                      sel2Runner.fixedWin ||
+                                        sel2Runner.nswTabWin
+                                    ).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 3rd Selection */}
+                            <div className="px-3 py-1.5 rounded-lg bg-[#0C1A14] border border-[#10B981]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
+                              <span className="px-1.5 py-0.5 rounded bg-[#10B981] text-[#070B09] font-black text-[10px] tracking-wider">
+                                3RD
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-[#F3F4F0]">
+                                  #{sel3Runner?.tabNumber}{" "}
+                                  {sel3Runner?.horseName}
+                                </span>
+                                {(sel3Runner?.fixedWin ||
+                                  sel3Runner?.nswTabWin) && (
+                                  <span className="text-[#10B981] font-semibold">
+                                    $
+                                    {Number(
+                                      sel3Runner.fixedWin ||
+                                        sel3Runner.nswTabWin
+                                    ).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Expand / Edit and Clear buttons */}
+                          <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toggleRaceCollapse(
+                                  meetingCard.id,
+                                  race.raceNumber
+                                )
+                              }
+                              className="px-3 py-1.5 rounded-lg bg-[#15231B] border border-[#23352B] hover:border-[#D4AF37] hover:bg-[#1D2F24] text-[#D4AF37] text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                              title="Expand race to view full runners table and modify selections"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                              <span>Edit / Expand</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleClearRacePicks(
+                                  activePunter.id,
+                                  meetingCard.id,
+                                  race.raceNumber
+                                )
+                              }
+                              className="p-1.5 rounded-lg text-xs font-mono text-[#8A9990] hover:text-rose-400 bg-[#0B110E] border border-[#1F2D26] hover:border-rose-500/40 transition cursor-pointer"
+                              title="Clear picks for this race"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key={race.raceNumber}
@@ -1592,6 +1848,24 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               </span>
                             )}
                           </div>
+
+                          {/* Collapse Card Toggle - only available once all 3 selections made */}
+                          {pickCount === 3 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toggleRaceCollapse(
+                                  meetingCard.id,
+                                  race.raceNumber
+                                )
+                              }
+                              className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-[#10B981] bg-[#12241B] border border-[#10B981]/50 hover:bg-[#183024] hover:border-[#10B981] transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                              title="Collapse race into simplified summary view"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                              <span>Collapse Card</span>
+                            </button>
+                          )}
 
                           {/* Joker Toggle */}
                           <button

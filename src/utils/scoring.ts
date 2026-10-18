@@ -842,6 +842,27 @@ export function getPunterSelectionsForMeeting(
   return merged;
 }
 
+/**
+ * Checks whether any syndicate punter has entered selections (1st, 2nd, or 3rd preference)
+ * for a given race at a specified meeting.
+ */
+export function isRaceParticipatedByAnyPunter(
+  meeting: { id: string; venue?: string; date?: string },
+  raceNumber: number,
+  punters: PunterProfile[]
+): boolean {
+  return punters.some((punter) => {
+    const selectionsMap = getPunterSelectionsForMeeting(punter, meeting);
+    const trio = selectionsMap[raceNumber];
+    return Boolean(
+      trio &&
+        (trio.firstPref !== null ||
+          trio.secondPref !== null ||
+          trio.thirdPref !== null)
+    );
+  });
+}
+
 export function parsePrizeMoneyValue(raw?: string | null): number {
   if (!raw || typeof raw !== "string") return 0;
   const s = raw.trim().toUpperCase();
@@ -1417,7 +1438,16 @@ export function evaluateCombinedTrifectaForRace(
       : null;
 
     if (betType === "flexi_combined") {
-      const allTips = combinedRunners.map((c) => c.tabNumber);
+      const customPicks =
+        customConfig.secondPicks && customConfig.secondPicks.length > 0
+          ? customConfig.secondPicks
+          : customConfig.firstPicks && customConfig.firstPicks.length > 0
+          ? customConfig.firstPicks
+          : null;
+      const allTips = customPicks && customPicks.length >= 2
+        ? customPicks
+        : combinedRunners.map((c) => c.tabNumber);
+
       // If there is a favourite with odds below 1.9 trigger auto selection of the standard banker rule
       if (sub19Fav) {
         isStandoutTriggered = true;
@@ -1441,23 +1471,55 @@ export function evaluateCombinedTrifectaForRace(
           second: safeOtherTabs,
           third: safeOtherTabs,
         };
-        betTypeLabel = `Flexi Combined (Auto Banker #${favTab} < $1.90)`;
+        betTypeLabel = `⚡ Standout 1st #${favTab} Flexi (<$1.90 Fav)`;
       } else {
-        const safeTabs =
-          allTips.length >= 3
-            ? allTips
-            : Array.from(
-                new Set([
-                  ...allTips,
-                  ...sortedField.map((f) => f.runner.tabNumber),
-                ])
-              ).slice(0, 4);
-        positionPicks = {
-          first: safeTabs,
-          second: safeTabs,
-          third: safeTabs,
-        };
-        betTypeLabel = `Flexi Combined (${safeTabs.length}H Users Tips)`;
+        // No sub-$1.90 favourite: Runner concatenation - runners added to the trifecta bet (flexi)
+        // ignoring the selected place across all syndicate members.
+        const customAnchor = customConfig.standoutTab ?? null;
+        if (customAnchor) {
+          standoutRunner =
+            race.runners.find((r) => r.tabNumber === customAnchor) || null;
+          standoutPosition = customConfig.standoutPosition ?? 1;
+          const otherSelectedTabs = allTips.filter((t) => t !== customAnchor);
+          const safeOtherTabs =
+            otherSelectedTabs.length >= 2
+              ? otherSelectedTabs
+              : Array.from(
+                  new Set([
+                    ...otherSelectedTabs,
+                    ...sortedField
+                      .map((f) => f.runner.tabNumber)
+                      .filter((t) => t !== customAnchor),
+                  ])
+                ).slice(0, 3);
+          positionPicks = {
+            first: standoutPosition === 1 ? [customAnchor] : safeOtherTabs,
+            second: standoutPosition === 2 ? [customAnchor] : safeOtherTabs,
+            third: standoutPosition === 3 ? [customAnchor] : safeOtherTabs,
+          };
+          betTypeLabel = `Custom Standout #${customAnchor} Flexi`;
+        } else {
+          // True Concatenated Flexi (ignoring tipped places, boxed across 1st, 2nd, 3rd)
+          const safePooledTabs =
+            allTips.length >= 3
+              ? allTips
+              : Array.from(
+                  new Set([
+                    ...allTips,
+                    ...sortedField.map((f) => f.runner.tabNumber),
+                  ])
+                ).slice(0, 4);
+
+          positionPicks = {
+            first: safePooledTabs,
+            second: safePooledTabs,
+            third: safePooledTabs,
+          };
+          betTypeLabel = `Syndicate Concatenated Flexi (${safePooledTabs.length} Horses Boxed)`;
+          standoutRunner = null;
+          standoutPosition = 1;
+          isStandoutTriggered = false;
+        }
       }
     } else if (betType === "flexi_standout") {
       const anchor =
@@ -1591,41 +1653,24 @@ export function evaluateCombinedTrifectaForRace(
       };
       betTypeLabel = `⚡ Standout 1st #${favTab} Flexi (<$1.90 Fav)`;
     } else {
-      // No sub-$1.90 favourite: default to Flexi Standout on top consensus pick
-      betType = "flexi_standout";
-      const topPick = combinedRunners[0];
-      if (topPick) {
-        standoutRunner = topPick.runner;
-        standoutPosition = 1;
-        const anchorTab = topPick.tabNumber;
-        const otherTabs = combinedRunners
-          .map((c) => c.tabNumber)
-          .filter((t) => t !== anchorTab);
-        const safeOthers =
-          otherTabs.length >= 2
-            ? otherTabs
-            : sortedField
-                .map((f) => f.runner.tabNumber)
-                .filter((t) => t !== anchorTab)
-                .slice(0, 2);
-        positionPicks = {
-          first: [anchorTab],
-          second: safeOthers,
-          third: safeOthers,
-        };
-        betTypeLabel = `Standout 1st #${anchorTab} Flexi`;
-      } else {
-        const topField = sortedField.slice(0, 3).map((f) => f.runner.tabNumber);
-        const anchor = topField[0] || 1;
-        standoutRunner = race.runners.find((r) => r.tabNumber === anchor) ?? null;
-        standoutPosition = 1;
-        positionPicks = {
-          first: [anchor],
-          second: topField.slice(1),
-          third: topField.slice(1),
-        };
-        betTypeLabel = `Standout 1st #${anchor} Flexi`;
+      // No sub-$1.90 favourite: default to Boxed Flexi across all concatenated user selections
+      betType = "flexi_boxed";
+      const tippedTabs = combinedRunners.map((c) => c.tabNumber);
+      let pooledTabs = tippedTabs;
+      if (pooledTabs.length < 3) {
+        const fieldFillers = sortedField
+          .map((f) => f.runner.tabNumber)
+          .filter((t) => !pooledTabs.includes(t))
+          .slice(0, 3 - pooledTabs.length);
+        pooledTabs = [...pooledTabs, ...fieldFillers];
       }
+
+      positionPicks = {
+        first: pooledTabs,
+        second: pooledTabs,
+        third: pooledTabs,
+      };
+      betTypeLabel = `Consensus Boxed Flexi (${pooledTabs.length}H)`;
     }
   }
 
@@ -1652,21 +1697,30 @@ export function evaluateCombinedTrifectaForRace(
   const combinationsCount = rawCombos.combinationsCount;
   const boxedCombinationsCount = combinationsCount; // Kept for backwards compatibility
 
-  // Total stake
-  const effectiveUsersForStake =
-    participatingUserCount > 0
-      ? participatingUserCount
-      : activeMeetingUsersCount > 0
-      ? activeMeetingUsersCount
-      : 2;
+  // Total stake based on defined trifecta bet amount
+  const syndicatePunterCount = Math.max(1, punters.length || 2);
+  const totalBetStake =
+    customConfig?.customStake && customConfig.customStake > 0
+      ? customConfig.customStake
+      : Number((buyInPerUser * syndicatePunterCount).toFixed(2));
+  const effectivePerUserBuyIn = Number((totalBetStake / syndicatePunterCount).toFixed(2));
 
   const flexiMetrics = computeTabFlexiBetMetrics(
-    effectiveUsersForStake,
-    buyInPerUser,
+    syndicatePunterCount,
+    effectivePerUserBuyIn,
     Math.max(1, combinationsCount)
   );
+  // Ensure totalBetStake matches exact defined stake
+  flexiMetrics.totalBetStake = totalBetStake;
+  if (combinationsCount > 0 && totalBetStake > 0) {
+    flexiMetrics.flexiUnitStakePerCombo = totalBetStake / combinationsCount;
+    flexiMetrics.flexiPercentage = Number(((totalBetStake / combinationsCount) * 100).toFixed(2));
+    flexiMetrics.perUserFlexiSharePct = Number(
+      ((effectivePerUserBuyIn / combinationsCount) * 100).toFixed(2)
+    );
+  }
 
-  const trifectaBetAmount = flexiMetrics.totalBetStake;
+  const trifectaBetAmount = totalBetStake;
   const flexiPercentage = combinationsCount > 0 ? flexiMetrics.flexiPercentage : 0;
   const perUserFlexiSharePct = combinationsCount > 0 ? flexiMetrics.perUserFlexiSharePct : 0;
 
@@ -2809,13 +2863,25 @@ export function computeTrifectaStructureOptions(
   const n = evalData.combinedRunners.length;
   const activeUsers = Math.max(1, evalData.participatingUserCount || 2);
   const buyIn = evalData.buyInPerUser || DEFAULT_TRIFECTA_BUY_IN_PER_USER;
-  const anchorRunner = evalData.combinedRunners[0] ?? null;
+  const isAutoBanker = Boolean(
+    evalData.isStandoutTriggered && evalData.standoutRunner
+  );
+  const anchorRunner = isAutoBanker
+    ? ({
+        tabNumber: evalData.standoutRunner!.tabNumber,
+        runner: evalData.standoutRunner!,
+        pickedByUsers: [],
+        consensusWeight: 999,
+        finishPosition: evalData.standoutRunner!.finishPosition || 0,
+      } as CombinedRunnerEntry)
+    : evalData.combinedRunners[0] ?? null;
+
   const baseDiv =
     evalData.bookmakerTrifectaDividend > 0
       ? evalData.bookmakerTrifectaDividend
       : evalData.estimatedUpcomingTrifectaDividend;
 
-  // 1. Boxed
+  // 1. Boxed (Full permutations across all runners)
   const boxedCombos = computeBoxTrifectaCombinations(n);
   const boxedFlexi = computeTabFlexiBetMetrics(
     activeUsers,
@@ -2824,7 +2890,23 @@ export function computeTrifectaStructureOptions(
   );
   const boxedPayout = computeTabFlexiPayout(boxedFlexi, baseDiv);
 
-  // 2. Standout Banker: 1st = anchorRunner, 2nd/3rd = remaining (N - 1) horses => (N - 1) * (N - 2) combos
+  const isBoxedHit = Boolean(
+    evalData.isRaceResulted &&
+      evalData.officialPodium.first &&
+      evalData.officialPodium.second &&
+      evalData.officialPodium.third &&
+      evalData.combinedRunners.some(
+        (r) => r.tabNumber === evalData.officialPodium.first?.tabNumber
+      ) &&
+      evalData.combinedRunners.some(
+        (r) => r.tabNumber === evalData.officialPodium.second?.tabNumber
+      ) &&
+      evalData.combinedRunners.some(
+        (r) => r.tabNumber === evalData.officialPodium.third?.tabNumber
+      )
+  );
+
+  // 2. Consensus Standout Banker: 1st = anchorRunner, 2nd/3rd = remaining (N - 1) horses => (N - 1) * (N - 2) combos
   const standoutCombos = n >= 3 ? (n - 1) * (n - 2) : 0;
   const standoutFlexi = computeTabFlexiBetMetrics(
     activeUsers,
@@ -2833,7 +2915,7 @@ export function computeTrifectaStructureOptions(
   );
   const standoutPayout = computeTabFlexiPayout(standoutFlexi, baseDiv);
   const isStandoutHit = Boolean(
-    evalData.isCombinedBoxedTrifectaHit &&
+    isBoxedHit &&
       anchorRunner &&
       evalData.officialPodium.first?.tabNumber === anchorRunner.tabNumber
   );
@@ -2847,7 +2929,7 @@ export function computeTrifectaStructureOptions(
   );
   const rovingPayout = computeTabFlexiPayout(rovingFlexi, baseDiv);
   const isRovingHit = Boolean(
-    evalData.isCombinedBoxedTrifectaHit &&
+    isBoxedHit &&
       anchorRunner &&
       (evalData.officialPodium.first?.tabNumber === anchorRunner.tabNumber ||
         evalData.officialPodium.second?.tabNumber === anchorRunner.tabNumber ||
@@ -2857,35 +2939,18 @@ export function computeTrifectaStructureOptions(
   const baseFlexiPct = Math.max(0.01, boxedFlexi.flexiPercentage);
 
   return {
-    boxed: {
-      mode: "boxed",
-      label: `Full Boxed (${n}H)`,
-      shortLabel: "Boxed",
-      formulaText:
-        n >= 3
-          ? `${n} × ${n - 1} × ${n - 2} = ${boxedCombos} combos`
-          : "Min 3 horses",
-      anchorRunner,
-      combinationsCount: boxedCombos,
-      flexiPercentage: boxedCombos > 0 ? boxedFlexi.flexiPercentage : 0,
-      perUserFlexiSharePct:
-        boxedCombos > 0 ? boxedFlexi.perUserFlexiSharePct : 0,
-      flexiMultiplierBoost: 1,
-      isHit: evalData.isCombinedBoxedTrifectaHit,
-      estimatedOrOfficialPayout: boxedPayout.totalFlexiPayout,
-      estimatedOrOfficialPerUserPayout: boxedPayout.perUserFlexiPayout,
-      wonFlexiReturn: evalData.isCombinedBoxedTrifectaHit
-        ? boxedPayout.totalFlexiPayout
-        : 0,
-    },
     standout_banker: {
       mode: "standout_banker",
-      label: anchorRunner
-        ? `Standout #${anchorRunner.tabNumber} 1st (${n - 1}H 2nd/3rd)`
-        : "Standout Banker",
-      shortLabel: anchorRunner
-        ? `1st #${anchorRunner.tabNumber} Standout`
-        : "Standout 1st",
+      label: isAutoBanker && anchorRunner
+        ? `Auto-Banker #${anchorRunner.tabNumber} (<$1.90 Fav · ${n - 1}H 2nd/3rd)`
+        : anchorRunner
+        ? `Consensus Flexi (#${anchorRunner.tabNumber} 1st · ${n - 1}H 2nd/3rd)`
+        : "Consensus Flexi",
+      shortLabel: isAutoBanker && anchorRunner
+        ? `Auto-Banker #${anchorRunner.tabNumber}`
+        : anchorRunner
+        ? `Consensus #${anchorRunner.tabNumber} 1st`
+        : "Consensus Flexi",
       formulaText:
         n >= 3
           ? `1 × ${n - 1} × ${n - 2} = ${standoutCombos} combos`
@@ -2902,6 +2967,27 @@ export function computeTrifectaStructureOptions(
       estimatedOrOfficialPayout: standoutPayout.totalFlexiPayout,
       estimatedOrOfficialPerUserPayout: standoutPayout.perUserFlexiPayout,
       wonFlexiReturn: isStandoutHit ? standoutPayout.totalFlexiPayout : 0,
+    },
+    boxed: {
+      mode: "boxed",
+      label: `Full Boxed (${n}H)`,
+      shortLabel: "Boxed",
+      formulaText:
+        n >= 3
+          ? `${n} × ${n - 1} × ${n - 2} = ${boxedCombos} combos`
+          : "Min 3 horses",
+      anchorRunner,
+      combinationsCount: boxedCombos,
+      flexiPercentage: boxedCombos > 0 ? boxedFlexi.flexiPercentage : 0,
+      perUserFlexiSharePct:
+        boxedCombos > 0 ? boxedFlexi.perUserFlexiSharePct : 0,
+      flexiMultiplierBoost: 1,
+      isHit: isBoxedHit,
+      estimatedOrOfficialPayout: boxedPayout.totalFlexiPayout,
+      estimatedOrOfficialPerUserPayout: boxedPayout.perUserFlexiPayout,
+      wonFlexiReturn: isBoxedHit
+        ? boxedPayout.totalFlexiPayout
+        : 0,
     },
     roving_banker: {
       mode: "roving_banker",
@@ -3092,7 +3178,8 @@ export function computeSyndicatePotSettlement(
   punters: PunterProfile[],
   trifectaBuyInPerUser: number = DEFAULT_TRIFECTA_BUY_IN_PER_USER,
   quaddieBuyInPerUser: number = DEFAULT_QUADDIE_BUY_IN_PER_USER,
-  quaddieExtraByMeeting: Record<string, Record<number, number[]>> = {}
+  quaddieExtraByMeeting: Record<string, Record<number, number[]>> = {},
+  customConfigs?: Record<string, CustomTrifectaRaceConfig>
 ): SyndicatePotSettlementSummary {
   const safeTriBuyIn =
     Number.isFinite(trifectaBuyInPerUser) && trifectaBuyInPerUser > 0
@@ -3135,15 +3222,18 @@ export function computeSyndicatePotSettlement(
   let quaddieHitsCount = 0;
 
   for (const m of meetings) {
-    // 1. Evaluate each race for Individual Each-Way + Combined Boxed Trifecta
+    // 1. Evaluate each race for Individual Each-Way + Combined Consensus Flexi Trifecta
     for (const r of m.races) {
+      const raceKey = `${m.id}_R${r.raceNumber}`;
+      const raceConfig = customConfigs ? customConfigs[raceKey] : undefined;
       const triEval = evaluateCombinedTrifectaForRace(
         r,
         punters,
         m.id,
         m.date,
         safeTriBuyIn,
-        m.venue
+        m.venue,
+        raceConfig
       );
 
       // Identify which punters actively selected runners in this race

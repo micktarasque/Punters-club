@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  Layers,
   Sparkles,
   Trophy,
   DollarSign,
@@ -14,17 +13,23 @@ import {
   ChevronRight,
   TrendingDown,
   TrendingUp,
-  ArrowRight,
   ShieldCheck,
   Zap,
   Info,
-  Calendar,
   MapPin,
   Flame,
   Plus,
   ChevronDown,
   ChevronUp,
+  Lock,
+  Star,
+  Layers,
+  Award,
+  Edit3,
+  Filter,
 } from "lucide-react";
+import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
+import { TrifectaCombinationsChart } from "./TrifectaCombinationsChart";
 import {
   RaceEvent,
   RaceMeeting,
@@ -41,7 +46,10 @@ import {
   computeTabFlexiBetMetrics,
   DEFAULT_QUADDIE_BUY_IN_PER_USER,
   TrifectaBetType,
+  CustomTrifectaRaceConfig,
   isRunnerScratched,
+  computeCustomTrifectaCombinations,
+  isRaceParticipatedByAnyPunter,
 } from "../utils/scoring";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
 import { JockeySilkSvg } from "./JockeySilkSvg";
@@ -89,97 +97,513 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
   onTriggerToast,
 }) => {
   const [activeFilter, setActiveFilter] = useState<ExoticsViewFilter>("all");
-  const [expandedLegs, setExpandedLegs] = useState<Record<number, boolean>>({});
 
+  // Toggle: Show all scheduled races vs only participated races (defaults to false / participated only)
+  const [showAllRaces, setShowAllRaces] = useState<boolean>(false);
+
+  // Active meeting fallback
   const activeMeeting = useMemo(() => {
-    return meetings.find((m) => m.id === selectedMeetingId) || meetings[0];
+    return (
+      meetings.find((m) => m.id === selectedMeetingId) || meetings[0] || null
+    );
   }, [meetings, selectedMeetingId]);
 
-  // Selected race for focused Trifecta customizer
+  // Selected race for focused Trifecta customizer (defaults to first participated race)
   const [selectedRaceNo, setSelectedRaceNo] = useState<number>(() => {
-    return activeMeeting?.races[0]?.raceNumber || 1;
+    if (!activeMeeting || !activeMeeting.races.length) return 1;
+    const candidates = activeMeeting.races.filter((r) =>
+      isRaceParticipatedByAnyPunter(activeMeeting, r.raceNumber, punters)
+    );
+    return candidates.length > 0
+      ? candidates[0].raceNumber
+      : activeMeeting.races[0].raceNumber;
   });
 
-  // Ensure selectedRaceNo stays valid when meeting changes
-  const activeRace = useMemo(() => {
-    if (!activeMeeting) return null;
+  // Sync selected race with active meeting races & participation filter
+  useEffect(() => {
+    if (activeMeeting && activeMeeting.races.length > 0) {
+      const candidates = !showAllRaces
+        ? activeMeeting.races.filter((r) =>
+            isRaceParticipatedByAnyPunter(activeMeeting, r.raceNumber, punters)
+          )
+        : activeMeeting.races;
+      const pool =
+        candidates.length > 0 ? candidates : activeMeeting.races;
+      const exists = pool.some((r) => r.raceNumber === selectedRaceNo);
+      if (!exists) {
+        setSelectedRaceNo(pool[0].raceNumber);
+      }
+    }
+  }, [activeMeeting, selectedRaceNo, showAllRaces, punters]);
+
+  const activeRace: RaceEvent | null = useMemo(() => {
+    if (!activeMeeting || !activeMeeting.races.length) return null;
+    const candidates = !showAllRaces
+      ? activeMeeting.races.filter((r) =>
+          isRaceParticipatedByAnyPunter(activeMeeting, r.raceNumber, punters)
+        )
+      : activeMeeting.races;
+    const pool = candidates.length > 0 ? candidates : activeMeeting.races;
     return (
-      activeMeeting.races.find((r) => r.raceNumber === selectedRaceNo) ||
+      pool.find((r) => r.raceNumber === selectedRaceNo) ||
+      pool[0] ||
       activeMeeting.races[0] ||
       null
     );
-  }, [activeMeeting, selectedRaceNo]);
+  }, [activeMeeting, selectedRaceNo, showAllRaces, punters]);
 
-  // Evaluate Quaddie for active meeting
-  const quaddieEval: CombinedMeetingQuaddieEvaluation | null = useMemo(() => {
-    if (!activeMeeting) return null;
-    return evaluateCombinedQuaddieForMeeting(
-      activeMeeting,
-      punters,
-      quaddieExtraByMeeting[activeMeeting.id] || {},
-      quaddieBuyInPerUser
-    );
-  }, [activeMeeting, punters, quaddieExtraByMeeting, quaddieBuyInPerUser]);
+  // Saved custom trifecta configurations and confirmed statuses
+  const [customConfigs, setCustomConfigs] = useState<
+    Record<string, CustomTrifectaRaceConfig>
+  >(() => {
+    try {
+      const saved = localStorage.getItem("turfsheet_custom_trifecta_configs_v1");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Option to modify trifecta selections (defaults to false / auto-final)
+  const [isCustomizing, setIsCustomizing] = useState<boolean>(false);
+  // Expandable Sportsbet & TAB reference table
+  const [showFlexiReference, setShowFlexiReference] = useState<boolean>(false);
+  // Dynamic Recharts Combinations Growth & Trade-Off Chart
+  const [showCombinationsChart, setShowCombinationsChart] = useState<boolean>(true);
 
   // Evaluate Trifecta for active race
   const activeTrifectaEval: CombinedRaceTrifectaEvaluation | null = useMemo(() => {
     if (!activeMeeting || !activeRace) return null;
+    const raceKey = `${activeMeeting.id}_R${activeRace.raceNumber}`;
     return evaluateCombinedTrifectaForRace(
       activeRace,
       punters,
       activeMeeting.id,
       activeMeeting.date,
-      trifectaBetAmount,
-      activeMeeting.venue
+      trifectaBetAmount / Math.max(1, punters.length || 2),
+      activeMeeting.venue,
+      customConfigs[raceKey]
     );
-  }, [activeMeeting, activeRace, punters, trifectaBetAmount]);
+  }, [activeMeeting, activeRace, punters, trifectaBetAmount, customConfigs]);
 
   // Evaluate all Trifectas across active meeting
   const allTrifectaEvals = useMemo(() => {
     if (!activeMeeting) return [];
-    return activeMeeting.races.map((r) => ({
-      race: r,
-      evaluation: evaluateCombinedTrifectaForRace(
-        r,
-        punters,
-        activeMeeting.id,
-        activeMeeting.date,
-        trifectaBetAmount,
-        activeMeeting.venue
-      ),
+    return activeMeeting.races.map((race) => {
+      const raceKey = `${activeMeeting.id}_R${race.raceNumber}`;
+      return {
+        race,
+        evaluation: evaluateCombinedTrifectaForRace(
+          race,
+          punters,
+          activeMeeting.id,
+          activeMeeting.date,
+          trifectaBetAmount / Math.max(1, punters.length || 2),
+          activeMeeting.venue,
+          customConfigs[raceKey]
+        ),
+      };
+    });
+  }, [activeMeeting, punters, trifectaBetAmount, customConfigs]);
+
+  // Evaluate all Trifectas across ALL participated meetings
+  const allMeetingTrifectaEvals = useMemo(() => {
+    return meetings
+      .filter((m) => m.races && m.races.length > 0)
+      .map((meeting) => {
+        const raceEvals = meeting.races.map((race) => {
+          const raceKey = `${meeting.id}_R${race.raceNumber}`;
+          const evaluation = evaluateCombinedTrifectaForRace(
+            race,
+            punters,
+            meeting.id,
+            meeting.date,
+            trifectaBetAmount / Math.max(1, punters.length || 2),
+            meeting.venue,
+            customConfigs[raceKey]
+          );
+          return {
+            race,
+            raceKey,
+            evaluation,
+          };
+        });
+
+        const participatedRaceEvals = raceEvals.filter(
+          (r) => r.evaluation.hasCombinedSelections
+        );
+        const participatedCount = participatedRaceEvals.length;
+
+        const activeEvalsForTotals = showAllRaces
+          ? raceEvals
+          : participatedCount > 0
+          ? participatedRaceEvals
+          : raceEvals;
+
+        const totalWon = activeEvalsForTotals.filter(
+          (r) => r.evaluation.isTrifectaHit
+        ).length;
+        const totalCollect = activeEvalsForTotals.reduce(
+          (sum, r) => sum + (r.evaluation.customBetFlexiReturn || 0),
+          0
+        );
+        const totalOutlay = activeEvalsForTotals.length * trifectaBetAmount;
+        const totalCombos = activeEvalsForTotals.reduce(
+          (sum, r) => sum + (r.evaluation.combinationsCount || 0),
+          0
+        );
+        const isAlive = activeEvalsForTotals.some(
+          (r) => !r.evaluation.isRaceResulted || r.evaluation.isTrifectaHit
+        );
+
+        return {
+          meeting,
+          raceEvals,
+          participatedRaceEvals,
+          participatedCount,
+          totalWon,
+          totalCollect,
+          totalOutlay,
+          totalCombos,
+          isAlive,
+        };
+      });
+  }, [meetings, punters, trifectaBetAmount, customConfigs, showAllRaces]);
+
+  // Collapsible state for Trifecta meeting accordions
+  const [openTrifectaMeetings, setOpenTrifectaMeetings] = useState<
+    Record<string, boolean>
+  >(() => {
+    return selectedMeetingId ? { [selectedMeetingId]: true } : {};
+  });
+
+  useEffect(() => {
+    if (selectedMeetingId) {
+      setOpenTrifectaMeetings((prev) => ({
+        ...prev,
+        [selectedMeetingId]: true,
+      }));
+    }
+  }, [selectedMeetingId]);
+
+  const toggleTrifectaMeeting = (meetingId: string) => {
+    setOpenTrifectaMeetings((prev) => ({
+      ...prev,
+      [meetingId]: !prev[meetingId],
     }));
-  }, [activeMeeting, punters, trifectaBetAmount]);
+  };
 
-  // Leg 4 sweat scenarios
-  const leg4SweatScenarios = useMemo(() => {
-    if (!quaddieEval || quaddieEval.legs.length < 4) return [];
-    return computeQuaddieLeg4SweatScenarios(quaddieEval);
-  }, [quaddieEval]);
+  const expandAllTrifectas = () => {
+    const next: Record<string, boolean> = {};
+    meetings.forEach((m) => {
+      next[m.id] = true;
+    });
+    setOpenTrifectaMeetings(next);
+  };
 
-  // Collect all distinct horse selections made by registered syndicate members for the active race
-  const allUsersTipsForRace = useMemo(() => {
-    if (!activeMeeting || !activeRace) return [];
-    const set = new Set<number>();
+  const collapseAllTrifectas = () => {
+    setOpenTrifectaMeetings({});
+  };
+
+  // State for which race is currently being customized (raceKey: "meetingId_R{no}")
+  const [editingRaceKey, setEditingRaceKey] = useState<string | null>(null);
+
+  // Editor form state for the currently customized race
+  const [editorFirst, setEditorFirst] = useState<number[]>([]);
+  const [editorSecond, setEditorSecond] = useState<number[]>([]);
+  const [editorThird, setEditorThird] = useState<number[]>([]);
+  const [editorStandoutPos, setEditorStandoutPos] = useState<1 | 2 | 3 | null>(null);
+  const [editorStandoutTab, setEditorStandoutTab] = useState<number | null>(null);
+
+  const startEditingRace = (
+    raceKey: string,
+    evalObj: CombinedRaceTrifectaEvaluation
+  ) => {
+    if (editingRaceKey === raceKey) {
+      setEditingRaceKey(null);
+      return;
+    }
+    const saved = customConfigs[raceKey];
+    if (saved) {
+      setEditorFirst(saved.firstPicks || []);
+      setEditorSecond(saved.secondPicks || []);
+      setEditorThird(saved.thirdPicks || []);
+      setEditorStandoutPos(saved.standoutPosition ?? null);
+      setEditorStandoutTab(saved.standoutTab ?? null);
+    } else {
+      setEditorFirst(evalObj.positionPicks.first);
+      setEditorSecond(evalObj.positionPicks.second);
+      setEditorThird(evalObj.positionPicks.third);
+      setEditorStandoutPos(evalObj.standoutPosition ?? null);
+      setEditorStandoutTab(evalObj.standoutRunner?.tabNumber ?? null);
+    }
+    setEditingRaceKey(raceKey);
+  };
+
+  const saveCustomRace = (raceKey: string) => {
+    const isStandout = Boolean(editorStandoutPos && editorStandoutTab);
+    const config: CustomTrifectaRaceConfig = {
+      mode: isStandout ? "standout_placing" : "flexi_positions",
+      firstPicks: editorFirst,
+      secondPicks: editorSecond,
+      thirdPicks: editorThird,
+      standoutPosition: editorStandoutPos ?? undefined,
+      standoutTab: editorStandoutTab ?? undefined,
+    };
+    setCustomConfigs((prev) => {
+      const next = { ...prev, [raceKey]: config };
+      try {
+        localStorage.setItem(
+          "turfsheet_custom_trifecta_configs_v1",
+          JSON.stringify(next)
+        );
+      } catch {}
+      return next;
+    });
+    setEditingRaceKey(null);
+    if (onTriggerToast) {
+      onTriggerToast(`✓ Custom Trifecta Saved & Active for ${raceKey}`);
+    }
+  };
+
+  const revertCustomRace = (raceKey: string) => {
+    setCustomConfigs((prev) => {
+      const next = { ...prev };
+      delete next[raceKey];
+      try {
+        localStorage.setItem(
+          "turfsheet_custom_trifecta_configs_v1",
+          JSON.stringify(next)
+        );
+      } catch {}
+      return next;
+    });
+    setEditingRaceKey(null);
+    if (onTriggerToast) {
+      onTriggerToast(`↺ Reverted to Concatenated Syndicate Consensus`);
+    }
+  };
+
+  const handleToggleEditor1st = (tab: number) => {
+    setEditorFirst((prev) => {
+      const next = prev.includes(tab) ? prev.filter((t) => t !== tab) : [...prev, tab];
+      if (editorStandoutPos === 1 && editorStandoutTab === tab) {
+        setEditorStandoutPos(null);
+        setEditorStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleEditor2nd = (tab: number) => {
+    setEditorSecond((prev) => {
+      const next = prev.includes(tab) ? prev.filter((t) => t !== tab) : [...prev, tab];
+      if (editorStandoutPos === 2 && editorStandoutTab === tab) {
+        setEditorStandoutPos(null);
+        setEditorStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleEditor3rd = (tab: number) => {
+    setEditorThird((prev) => {
+      const next = prev.includes(tab) ? prev.filter((t) => t !== tab) : [...prev, tab];
+      if (editorStandoutPos === 3 && editorStandoutTab === tab) {
+        setEditorStandoutPos(null);
+        setEditorStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  const handleEditorStandout = (pos: 1 | 2 | 3, tab: number) => {
+    if (editorStandoutPos === pos && editorStandoutTab === tab) {
+      setEditorStandoutPos(null);
+      setEditorStandoutTab(null);
+    } else {
+      setEditorStandoutPos(pos);
+      setEditorStandoutTab(tab);
+      if (pos === 1) setEditorFirst([tab]);
+      if (pos === 2) setEditorSecond([tab]);
+      if (pos === 3) setEditorThird([tab]);
+    }
+  };
+
+  const editorPermutations = useMemo(() => {
+    if (!editingRaceKey) return { count: 0, combos: [] };
+    const combos: Array<[number, number, number]> = [];
+    for (const f of editorFirst) {
+      for (const s of editorSecond) {
+        if (s === f) continue;
+        for (const t of editorThird) {
+          if (t === f || t === s) continue;
+          combos.push([f, s, t]);
+        }
+      }
+    }
+    return {
+      combos,
+      count: combos.length,
+    };
+  }, [editingRaceKey, editorFirst, editorSecond, editorThird]);
+
+  const editorFlexiPercentage = useMemo(() => {
+    if (editorPermutations.count === 0) return 0;
+    return (trifectaBetAmount / editorPermutations.count) * 100;
+  }, [trifectaBetAmount, editorPermutations.count]);
+
+  const getPunterSelectionsForRaceText = (meetingId: string, raceNumber: number) => {
+    const parts: string[] = [];
     punters.forEach((punter) => {
-      const trio = punter.selectionsByMeeting?.[activeMeeting.id]?.[activeRace.raceNumber];
-      if (trio) {
-        if (trio.firstPref) set.add(trio.firstPref);
-        if (trio.secondPref) set.add(trio.secondPref);
-        if (trio.thirdPref) set.add(trio.thirdPref);
+      const trio = punter.selectionsByMeeting?.[meetingId]?.[raceNumber];
+      if (trio && (trio.firstPref || trio.secondPref || trio.thirdPref)) {
+        const picks: string[] = [];
+        if (trio.firstPref) picks.push(`#${trio.firstPref}`);
+        if (trio.secondPref) picks.push(`#${trio.secondPref}`);
+        if (trio.thirdPref) picks.push(`#${trio.thirdPref}`);
+        parts.push(`${punter.name}: [${picks.join(", ")}]`);
       }
     });
-    return Array.from(set);
-  }, [punters, activeMeeting?.id, activeRace?.raceNumber]);
+    return parts.length > 0 ? parts.join(" · ") : "Market consensus fallback";
+  };
 
-  // Trifecta mode customization state for active race (Default: flexi_combined)
-  const [customTrifectaMode, setCustomTrifectaMode] =
-    useState<TrifectaBetType>("flexi_combined");
+  // Evaluate Quaddies across ALL meetings that have >= 4 races
+  const allQuaddieEvals = useMemo(() => {
+    return meetings
+      .filter((m) => m.races && m.races.length >= 4)
+      .map((meeting) => {
+        const evaluation = evaluateCombinedQuaddieForMeeting(
+          meeting,
+          punters,
+          quaddieExtraByMeeting[meeting.id] || {},
+          quaddieBuyInPerUser
+        );
+        return {
+          meeting,
+          evaluation,
+          sweatScenarios: computeQuaddieLeg4SweatScenarios(evaluation),
+        };
+      });
+  }, [meetings, punters, quaddieExtraByMeeting, quaddieBuyInPerUser]);
+
+  // Collapsible state for Quaddie meeting accordions
+  const [openQuaddieMeetings, setOpenQuaddieMeetings] = useState<
+    Record<string, boolean>
+  >(() => {
+    return selectedMeetingId ? { [selectedMeetingId]: true } : {};
+  });
+
+  // Keep active meeting expanded when user switches meeting
+  useEffect(() => {
+    if (selectedMeetingId) {
+      setOpenQuaddieMeetings((prev) => ({
+        ...prev,
+        [selectedMeetingId]: true,
+      }));
+    }
+  }, [selectedMeetingId]);
+
+  const toggleQuaddieMeeting = (meetingId: string) => {
+    setOpenQuaddieMeetings((prev) => ({
+      ...prev,
+      [meetingId]: !prev[meetingId],
+    }));
+  };
+
+  const expandAllQuaddies = () => {
+    const allOpen: Record<string, boolean> = {};
+    allQuaddieEvals.forEach((q) => {
+      allOpen[q.meeting.id] = true;
+    });
+    setOpenQuaddieMeetings(allOpen);
+  };
+
+  const collapseAllQuaddies = () => {
+    setOpenQuaddieMeetings({});
+  };
+
+  // Expanded runners state for Quaddie legs keyed by `${meetingId}_leg_${legIdx}`
+  const [expandedLegs, setExpandedLegs] = useState<Record<string, boolean>>({});
+
+  // -------------------------------------------------------------------------
+  // 3-PLACE TRIFECTA STATE MANAGEMENT (1st Place, 2nd Place, 3rd Place)
+  // -------------------------------------------------------------------------
+  const [firstPlaceTabs, setFirstPlaceTabs] = useState<number[]>([]);
+  const [secondPlaceTabs, setSecondPlaceTabs] = useState<number[]>([]);
+  const [thirdPlaceTabs, setThirdPlaceTabs] = useState<number[]>([]);
+  const [standoutPosition, setStandoutPosition] = useState<1 | 2 | 3 | null>(null);
   const [standoutTab, setStandoutTab] = useState<number | null>(null);
-  const [flexiTabs, setFlexiTabs] = useState<number[]>([]);
+  // Quaddie-style Field vs Selected view toggle for each place column
+  const [expandedPlaces, setExpandedPlaces] = useState<Record<1 | 2 | 3, boolean>>({
+    1: false,
+    2: false,
+    3: false,
+  });
 
-  // Apply Flexi Combined selections with auto sub-$1.90 standard banker rule
-  const applyFlexiCombined = React.useCallback(() => {
-    if (!activeRace) return;
+  // Active sub-1.90 favourite in current race
+  const activeSub19 = useMemo(() => {
+    if (!activeRace) return null;
+    return (
+      activeRace.runners.find((r) => {
+        if (isRunnerScratched(r)) return false;
+        const w = Number(r.fixedWin || r.nswTabWin);
+        return Number.isFinite(w) && w > 0 && w < 1.9;
+      }) || null
+    );
+  }, [activeRace]);
+
+  // Contributing punter selections map for the active race
+  // maps runner tabNumber -> array of { punterName, pref: 1|2|3 }
+  const runnerPunterPicks = useMemo(() => {
+    const map = new Map<number, Array<{ punterName: string; pref: 1 | 2 | 3 }>>();
+    if (!activeMeeting || !activeRace) return map;
+
+    punters.forEach((punter) => {
+      const trio =
+        punter.selectionsByMeeting?.[activeMeeting.id]?.[activeRace.raceNumber];
+      if (trio) {
+        if (trio.firstPref) {
+          const arr = map.get(trio.firstPref) || [];
+          arr.push({ punterName: punter.name, pref: 1 });
+          map.set(trio.firstPref, arr);
+        }
+        if (trio.secondPref) {
+          const arr = map.get(trio.secondPref) || [];
+          arr.push({ punterName: punter.name, pref: 2 });
+          map.set(trio.secondPref, arr);
+        }
+        if (trio.thirdPref) {
+          const arr = map.get(trio.thirdPref) || [];
+          arr.push({ punterName: punter.name, pref: 3 });
+          map.set(trio.thirdPref, arr);
+        }
+      }
+    });
+    return map;
+  }, [punters, activeMeeting, activeRace]);
+
+  // Concatenated user selections per race summary
+  const concatenatedPunterSelectionsSummary = useMemo(() => {
+    if (!activeMeeting || !activeRace) return "";
+    const parts: string[] = [];
+    punters.forEach((punter) => {
+      const trio =
+        punter.selectionsByMeeting?.[activeMeeting.id]?.[activeRace.raceNumber];
+      if (trio && (trio.firstPref || trio.secondPref || trio.thirdPref)) {
+        const picks: string[] = [];
+        if (trio.firstPref) picks.push(`#${trio.firstPref} (1st)`);
+        if (trio.secondPref) picks.push(`#${trio.secondPref} (2nd)`);
+        if (trio.thirdPref) picks.push(`#${trio.thirdPref} (3rd)`);
+        parts.push(`${punter.name}: [${picks.join(", ")}]`);
+      }
+    });
+    return parts.join(" · ");
+  }, [punters, activeMeeting, activeRace]);
+
+  // Apply default Consensus / Auto-Banker setup for current race
+  const applyConsensusSetup = useCallback(() => {
+    if (!activeRace || !activeMeeting) return;
     const sorted = [...activeRace.runners]
       .filter((r) => !isRunnerScratched(r))
       .sort((a, b) => {
@@ -193,1158 +617,2009 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
       return Number.isFinite(w) && w > 0 && w < 1.9;
     });
 
-    const tips =
-      allUsersTipsForRace.length >= 2
-        ? allUsersTipsForRace
-        : sorted.slice(0, 4).map((r) => r.tabNumber);
+    // All concatenated user selections across all syndicate members
+    const tippedTabs = Array.from(runnerPunterPicks.keys());
 
     if (sub19) {
-      // TRIGGER AUTO SELECTION OF THE STANDARD BANKER RULE
+      // Automatic banker rule: Extreme favourite (< $1.90) anchored as 1st place standout
+      setFirstPlaceTabs([sub19.tabNumber]);
+      setStandoutPosition(1);
       setStandoutTab(sub19.tabNumber);
-      const remaining = tips.filter((t) => t !== sub19.tabNumber);
-      const safeRemaining =
-        remaining.length >= 2
-          ? remaining
-          : sorted
-              .filter((r) => r.tabNumber !== sub19.tabNumber)
-              .slice(0, 3)
-              .map((r) => r.tabNumber);
-      setFlexiTabs(safeRemaining);
+
+      const remainingTips = tippedTabs.filter((t) => t !== sub19.tabNumber);
+      let safeRemaining = remainingTips;
+      if (safeRemaining.length < 2) {
+        const fillers = sorted
+          .filter(
+            (r) =>
+              r.tabNumber !== sub19.tabNumber && !safeRemaining.includes(r.tabNumber)
+          )
+          .slice(0, 2 - safeRemaining.length)
+          .map((r) => r.tabNumber);
+        safeRemaining = [...safeRemaining, ...fillers];
+      }
+
+      setSecondPlaceTabs(safeRemaining);
+      setThirdPlaceTabs(safeRemaining);
     } else {
+      // Default: Concatenate and add all user selections across all placings as a Flexi Bet
+      // Supports any number of selections (can be greater than 3 horses)
+      let pooledTabs = tippedTabs;
+      if (pooledTabs.length < 3) {
+        const fillers = sorted
+          .filter((r) => !pooledTabs.includes(r.tabNumber))
+          .slice(0, 3 - pooledTabs.length)
+          .map((r) => r.tabNumber);
+        pooledTabs = [...pooledTabs, ...fillers];
+      }
+
+      setFirstPlaceTabs(pooledTabs);
+      setSecondPlaceTabs(pooledTabs);
+      setThirdPlaceTabs(pooledTabs);
+      setStandoutPosition(null);
       setStandoutTab(null);
-      setFlexiTabs(
-        tips.length >= 3 ? tips : sorted.slice(0, 4).map((r) => r.tabNumber)
-      );
     }
-  }, [activeRace, allUsersTipsForRace]);
+  }, [activeRace, activeMeeting, runnerPunterPicks]);
 
-  // Synchronize initial trifecta selections when active race changes
-  React.useEffect(() => {
-    if (!activeRace) return;
-    const sorted = [...activeRace.runners]
-      .filter((r) => !isRunnerScratched(r))
-      .sort((a, b) => {
-        const oA = Number(a.fixedWin || a.nswTabWin) || 99;
-        const oB = Number(b.fixedWin || b.nswTabWin) || 99;
-        return oA - oB;
-      });
+  // Synchronize or load trifecta selections when active race or meeting changes
+  useEffect(() => {
+    if (!activeRace || !activeMeeting) return;
+    setIsCustomizing(false);
+    const raceKey = `${activeMeeting.id}_R${activeRace.raceNumber}`;
+    const saved = customConfigs[raceKey];
 
-    // Check if sub-$1.90 favourite exists
-    const sub19 = sorted.find((r) => {
-      const w = Number(r.fixedWin || r.nswTabWin);
-      return Number.isFinite(w) && w > 0 && w < 1.9;
-    });
+    if (saved) {
+      setStandoutPosition(saved.standoutPosition ?? (saved.standoutTab ? 1 : null));
+      setStandoutTab(saved.standoutTab ?? null);
+      setFirstPlaceTabs(saved.firstPicks || []);
+      setSecondPlaceTabs(saved.secondPicks || []);
+      setThirdPlaceTabs(saved.thirdPicks || []);
+    } else {
+      applyConsensusSetup();
+    }
+  }, [activeRace?.raceNumber, activeMeeting?.id, customConfigs, applyConsensusSetup]);
 
-    if (customTrifectaMode === "flexi_combined") {
-      applyFlexiCombined();
-    } else if (sub19) {
-      // Auto-trigger standard banker rule
-      setStandoutTab(sub19.tabNumber);
-      const others = sorted
-        .filter((r) => r.tabNumber !== sub19.tabNumber)
-        .slice(0, 3)
-        .map((r) => r.tabNumber);
-      setFlexiTabs(others);
-    } else if (customTrifectaMode === "flexi_standout") {
-      if (sorted[0]) {
-        setStandoutTab(sorted[0].tabNumber);
-        setFlexiTabs(sorted.slice(1, 4).map((r) => r.tabNumber));
+  // Compute Trifecta permutations across 1st, 2nd, and 3rd place columns
+  const trifectaPermutations = useMemo(() => {
+    const combos: Array<[number, number, number]> = [];
+    for (const f of firstPlaceTabs) {
+      for (const s of secondPlaceTabs) {
+        if (s === f) continue;
+        for (const t of thirdPlaceTabs) {
+          if (t === f || t === s) continue;
+          combos.push([f, s, t]);
+        }
       }
     }
-  }, [activeRace?.raceNumber, activeMeeting?.id, customTrifectaMode, applyFlexiCombined]);
+    return {
+      combos,
+      count: combos.length,
+    };
+  }, [firstPlaceTabs, secondPlaceTabs, thirdPlaceTabs]);
 
-  if (!activeMeeting) {
+  // Calculated Flexi Metrics for the custom ticket
+  const flexiPercentage = useMemo(() => {
+    if (trifectaPermutations.count === 0) return 0;
+    return (trifectaBetAmount / trifectaPermutations.count) * 100;
+  }, [trifectaBetAmount, trifectaPermutations.count]);
+
+  // Unique horses count across all 3 positions
+  const uniqueHorsesCount = useMemo(() => {
+    return new Set([...firstPlaceTabs, ...secondPlaceTabs, ...thirdPlaceTabs]).size;
+  }, [firstPlaceTabs, secondPlaceTabs, thirdPlaceTabs]);
+
+  const activeRaceKey = `${activeMeeting?.id || ""}_R${activeRace?.raceNumber || 1}`;
+  const isCurrentRaceConfirmed = Boolean(customConfigs[activeRaceKey]);
+
+  // Toggle runner in 1st Place
+  const handleToggle1stPlace = (tabNumber: number) => {
+    if (activeSub19 && activeSub19.tabNumber === tabNumber && standoutPosition === 1) {
+      if (onTriggerToast) {
+        onTriggerToast(
+          `⚡ Auto-Banker Locked: #${tabNumber} has odds < $1.90 and is anchored in 1st Place.`
+        );
+      }
+      return;
+    }
+    setFirstPlaceTabs((prev) => {
+      const next = prev.includes(tabNumber)
+        ? prev.filter((t) => t !== tabNumber)
+        : [...prev, tabNumber];
+      if (standoutPosition === 1 && standoutTab === tabNumber) {
+        setStandoutPosition(null);
+        setStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  // Toggle runner in 2nd Place
+  const handleToggle2ndPlace = (tabNumber: number) => {
+    setSecondPlaceTabs((prev) => {
+      const next = prev.includes(tabNumber)
+        ? prev.filter((t) => t !== tabNumber)
+        : [...prev, tabNumber];
+      if (standoutPosition === 2 && standoutTab === tabNumber) {
+        setStandoutPosition(null);
+        setStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  // Toggle runner in 3rd Place
+  const handleToggle3rdPlace = (tabNumber: number) => {
+    setThirdPlaceTabs((prev) => {
+      const next = prev.includes(tabNumber)
+        ? prev.filter((t) => t !== tabNumber)
+        : [...prev, tabNumber];
+      if (standoutPosition === 3 && standoutTab === tabNumber) {
+        setStandoutPosition(null);
+        setStandoutTab(null);
+      }
+      return next;
+    });
+  };
+
+  // Set Standout for a specific place position
+  const handleSelectStandout = (position: 1 | 2 | 3, tabNumber: number) => {
+    if (standoutPosition === position && standoutTab === tabNumber) {
+      // Deselect standout
+      setStandoutPosition(null);
+      setStandoutTab(null);
+      return;
+    }
+
+    setStandoutPosition(position);
+    setStandoutTab(tabNumber);
+
+    if (position === 1) {
+      setFirstPlaceTabs([tabNumber]);
+    } else if (position === 2) {
+      setSecondPlaceTabs([tabNumber]);
+    } else if (position === 3) {
+      setThirdPlaceTabs([tabNumber]);
+    }
+  };
+
+  // Confirm and persist custom trifecta configuration
+  const handleConfirmTrifecta = () => {
+    if (!activeMeeting || !activeRace) return;
+    if (trifectaPermutations.count === 0) {
+      if (onTriggerToast) {
+        onTriggerToast(
+          "⚠️ Please select at least one runner in 1st, 2nd, and 3rd place."
+        );
+      }
+      return;
+    }
+
+    const raceKey = `${activeMeeting.id}_R${activeRace.raceNumber}`;
+    const newConfig: CustomTrifectaRaceConfig = {
+      mode: standoutPosition ? "standout_placing" : "flexi_positions",
+      standoutTab: standoutTab,
+      standoutPosition: standoutPosition || undefined,
+      firstPicks: firstPlaceTabs,
+      secondPicks: secondPlaceTabs,
+      thirdPicks: thirdPlaceTabs,
+      customStake: trifectaBetAmount,
+    };
+
+    const updated = {
+      ...customConfigs,
+      [raceKey]: newConfig,
+    };
+    setCustomConfigs(updated);
+
+    try {
+      localStorage.setItem(
+        "turfsheet_custom_trifecta_configs_v1",
+        JSON.stringify(updated)
+      );
+      window.dispatchEvent(new Event("storage"));
+    } catch (err) {
+      console.error("Failed to save custom trifecta config:", err);
+    }
+
+    setIsCustomizing(false);
+    if (onTriggerToast) {
+      onTriggerToast(
+        `✓ Custom Trifecta Saved & Active: ${activeMeeting.venue} R${activeRace.raceNumber} ($${trifectaBetAmount} Stake · ${trifectaPermutations.count} Combos · ${flexiPercentage.toFixed(2)}% Flexi)`
+      );
+    }
+  };
+
+  // Reset to syndicate consensus
+  const handleResetTrifecta = () => {
+    if (!activeMeeting || !activeRace) return;
+    const raceKey = `${activeMeeting.id}_R${activeRace.raceNumber}`;
+    const updated = { ...customConfigs };
+    delete updated[raceKey];
+    setCustomConfigs(updated);
+
+    try {
+      localStorage.setItem(
+        "turfsheet_custom_trifecta_configs_v1",
+        JSON.stringify(updated)
+      );
+      window.dispatchEvent(new Event("storage"));
+    } catch (err) {
+      console.error("Failed to reset trifecta config:", err);
+    }
+
+    applyConsensusSetup();
+    setIsCustomizing(false);
+    if (onTriggerToast) {
+      onTriggerToast(
+        `Reset Trifecta for Race ${activeRace.raceNumber} to Syndicate Consensus (Active & Final).`
+      );
+    }
+  };
+
+  // KPI Pool Aggregations across active meeting
+  const trifectaHitsCount = allTrifectaEvals.filter(
+    (e) => e.evaluation.isCombinedBoxedTrifectaHit
+  ).length;
+  const totalTrifectaPoolStaked = allTrifectaEvals.length * trifectaBetAmount;
+  const totalTrifectaPoolCollected = allTrifectaEvals.reduce(
+    (acc, e) => acc + (e.evaluation.customBetFlexiReturn || 0),
+    0
+  );
+
+  const totalQuaddieStakedAll = allQuaddieEvals.reduce(
+    (acc, q) => acc + q.evaluation.quaddieBetAmount,
+    0
+  );
+  const totalQuaddieCollectedAll = allQuaddieEvals.reduce(
+    (acc, q) => acc + (q.evaluation.isQuaddieWon ? q.evaluation.wonQuaddieReturn : 0),
+    0
+  );
+
+  const totalExoticsStaked = totalTrifectaPoolStaked + totalQuaddieStakedAll;
+  const totalExoticsCollected = totalTrifectaPoolCollected + totalQuaddieCollectedAll;
+
+  if (!activeMeeting || !activeRace) {
     return (
       <div className="p-8 text-center text-[#8A9990] font-mono">
-        No active race meetings available.
+        No active race meetings available for Exotics analysis.
       </div>
     );
   }
 
-  const trifectaHitsCount = allTrifectaEvals.filter(
-    (e) => e.evaluation.isCombinedBoxedTrifectaHit
-  ).length;
-
-  const totalTrifectaPoolStaked = allTrifectaEvals.length * trifectaBetAmount;
-  const totalTrifectaPoolCollected = allTrifectaEvals.reduce(
-    (sum, e) => sum + e.evaluation.customBetFlexiReturn,
-    0
-  );
-
-  const quaddieStaked = quaddieEval ? quaddieEval.quaddieBetAmount : 0;
-  const quaddieCollected = quaddieEval?.isQuaddieWon ? quaddieEval.wonQuaddieReturn : 0;
-
-  const totalExoticsStaked = totalTrifectaPoolStaked + quaddieStaked;
-  const totalExoticsCollected = totalTrifectaPoolCollected + quaddieCollected;
-  const netExoticsProfit = totalExoticsCollected - totalExoticsStaked;
-
   return (
-    <div className="space-y-6 pb-20 animate-fade-in font-sans">
+    <div className="space-y-8 animate-in fade-in duration-200">
       {/* ====================================================================
-          APPLE-STYLE BENTO HERO: EXOTICS CONTROL DESK
+          TOP HERO KPI BENTO STRIP
          ==================================================================== */}
-      <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-[#1E2E25] pb-6">
+      <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#10B981]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1E2E25] pb-5 relative z-10">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono font-bold tracking-wider uppercase">
-                <Target className="w-3.5 h-3.5" />
-                Exotics Studio
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-xs font-bold uppercase tracking-wider">
+                TurfSheet Exotics Matrix
               </span>
               <span className="text-xs text-[#8A9990] font-mono">
-                Pari-Mutuel &amp; Flexi Suite
+                {activeMeeting.venue} ({activeMeeting.state || "AU"}) · {activeMeeting.date}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-[#F3F4F0] tracking-tight">
-              Syndicate Trifectas &amp; Quaddies
+            <h1 className="text-2xl sm:text-3xl font-display font-black text-[#F3F4F0] mt-1 tracking-tight">
+              Syndicate Trifectas &amp; Quaddies Studio
             </h1>
-            <p className="text-sm text-[#8A9990] mt-1 max-w-2xl leading-relaxed">
-              Curate, customize, and sweat multi-leg exotic wagers with unified TAB Flexi calculations, automatic sub-$1.90 standout banker logic, and real-time combination multipliers.
+            <p className="text-xs sm:text-sm text-[#8A9990] font-mono mt-1">
+              Position-by-position 3-place Trifecta builder with auto-banker low-odds rule, multi-meeting Quaddie matrices, and live Flexi yield calculations.
             </p>
           </div>
 
-          {/* Apple Segmented Control */}
-          <div className="flex items-center gap-1 bg-[#080D0B] p-1.5 rounded-2xl border border-[#1E2E25] self-start lg:self-center">
-            <button
-              type="button"
-              onClick={() => setActiveFilter("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeFilter === "all"
-                  ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-md"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>All Exotics</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("trifectas")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeFilter === "trifectas"
-                  ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-md"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
-              }`}
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Trifectas</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("quaddies")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeFilter === "quaddies"
-                  ? "bg-[#10B981] text-[#070B09] font-bold shadow-md"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>Quaddies (4 Legs)</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto">
+            {/* Quick Sub-Filter: All / Trifectas / Quaddies */}
+            <div className="flex items-center gap-1.5 bg-[#080D0B] p-1.5 rounded-2xl border border-[#1E2E25]">
+              <button
+                type="button"
+                onClick={() => setActiveFilter("all")}
+                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeFilter === "all"
+                    ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-black"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>All Exotics</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("trifectas")}
+                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeFilter === "trifectas"
+                    ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-black"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>Trifectas (3-Place)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("quaddies")}
+                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeFilter === "quaddies"
+                    ? "bg-[#10B981] text-[#070B09] shadow-sm font-black"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Quaddies ({allQuaddieEvals.length})</span>
+              </button>
+            </div>
+
+            {/* Participated Races Filter Toggle */}
+            <div className="flex items-center gap-1.5 bg-[#080D0B] p-1.5 rounded-2xl border border-[#1E2E25]">
+              <button
+                type="button"
+                onClick={() => setShowAllRaces((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  !showAllRaces
+                    ? "bg-[#152920] border border-[#10B981]/60 text-[#10B981] shadow-sm font-black"
+                    : "bg-[#0E1512] text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+                title={
+                  !showAllRaces
+                    ? "Filtered to participated races only. Click to view all scheduled races."
+                    : "Showing all scheduled races. Click to filter to syndicate participated races."
+                }
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span>
+                  {!showAllRaces
+                    ? "Participated Races Only"
+                    : "Showing All Races · Switch to Tipped"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Meeting Selector Ribbon & KPI Bento Strip */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          {/* Tile 1: Venue Selector */}
-          <div className="p-4 rounded-2xl bg-[#121C17]/80 border border-[#23352B] flex flex-col justify-between">
-            <span className="text-xs font-mono text-[#8A9990] uppercase tracking-wider">
-              Selected Venue
+        {/* 4 Financial & Hit KPI Bento Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-5 relative z-10">
+          <div className="p-4 rounded-2xl bg-[#080D0B]/80 border border-[#1E2E25]">
+            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+              Total Exotics Outlay
             </span>
-            <div className="mt-2">
-              <select
-                aria-label="Select Venue"
-                value={activeMeeting.id}
-                onChange={(e) => onSelectMeeting(e.target.value)}
-                className="w-full bg-[#080D0B] border border-[#23352B] rounded-xl px-3 py-2 text-sm font-display font-bold text-[#F3F4F0] focus:border-[#D4AF37] outline-none cursor-pointer"
-              >
-                {meetings.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.venue} ({m.state}) · {m.races.length} Races
-                  </option>
-                ))}
-              </select>
+            <div className="text-xl sm:text-2xl font-mono font-bold text-[#F3F4F0] mt-1">
+              ${totalExoticsStaked.toFixed(2)}
             </div>
-            <div className="flex items-center gap-2 mt-2 text-xs text-[#8A9990] font-mono">
-              <Calendar className="w-3 h-3 text-[#D4AF37]" />
-              <span>{activeMeeting.date}</span>
-              <span>·</span>
-              <span>{activeMeeting.trackCondition || "Good 4"}</span>
-            </div>
-          </div>
-
-          {/* Tile 2: Total Syndicate Staked */}
-          <div className="p-4 rounded-2xl bg-[#121C17]/80 border border-[#23352B] flex flex-col justify-between">
-            <span className="text-xs font-mono text-[#8A9990] uppercase tracking-wider">
-              Exotics Capital Staked
-            </span>
-            <div className="mt-1">
-              <span className="text-2xl sm:text-3xl font-display font-bold text-[#F3F4F0]">
-                ${totalExoticsStaked.toFixed(2)}
-              </span>
-              <span className="text-xs text-[#8A9990] font-mono ml-2">
-                combined
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-2 text-xs font-mono text-[#8A9990]">
+            <div className="flex items-center gap-1.5 text-[11px] text-[#8A9990] font-mono mt-1">
               <span>Trifectas: ${totalTrifectaPoolStaked}</span>
               <span>·</span>
-              <span>Quaddie: ${quaddieStaked}</span>
+              <span>Quaddies: ${totalQuaddieStakedAll.toFixed(0)}</span>
             </div>
           </div>
 
-          {/* Tile 3: Total Payout / Collect */}
-          <div className="p-4 rounded-2xl bg-[#121C17]/80 border border-[#23352B] flex flex-col justify-between">
-            <span className="text-xs font-mono text-[#8A9990] uppercase tracking-wider">
-              Exotics Return
+          <div className="p-4 rounded-2xl bg-[#080D0B]/80 border border-[#1E2E25]">
+            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+              Total Exotics Returns
             </span>
-            <div className="mt-1">
-              <span
-                className={`text-2xl sm:text-3xl font-display font-bold ${
-                  totalExoticsCollected > 0 ? "text-[#10B981]" : "text-[#D5DDD8]"
-                }`}
-              >
-                ${totalExoticsCollected.toFixed(2)}
-              </span>
-              {netExoticsProfit !== 0 && (
-                <span
-                  className={`text-xs font-mono font-bold ml-2 ${
-                    netExoticsProfit > 0 ? "text-[#10B981]" : "text-rose-400"
-                  }`}
-                >
-                  {netExoticsProfit > 0 ? `+${formatDollarReturn(netExoticsProfit)}` : formatDollarReturn(netExoticsProfit)}
+            <div
+              className={`text-xl sm:text-2xl font-mono font-bold mt-1 ${
+                totalExoticsCollected > totalExoticsStaked
+                  ? "text-[#10B981]"
+                  : "text-[#F3F4F0]"
+              }`}
+            >
+              ${totalExoticsCollected.toFixed(2)}
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] font-mono mt-1">
+              {totalExoticsCollected >= totalExoticsStaked ? (
+                <span className="text-[#10B981] flex items-center gap-0.5">
+                  <TrendingUp className="w-3 h-3" />
+                  +${(totalExoticsCollected - totalExoticsStaked).toFixed(2)} Profit
+                </span>
+              ) : (
+                <span className="text-rose-400 flex items-center gap-0.5">
+                  <TrendingDown className="w-3 h-3" />
+                  -${(totalExoticsStaked - totalExoticsCollected).toFixed(2)} Net
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-2 text-xs font-mono text-[#8A9990]">
-              <span>Hits: {trifectaHitsCount} Trifectas</span>
-              <span>·</span>
-              <span>{quaddieEval?.isQuaddieWon ? "Quaddie HIT! 🎯" : "Quaddie Pending"}</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#080D0B]/80 border border-[#1E2E25]">
+            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+              Trifecta Strike Rate
+            </span>
+            <div className="text-xl sm:text-2xl font-mono font-bold text-[#D4AF37] mt-1">
+              {trifectaHitsCount} / {allTrifectaEvals.length}
+            </div>
+            <div className="text-[11px] text-[#8A9990] font-mono mt-1">
+              {allTrifectaEvals.length > 0
+                ? `${((trifectaHitsCount / allTrifectaEvals.length) * 100).toFixed(0)}% Hit Precision`
+                : "0%"}
             </div>
           </div>
 
-          {/* Tile 4: Active Punters */}
-          <div className="p-4 rounded-2xl bg-[#121C17]/80 border border-[#23352B] flex flex-col justify-between">
-            <span className="text-xs font-mono text-[#8A9990] uppercase tracking-wider">
-              Syndicate Allocation
+          <div className="p-4 rounded-2xl bg-[#080D0B]/80 border border-[#1E2E25]">
+            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+              Active Quaddies Monitored
             </span>
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              {punters.map((p) => (
-                <span
-                  key={p.id}
-                  className="px-2 py-0.5 rounded-lg bg-[#080D0B] border border-[#23352B] text-xs font-mono text-[#D5DDD8]"
-                >
-                  {p.name.split(" ")[0]}
-                </span>
-              ))}
+            <div className="text-xl sm:text-2xl font-mono font-bold text-[#10B981] mt-1">
+              {allQuaddieEvals.filter((q) => q.evaluation.isQuaddieAlive).length} Alive
             </div>
-            <div className="mt-2 text-xs font-mono text-[#D4AF37] flex items-center justify-between">
-              <span>Buy-in: ${quaddieBuyInPerUser}/punter</span>
-              <button
-                type="button"
-                onClick={() => onJumpToSelections()}
-                className="hover:underline flex items-center gap-1 text-[#10B981] cursor-pointer"
-              >
-                <span>Edit Picks</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
+            <div className="text-[11px] text-[#8A9990] font-mono mt-1">
+              {allQuaddieEvals.length} Race Card Quaddies Total
             </div>
           </div>
         </div>
       </div>
 
       {/* ====================================================================
-          BENTO SECTION 1: COMBINED TRIFECTA SUITE
+          BENTO SECTION 1: REVISED 3-PLACE TRIFECTA MATRIX (Quaddie-Style Layout)
          ==================================================================== */}
-      {(activeFilter === "all" || activeFilter === "trifectas") && activeRace && (
-        <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#1E2E25] pb-5">
+      {(activeFilter === "all" || activeFilter === "trifectas") && (
+        <div className="space-y-4">
+          {/* Section Header with Expand / Collapse, Stake & Guide Controls */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-1">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-xs font-bold uppercase">
-                  Trifecta Suite
+                  All Active Card Trifectas ({allMeetingTrifectaEvals.length})
                 </span>
                 <span className="text-xs text-[#8A9990] font-mono">
-                  Race {activeRace.raceNumber} of {activeMeeting.races.length}
+                  {allMeetingTrifectaEvals.reduce((sum, m) => sum + m.totalWon, 0)} Won · Place-Agnostic Concatenation · Default ${trifectaBetAmount} Flexi
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-display font-bold text-[#F3F4F0] mt-1">
-                Race {activeRace.raceNumber}: {activeRace.raceName}
+                Syndicate Concatenated Trifecta Accordions
               </h2>
-              <p className="text-xs text-[#8A9990] font-mono mt-0.5">
-                Jumps {activeRace.startTime} · {activeRace.distance}m · Track: {activeMeeting.trackCondition || "Good 4"} · Rail: {activeMeeting.railPosition || "True"}
-              </p>
             </div>
 
-            {/* Race Quick Switcher Ribbon */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-              {activeMeeting.races.map((r) => {
-                const isSelected = r.raceNumber === activeRace.raceNumber;
-                return (
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Default Stake Quick Selector */}
+              <div className="flex items-center gap-1 bg-[#0E1512] border border-[#1E2E25] p-1 rounded-xl">
+                <span className="text-[10px] font-mono text-[#8A9990] px-1.5 font-bold">
+                  Stake:
+                </span>
+                {[10, 20, 50].map((amt) => (
                   <button
-                    key={r.raceNumber}
+                    key={amt}
                     type="button"
-                    onClick={() => setSelectedRaceNo(r.raceNumber)}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer shrink-0 ${
-                      isSelected
-                        ? "bg-[#D4AF37] text-[#070B09] shadow-sm"
-                        : "bg-[#121C17] text-[#8A9990] border border-[#23352B] hover:text-[#F3F4F0]"
+                    onClick={() => onChangeTrifectaBetAmount(amt)}
+                    className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition cursor-pointer ${
+                      trifectaBetAmount === amt
+                        ? "bg-[#D4AF37] text-[#070B09] font-black"
+                        : "text-[#8A9990] hover:text-[#F3F4F0]"
                     }`}
                   >
-                    R{r.raceNumber}
+                    ${amt}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+
+              {/* Trade-Off Curve Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowCombinationsChart((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  showCombinationsChart
+                    ? "bg-[#10B981]/20 border border-[#10B981]/50 text-[#10B981]"
+                    : "bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+                title="Toggle dynamic Recharts curve of combination growth and cost-to-coverage trade-off"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>{showCombinationsChart ? "Hide Chart" : "Trade-Off Chart"}</span>
+              </button>
+
+              {/* Verified Bookmaker Flexi Guide Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowFlexiReference((prev) => !prev)}
+                className="px-3 py-1.5 rounded-xl bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0] font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                title="View verified Sportsbet and TAB Flexi calculation tables"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{showFlexiReference ? "Hide Guide" : "Flexi % Guide"}</span>
+              </button>
+
+              {/* Expand / Collapse All Meetings */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={expandAllTrifectas}
+                  className="px-3 py-1.5 rounded-xl bg-[#121E18] border border-[#23352B] hover:border-[#D4AF37]/50 text-xs font-mono font-bold text-[#D5DDD8] transition cursor-pointer"
+                >
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAllTrifectas}
+                  className="px-3 py-1.5 rounded-xl bg-[#121E18] border border-[#23352B] hover:border-rose-900/50 text-xs font-mono font-bold text-[#8A9990] hover:text-[#F3F4F0] transition cursor-pointer"
+                >
+                  Collapse All
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Bento Grid: Trifecta Customizer + Calculations */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2 Cols: Mode Selection & Runner Matrix */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Mode Toggle Controls */}
-              <div className="p-4 rounded-2xl bg-[#121C17]/90 border border-[#23352B] space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#D4AF37]">
-                    Trifecta Construction Mode
+          {/* -----------------------------------------------------------------
+              DYNAMIC RECHARTS COMBINATIONS GROWTH & COST-TO-COVERAGE CHART
+             ----------------------------------------------------------------- */}
+          {showCombinationsChart && (
+            <div className="animate-in fade-in duration-200">
+              <TrifectaCombinationsChart
+                currentHorsesCount={uniqueHorsesCount}
+                currentCombosCount={trifectaPermutations.count}
+                currentFlexiPct={flexiPercentage}
+                stake={trifectaBetAmount}
+                isStandoutActive={Boolean(standoutPosition && standoutTab)}
+                standoutHorseName={
+                  activeRace.runners.find((r) => r.tabNumber === standoutTab)?.horseName
+                }
+                fieldSize={
+                  activeRace.runners.filter((r) => !isRunnerScratched(r)).length || 12
+                }
+              />
+            </div>
+          )}
+
+          {/* -----------------------------------------------------------------
+              EXPANDABLE VERIFIED BOOKMAKER FLEXI REFERENCE TABLE (SPORTSBET / TAB)
+             ----------------------------------------------------------------- */}
+          {showFlexiReference && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#09110D] border border-[#23352B] space-y-4 font-mono text-xs animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#1E2E25]">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#D4AF37]" />
+                  <span className="font-bold text-[#F3F4F0] text-sm">
+                    Sportsbet &amp; TAB Australia Verified Flexi &amp; Combinations Table
                   </span>
-                  <div className="flex items-center gap-1 bg-[#080D0B] p-1 rounded-xl border border-[#1E2E25]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomTrifectaMode("flexi_combined");
-                        applyFlexiCombined();
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                        customTrifectaMode === "flexi_combined"
-                          ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
-                      }`}
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>Flexi Combined</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCustomTrifectaMode("flexi_standout")}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer ${
-                        customTrifectaMode === "flexi_standout"
-                          ? "bg-[#D4AF37] text-[#070B09] font-bold"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
-                      }`}
-                    >
-                      Standout Banker
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCustomTrifectaMode("flexi_boxed")}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer ${
-                        customTrifectaMode === "flexi_boxed"
-                          ? "bg-[#D4AF37] text-[#070B09] font-bold"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
-                      }`}
-                    >
-                      Boxed
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCustomTrifectaMode("roving_banker")}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition cursor-pointer ${
-                        customTrifectaMode === "roving_banker"
-                          ? "bg-[#D4AF37] text-[#070B09] font-bold"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
-                      }`}
-                    >
-                      Roving Banker
-                    </button>
+                </div>
+                <span className="text-[10px] text-[#10B981] font-bold">
+                  Formula: Flexi % = (Stake / Combinations) × 100%
+                </span>
+              </div>
+
+              <p className="text-[11px] text-[#8A9990] leading-relaxed">
+                In real syndicate betting, pooling selections from 4 to 6 punters typically yields <strong>5 to 8 unique horses</strong> (<strong>60 to 336 combinations</strong>). Because a 100% full unit costs $60 to $336, Australian wagering operators (Sportsbet, TAB, Ladbrokes) calculate a <strong>sub-100% Flexi percentage</strong> (typically <strong>5% to 33.33%</strong>) on standard $10 to $20 syndicate stakes.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Table A: Boxed Trifectas */}
+                <div className="overflow-x-auto rounded-xl border border-[#1E2E25] bg-[#0E1512]">
+                  <div className="px-3 py-2 bg-[#121C17] border-b border-[#1E2E25] font-bold text-[#D4AF37] text-[11px] flex items-center justify-between">
+                    <span>A. Boxed Trifecta (N × (N-1) × (N-2))</span>
+                    <span className="text-[10px] text-[#8A9990]">All Tips Pooled</span>
                   </div>
+                  <table className="w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="border-b border-[#1E2E25] bg-[#080D0B] text-[#8A9990]">
+                        <th className="py-1.5 px-2">Horses</th>
+                        <th className="py-1.5 px-2 text-right">Combos</th>
+                        <th className="py-1.5 px-2 text-right">100% Unit</th>
+                        <th className="py-1.5 px-2 text-right text-[#10B981]">$10 Stake</th>
+                        <th className="py-1.5 px-2 text-right text-[#D4AF37]">$20 Stake</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#1A2620] text-[#D5DDD8]">
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">5 Horses</td>
+                        <td className="py-1.5 px-2 text-right">60</td>
+                        <td className="py-1.5 px-2 text-right">$60</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">16.67%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">33.33%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">6 Horses</td>
+                        <td className="py-1.5 px-2 text-right">120</td>
+                        <td className="py-1.5 px-2 text-right">$120</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">8.33%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">16.67%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">7 Horses</td>
+                        <td className="py-1.5 px-2 text-right">210</td>
+                        <td className="py-1.5 px-2 text-right">$210</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">4.76%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">9.52%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">8 Horses</td>
+                        <td className="py-1.5 px-2 text-right">336</td>
+                        <td className="py-1.5 px-2 text-right">$336</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">2.98%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">5.95%</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
-                {/* Sub-$1.90 favourite callout banner */}
-                {(() => {
-                  const sorted = [...activeRace.runners]
-                    .filter((r) => !isRunnerScratched(r))
-                    .sort((a, b) => (Number(a.fixedWin || a.nswTabWin) || 99) - (Number(b.fixedWin || b.nswTabWin) || 99));
-                  const fav = sorted[0];
-                  const favOdds = Number(fav?.fixedWin || fav?.nswTabWin || 0);
-                  const isSub19 = favOdds > 0 && favOdds < 1.9;
+                {/* Table B: Standout Banker Trifectas */}
+                <div className="overflow-x-auto rounded-xl border border-[#1E2E25] bg-[#0E1512]">
+                  <div className="px-3 py-2 bg-[#121C17] border-b border-[#1E2E25] font-bold text-[#10B981] text-[11px] flex items-center justify-between">
+                    <span>B. Standout Banker (&lt; $1.90 Fav Locked 1st)</span>
+                    <span className="text-[10px] text-[#8A9990]">1 × M × (M-1)</span>
+                  </div>
+                  <table className="w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="border-b border-[#1E2E25] bg-[#080D0B] text-[#8A9990]">
+                        <th className="py-1.5 px-2">Other Picks</th>
+                        <th className="py-1.5 px-2 text-right">Combos</th>
+                        <th className="py-1.5 px-2 text-right">100% Unit</th>
+                        <th className="py-1.5 px-2 text-right text-[#10B981]">$10 Stake</th>
+                        <th className="py-1.5 px-2 text-right text-[#D4AF37]">$20 Stake</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#1A2620] text-[#D5DDD8]">
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">4 Others (5H)</td>
+                        <td className="py-1.5 px-2 text-right">12</td>
+                        <td className="py-1.5 px-2 text-right">$12</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">83.33%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">166.67%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">5 Others (6H)</td>
+                        <td className="py-1.5 px-2 text-right">20</td>
+                        <td className="py-1.5 px-2 text-right">$20</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">50.00%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">100.00%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">6 Others (7H)</td>
+                        <td className="py-1.5 px-2 text-right">30</td>
+                        <td className="py-1.5 px-2 text-right">$30</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">33.33%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">66.67%</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 font-bold">7 Others (8H)</td>
+                        <td className="py-1.5 px-2 text-right">42</td>
+                        <td className="py-1.5 px-2 text-right">$42</td>
+                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">23.81%</td>
+                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">47.62%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
-                  if (isSub19) {
-                    return (
-                      <div className="p-3.5 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-start gap-3 text-xs text-[#D5DDD8] shadow-[0_4px_16px_rgba(212,175,55,0.08)]">
-                        <Flame className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-                        <div className="space-y-1">
+          {/* ====================================================================
+              ALL PARTICIPATED MEETING CARD TRIFECTAS (Collapsible Accordions)
+             ==================================================================== */}
+          <div className="space-y-4">
+            {allMeetingTrifectaEvals.map(
+              ({
+                meeting,
+                raceEvals,
+                participatedRaceEvals,
+                participatedCount,
+                totalWon,
+                totalCollect,
+                totalOutlay,
+                totalCombos,
+                isAlive,
+              }) => {
+                const isOpen = Boolean(openTrifectaMeetings[meeting.id]);
+                const displayedRaceEvals = showAllRaces
+                  ? raceEvals
+                  : participatedRaceEvals;
+
+                return (
+                  <div
+                    key={meeting.id}
+                    className={`rounded-3xl border transition-all ${
+                      totalWon > 0
+                        ? "border-[#D4AF37]/50 bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(212,175,55,0.15)]"
+                        : isAlive
+                        ? "border-white/[0.08] bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                        : "border-[#1E2E25] bg-[#0A0F0D]/90 opacity-80"
+                    }`}
+                  >
+                    {/* Accordion Trigger Header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleTrifectaMeeting(meeting.id)}
+                      className="w-full p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-left cursor-pointer hover:bg-white/[0.02] rounded-3xl transition"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 ${
+                            totalWon > 0
+                              ? "bg-[#D4AF37] text-[#070B09]"
+                              : isAlive
+                              ? "bg-[#14231B] text-[#D4AF37] border border-[#D4AF37]/50"
+                              : "bg-[#121A15] text-[#8A9990] border border-[#23352B]"
+                          }`}
+                        >
+                          {totalWon > 0 ? "🏆" : isAlive ? "🟢" : "⚪"}
+                        </div>
+
+                        <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <strong className="text-[#D4AF37]">
-                              Standard Banker Rule Auto-Triggered:
-                            </strong>
-                            <span className="px-1.5 py-0.2 rounded bg-[#D4AF37] text-[#070B09] font-mono font-black text-[10px]">
-                              FAV &lt; $1.90
+                            <span className="font-display font-bold text-base sm:text-lg text-[#F3F4F0]">
+                              {meeting.venue} ({meeting.state || "AU"})
                             </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold uppercase ${
+                                totalWon > 0
+                                  ? "bg-[#D4AF37] text-[#070B09]"
+                                  : isAlive
+                                  ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40"
+                                  : "bg-[#14231B] text-[#8A9990]"
+                              }`}
+                            >
+                              {totalWon > 0
+                                ? `STATUS: ${totalWon} WON ✓`
+                                : isAlive
+                                ? "STATUS: ACTIVE"
+                                : "STATUS: COMPLETED"}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981]">
+                              {participatedCount} of {meeting.races.length} Races Tipped
+                            </span>
+                            {meeting.date && (
+                              <span className="text-[11px] text-[#8A9990] font-mono">
+                                {meeting.date}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
-                            #{fav.tabNumber} <strong>{fav.horseName}</strong> is paying <strong>${favOdds.toFixed(2)}</strong> (&lt; $1.90). Automatically anchored in 1st place as Standard Banker, with all remaining syndicate picks ({flexiTabs.length} runners: #{flexiTabs.join(", #")}) boxed for 2nd and 3rd legs to maximize Flexi return!
+                          <p className="text-xs text-[#8A9990] font-mono mt-0.5">
+                            {displayedRaceEvals.length} Races Displayed {!showAllRaces && `(${participatedCount} Tipped)`} · {totalCombos} Total Combos · ${trifectaBetAmount} Bet / Race (${totalOutlay} Outlay)
                           </p>
                         </div>
                       </div>
-                    );
-                  }
 
-                  if (customTrifectaMode === "flexi_combined") {
-                    return (
-                      <div className="p-3 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center gap-2.5 text-xs text-[#D5DDD8]">
-                        <Users className="w-4 h-4 text-[#10B981] shrink-0" />
-                        <div>
-                          <strong className="text-[#10B981]">Flexi Combined (All Users Tips):</strong>{" "}
-                          Pooling {flexiTabs.length} distinct selections across registered syndicate members ({punters.map((p) => p.name).join(", ")}) into a unified TAB Flexi ticket.
+                      <div className="flex items-center gap-4 self-end md:self-center">
+                        {/* Race Hit Indicators */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {displayedRaceEvals.map(({ race, evaluation }) => {
+                            const isHit = evaluation.isTrifectaHit;
+                            const isMissed = evaluation.isRaceResulted && !isHit;
+                            return (
+                              <span
+                                key={race.raceNumber}
+                                className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold flex items-center justify-center ${
+                                  isHit
+                                    ? "bg-[#10B981] text-[#070B09]"
+                                    : isMissed
+                                    ? "bg-rose-950 text-rose-300 border border-rose-800"
+                                    : "bg-[#14231B] text-[#D4AF37] border border-[#23352B]"
+                                }`}
+                                title={`R${race.raceNumber}: ${
+                                  isHit ? "WON ✓" : isMissed ? "MISSED" : "UPCOMING"
+                                } (${evaluation.combinationsCount} combos, ${evaluation.flexiPercentage.toFixed(1)}% Flexi)`}
+                              >
+                                R{race.raceNumber}
+                              </span>
+                            );
+                          })}
                         </div>
-                      </div>
-                    );
-                  }
 
-                  return null;
-                })()}
-
-                <p className="text-xs text-[#8A9990]">
-                  {customTrifectaMode === "flexi_combined"
-                    ? "Flexi Combined pools all syndicate members' tips. If there is a favourite with odds under $1.90, the Standard Banker rule automatically locks them in 1st place with remaining selections filling 2nd & 3rd."
-                    : customTrifectaMode === "flexi_standout"
-                    ? "Standout Banker locks 1st place to your top pick; flexi legs complete 2nd & 3rd in any order for maximum dividend leverage."
-                    : customTrifectaMode === "flexi_boxed"
-                    ? "Boxed Trifecta hits if your chosen runners finish 1st, 2nd, and 3rd in any order across all permutations."
-                    : "Roving Banker includes your banker across 1st, 2nd, or 3rd with flexi legs filling remaining spots."}
-                </p>
-              </div>
-
-              {/* Runners Selection Table */}
-              <div className="rounded-2xl border border-[#23352B] bg-[#0A120E] overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#080D0B] border-b border-[#1E2E25] flex items-center justify-between gap-2 flex-wrap text-xs font-mono text-[#8A9990]">
-                  <span>Field ({activeRace.runners.length} runners)</span>
-                  <div className="flex items-center gap-1.5">
-                    {customTrifectaMode === "flexi_boxed" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const sorted = [...activeRace.runners]
-                              .filter((r) => !isRunnerScratched(r))
-                              .sort(
-                                (a, b) =>
-                                  (Number(a.fixedWin || a.nswTabWin) || 99) -
-                                  (Number(b.fixedWin || b.nswTabWin) || 99)
-                              );
-                            setFlexiTabs(sorted.slice(0, 3).map((r) => r.tabNumber));
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-[#14231B] border border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/20 font-bold cursor-pointer"
-                        >
-                          Box Top 3
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const sorted = [...activeRace.runners]
-                              .filter((r) => !isRunnerScratched(r))
-                              .sort(
-                                (a, b) =>
-                                  (Number(a.fixedWin || a.nswTabWin) || 99) -
-                                  (Number(b.fixedWin || b.nswTabWin) || 99)
-                              );
-                            setFlexiTabs(sorted.slice(0, 4).map((r) => r.tabNumber));
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-[#14231B] border border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/20 font-bold cursor-pointer"
-                        >
-                          Box Top 4
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const sorted = [...activeRace.runners]
-                              .filter((r) => !isRunnerScratched(r))
-                              .sort(
-                                (a, b) =>
-                                  (Number(a.fixedWin || a.nswTabWin) || 99) -
-                                  (Number(b.fixedWin || b.nswTabWin) || 99)
-                              );
-                            if (sorted[0]) {
-                              setStandoutTab(sorted[0].tabNumber);
-                              setFlexiTabs(sorted.slice(1, 4).map((r) => r.tabNumber));
-                            }
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-[#201A0E] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/20 font-bold cursor-pointer"
-                        >
-                          Fav + Top 3 Flexi
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStandoutTab(null);
-                        setFlexiTabs([]);
-                      }}
-                      className="px-2 py-0.5 rounded-lg text-rose-400 hover:bg-rose-950/40 border border-rose-900/40 cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-                <div className="divide-y divide-[#17231C] max-h-80 overflow-y-auto">
-                  {activeRace.runners.map((r) => {
-                    const isScr = isRunnerScratched(r);
-                    const isStandout = standoutTab === r.tabNumber;
-                    const isFlexi = flexiTabs.includes(r.tabNumber);
-                    const winOdds = Number(r.fixedWin || r.nswTabWin || 0);
-
-                    return (
-                      <div
-                        key={r.tabNumber}
-                        className={`p-3 flex items-center justify-between gap-3 transition ${
-                          isScr
-                            ? "opacity-40 bg-[#060A08]"
-                            : isStandout
-                            ? "bg-[#D4AF37]/15"
-                            : isFlexi
-                            ? "bg-[#10B981]/10"
-                            : "hover:bg-[#101A14]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${
-                              isStandout
-                                ? "bg-[#D4AF37] text-[#070B09]"
-                                : isFlexi
-                                ? "bg-[#10B981] text-[#070B09]"
-                                : "bg-[#16231C] text-[#D5DDD8] border border-[#23352B]"
+                        {/* Financial Return / Outlay */}
+                        <div className="text-right font-mono">
+                          <div
+                            className={`text-sm sm:text-base font-bold ${
+                              totalCollect > 0 ? "text-[#10B981]" : "text-[#F3F4F0]"
                             }`}
                           >
-                            {r.tabNumber}
-                          </span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-display font-bold text-sm text-[#F3F4F0]">
-                                {r.horseName}
-                              </span>
-                              {isScr && (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-950 text-rose-300 font-mono text-[9px] font-bold">
-                                  SCR
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-[#8A9990] font-mono">
-                              B{r.barrier} · {r.jockey} · Form: {r.form || "—"}
-                            </div>
+                            {totalCollect > 0
+                              ? `+$${totalCollect.toFixed(2)}`
+                              : `$${totalOutlay.toFixed(0)} Outlay`}
+                          </div>
+                          <div className="text-[10px] text-[#8A9990]">
+                            {totalCollect > 0
+                              ? `+$${(totalCollect / Math.max(1, punters.length)).toFixed(2)} / member`
+                              : `$${(totalOutlay / Math.max(1, punters.length)).toFixed(2)} / member`}
                           </div>
                         </div>
 
-                        {/* Odds & Action Buttons */}
-                        <div className="flex items-center gap-3">
-                          <div className="text-right font-mono">
-                            <span className="text-sm font-bold text-[#F3F4F0]">
-                              {winOdds > 0 ? `$${winOdds.toFixed(2)}` : "—"}
-                            </span>
-                            <TactileOddsFlucBadge
-                              openingOdds={r.openingOdds}
-                              currentOdds={winOdds}
-                              size="sm"
-                              className="ml-1"
-                            />
-                          </div>
-
-                          {/* Action Buttons */}
-                          {!isScr && (
-                            <div className="flex items-center gap-1.5">
-                              {customTrifectaMode === "flexi_boxed" ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (isFlexi) {
-                                      setFlexiTabs((prev) =>
-                                        prev.filter((t) => t !== r.tabNumber)
-                                      );
-                                    } else {
-                                      setFlexiTabs((prev) => [...prev, r.tabNumber]);
-                                    }
-                                  }}
-                                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
-                                    isFlexi
-                                      ? "bg-[#10B981] text-[#070B09] border-[#10B981] shadow-sm"
-                                      : "bg-[#080D0B] text-[#10B981] border-[#10B981]/30 hover:bg-[#10B981]/15"
-                                  }`}
-                                >
-                                  {isFlexi ? "✓ In Boxed" : "+ Box Runner"}
-                                </button>
-                              ) : (
-                                <>
-                                  {/* Standout Button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (isStandout) {
-                                        setStandoutTab(null);
-                                      } else {
-                                        setStandoutTab(r.tabNumber);
-                                        setFlexiTabs((prev) =>
-                                          prev.filter((t) => t !== r.tabNumber)
-                                        );
-                                      }
-                                    }}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
-                                      isStandout
-                                        ? "bg-[#D4AF37] text-[#070B09] border-[#D4AF37]"
-                                        : "bg-[#080D0B] text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/15"
-                                    }`}
-                                  >
-                                    {isStandout ? "✓ Standout" : "Standout"}
-                                  </button>
-
-                                  {/* Flexi Leg Button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (isFlexi) {
-                                        setFlexiTabs((prev) =>
-                                          prev.filter((t) => t !== r.tabNumber)
-                                        );
-                                      } else {
-                                        setFlexiTabs((prev) => [...prev, r.tabNumber]);
-                                        if (isStandout) setStandoutTab(null);
-                                      }
-                                    }}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
-                                      isFlexi
-                                        ? "bg-[#10B981] text-[#070B09] border-[#10B981]"
-                                        : "bg-[#080D0B] text-[#10B981] border-[#10B981]/30 hover:bg-[#10B981]/15"
-                                    }`}
-                                  >
-                                    {isFlexi ? "✓ Flexi Leg" : "+ Flexi"}
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                        <div className="p-1 rounded-xl bg-[#14231B] text-[#8A9990]">
+                          {isOpen ? (
+                            <ChevronUp className="w-5 h-5 text-[#F3F4F0]" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-[#8A9990]" />
                           )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+                    </button>
 
-            {/* Right Col: Live Trifecta Math & Bet Receipt Bento */}
-            <div className="space-y-4">
-              <div className="p-5 rounded-2xl bg-[#121C17]/90 border border-[#23352B] space-y-4">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#D4AF37]">
-                  Trifecta Ticket Specifications
-                </span>
+                    {/* Accordion Content Body: Vertically Stacked Race Events */}
+                    {isOpen && (
+                      <div className="p-4 sm:p-6 pt-2 border-t border-[#1E2E25] space-y-4 animate-in fade-in duration-150">
+                        {displayedRaceEvals.length === 0 ? (
+                          <div className="p-6 rounded-2xl bg-[#09100D] border border-[#1E2E25] text-center space-y-2">
+                            <p className="text-sm font-bold text-[#F3F4F0]">
+                              No syndicate tips submitted for {meeting.venue} yet
+                            </p>
+                            <p className="text-xs text-[#8A9990] font-mono">
+                              Filtering is currently set to Participated Races Only.
+                            </p>
+                            <div className="flex items-center justify-center gap-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setShowAllRaces(true)}
+                                className="px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#070B09] font-mono text-xs font-bold hover:bg-[#e3be42] cursor-pointer"
+                              >
+                                Show All {meeting.races.length} Scheduled Races
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onJumpToSelections?.(punters[0]?.id, meeting.id)
+                                }
+                                className="px-3 py-1.5 rounded-xl bg-[#14231B] border border-[#23352B] text-xs font-mono font-bold text-[#10B981] hover:bg-[#10B981]/15 cursor-pointer"
+                              >
+                                Enter Selections
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          displayedRaceEvals.map(({ race, raceKey, evaluation }) => {
+                            const isCustomized = Boolean(customConfigs[raceKey]);
+                            const isHit = evaluation.isTrifectaHit;
+                            const isMissed = evaluation.isRaceResulted && !isHit;
+                            const isUpcoming = !evaluation.isRaceResulted;
+                            const isEditing = editingRaceKey === raceKey;
 
-                {/* Bet Stake Preset Selector */}
-                <div>
-                  <span className="text-xs text-[#8A9990] font-mono block mb-1.5">
-                    Syndicate Stake:
-                  </span>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[10, 20, 50, 100].map((amt) => (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => onChangeTrifectaBetAmount(amt)}
-                        className={`py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer ${
-                          trifectaBetAmount === amt
-                            ? "bg-[#D4AF37] text-[#070B09]"
-                            : "bg-[#080D0B] text-[#8A9990] border border-[#1E2E25] hover:text-[#F3F4F0]"
-                        }`}
-                      >
-                        ${amt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                          // Check if race has extreme favorite (< $1.90)
+                          const sub19FavInRace = race.runners.find((r) => {
+                            if (isRunnerScratched(r)) return false;
+                            const w = Number(r.fixedWin || r.nswTabWin);
+                            return Number.isFinite(w) && w > 0 && w < 1.9;
+                          });
 
-                {/* Live Combinations & Flexi calculation */}
-                {(() => {
-                  const isStandoutStyle =
-                    customTrifectaMode === "flexi_standout" ||
-                    (customTrifectaMode === "flexi_combined" && standoutTab !== null);
-                  const isBoxedStyle =
-                    customTrifectaMode === "flexi_boxed" ||
-                    (customTrifectaMode === "flexi_combined" && standoutTab === null);
+                          // Punters who contributed tips for this race
+                          const contributingPunters = punters.filter((p) => {
+                            const trio = p.selectionsByMeeting?.[meeting.id]?.[race.raceNumber];
+                            return trio && (trio.firstPref || trio.secondPref || trio.thirdPref);
+                          });
 
-                  const combos = isStandoutStyle
-                    ? standoutTab && flexiTabs.length >= 2
-                      ? flexiTabs.length * (flexiTabs.length - 1)
-                      : 0
-                    : isBoxedStyle
-                    ? flexiTabs.length >= 3
-                      ? flexiTabs.length * (flexiTabs.length - 1) * (flexiTabs.length - 2)
-                      : 0
-                    : flexiTabs.length * (flexiTabs.length - 1) * 3;
+                          return (
+                            <div
+                              key={raceKey}
+                              className={`rounded-2xl border transition-all ${
+                                isHit
+                                  ? "border-[#10B981]/50 bg-[#0A1610] shadow-[0_4px_20px_rgba(16,185,129,0.12)]"
+                                  : isEditing
+                                  ? "border-[#D4AF37] bg-[#121A15]"
+                                  : isCustomized
+                                  ? "border-[#D4AF37]/40 bg-[#0E1512]"
+                                  : "border-white/[0.06] bg-[#0A0F0D] hover:border-white/[0.12]"
+                              }`}
+                            >
+                              {/* RACE EVENT CARD */}
+                              <div className="p-4 sm:p-5 space-y-3">
+                                {/* Race Event Top Bar: Header & Badges & Action Buttons */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2.5 flex-wrap">
+                                    <span className="w-8 h-8 rounded-xl bg-[#D4AF37] text-[#070B09] font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                      R{race.raceNumber}
+                                    </span>
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="font-display font-bold text-sm sm:text-base text-[#F3F4F0]">
+                                          {race.raceName || `Race ${race.raceNumber}`}
+                                        </h3>
+                                        {/* Status Badge */}
+                                        {isHit && (
+                                          <span className="px-2 py-0.5 rounded-md bg-[#10B981] text-[#070B09] font-mono text-[10px] font-black uppercase">
+                                            WON ✓ +${(evaluation.customBetFlexiReturn || 0).toFixed(2)}
+                                          </span>
+                                        )}
+                                        {isMissed && (
+                                          <span className="px-2 py-0.5 rounded-md bg-rose-950/70 border border-rose-900/40 text-rose-300 font-mono text-[10px] font-bold uppercase">
+                                            MISSED (Podium: #{evaluation.officialPodium.first?.tabNumber ?? "?"}-#{evaluation.officialPodium.second?.tabNumber ?? "?"}-#{evaluation.officialPodium.third?.tabNumber ?? "?"})
+                                          </span>
+                                        )}
+                                        {isUpcoming && (
+                                          <span className="px-2 py-0.5 rounded-md bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-mono text-[10px] font-bold uppercase">
+                                            ACTIVE SWEAT
+                                          </span>
+                                        )}
+                                        {isCustomized && (
+                                          <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[10px] font-bold">
+                                            Custom Override
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-[#8A9990] font-mono mt-0.5">
+                                        {race.distance ? `${race.distance}m` : ""} {race.classGrade ? `· ${race.classGrade}` : ""} {meeting.trackCondition ? `· ${meeting.trackCondition}` : ""}
+                                      </p>
+                                    </div>
+                                  </div>
 
-                  const metrics = computeTabFlexiBetMetrics(
-                    combos || 1,
-                    punters.length || 2,
-                    trifectaBetAmount / (punters.length || 2)
-                  );
+                                  {/* Right side: Flexi % Metric Pill & Customize Action */}
+                                  <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                                    {/* Official Flexi % Badge based on defined bet ($20 default) */}
+                                    <div className="px-3 py-1.5 rounded-xl bg-[#080D0B] border border-[#1E2E25] font-mono text-right">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[#8A9990] text-[10px]">Flexi:</span>
+                                        <span className="text-[#10B981] font-bold text-sm">
+                                          {evaluation.flexiPercentage.toFixed(2)}%
+                                        </span>
+                                      </div>
+                                      <div className="text-[10px] text-[#8A9990]">
+                                        ${trifectaBetAmount} Bet · {evaluation.combinationsCount} Combos
+                                      </div>
+                                    </div>
 
-                  return (
-                    <div className="p-4 rounded-xl bg-[#080D0B] border border-[#1E2E25] space-y-3 font-mono text-xs">
-                      <div className="flex items-center justify-between text-[#8A9990]">
-                        <span>Combinations:</span>
-                        <strong className="text-[#F3F4F0]">{combos} combos</strong>
-                      </div>
-                      <div className="flex items-center justify-between text-[#8A9990]">
-                        <span>Total Stake:</span>
-                        <strong className="text-[#F3F4F0]">${trifectaBetAmount.toFixed(2)}</strong>
-                      </div>
-                      <div className="flex items-center justify-between text-[#8A9990]">
-                        <span>Flexi Percentage:</span>
-                        <strong className="text-[#10B981]">
-                          {metrics.flexiPercentage.toFixed(2)}%
-                        </strong>
-                      </div>
-                      <div className="flex items-center justify-between text-[#8A9990]">
-                        <span>Stake Per Member:</span>
-                        <strong className="text-[#F3F4F0]">
-                          ${(trifectaBetAmount / (punters.length || 1)).toFixed(2)}
-                        </strong>
-                      </div>
+                                    {/* Customize Drawer Toggle Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingRace(raceKey, evaluation)}
+                                      className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                        isEditing
+                                          ? "bg-[#D4AF37] text-[#070B09] font-black"
+                                          : "bg-[#14231B] border border-[#23352B] text-[#D4AF37] hover:bg-[#D4AF37]/20"
+                                      }`}
+                                      title="Open inline customize drawer for this race"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                      <span>{isEditing ? "Close Editor" : "Customize"}</span>
+                                    </button>
 
-                      {/* Official Payout if resulted */}
-                      {activeTrifectaEval?.isCombinedBoxedTrifectaHit && (
-                        <div className="pt-2 border-t border-[#1E2E25] flex items-center justify-between text-[#10B981]">
-                          <span className="font-bold">Official Collect:</span>
-                          <span className="text-base font-bold">
-                            +${activeTrifectaEval.customBetFlexiReturn.toFixed(2)}
-                          </span>
-                        </div>
+                                    {isCustomized && (
+                                      <button
+                                        type="button"
+                                        onClick={() => revertCustomRace(raceKey)}
+                                        className="px-2.5 py-1.5 rounded-xl bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0] font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                                        title="Revert back to auto concatenated consensus"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5" />
+                                        <span>Revert</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* SELECTIONS BUILD-UP (Quaddie-style concatenation display) */}
+                                <div className="p-3 sm:p-3.5 rounded-xl bg-[#080D0B]/80 border border-[#1E2E25] space-y-2.5">
+                                  {/* Auto-Banker Alert or Concatenated Notice */}
+                                  {sub19FavInRace ? (
+                                    <div className="flex items-center gap-2 text-xs font-mono text-[#D4AF37] bg-[#D4AF37]/10 p-2.5 rounded-lg border border-[#D4AF37]/30">
+                                      <Zap className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                                      <span>
+                                        <strong>Auto-Banker Rule Active:</strong> #{sub19FavInRace.tabNumber} {sub19FavInRace.horseName} ($
+                                        {Number(sub19FavInRace.fixedWin || sub19FavInRace.nswTabWin).toFixed(2)}) is &lt; $1.90 and locked as <strong>1st Place Standout Banker</strong>. All remaining syndicate selections are aggregated into 2nd &amp; 3rd Place (Flexi).
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between text-xs font-mono text-[#8A9990] pb-1 border-b border-[#1A2620]">
+                                      <span className="flex items-center gap-1.5 text-[#D5DDD8]">
+                                        <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                        <strong>Concatenated Syndicate Flexi:</strong> All tipped runners aggregated into Flexi Trifecta (Boxed across 1st, 2nd, and 3rd place)
+                                      </span>
+                                      <span className="text-[#D4AF37] font-bold">
+                                        {evaluation.positionPicks.first.length} Horses Boxed
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Runner Chips Presentation */}
+                                  {sub19FavInRace ? (
+                                    <div className="space-y-2.5">
+                                      {/* Row 1: 1st Place Standout Banker */}
+                                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <div className="flex items-center gap-1.5 shrink-0 sm:w-36">
+                                          <span className="w-5 h-5 rounded bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                            1st
+                                          </span>
+                                          <span className="text-[11px] font-mono font-bold text-[#D4AF37]">
+                                            Standout Banker
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          {evaluation.positionPicks.first.map((tab) => {
+                                            const runner = race.runners.find((r) => r.tabNumber === tab);
+                                            const odds = Number(runner?.fixedWin || runner?.nswTabWin) || 0;
+                                            const pickers = punters
+                                              .filter((p) => {
+                                                const t = p.selectionsByMeeting?.[meeting.id]?.[race.raceNumber];
+                                                return (
+                                                  t &&
+                                                  (Number(t.firstPref) === tab ||
+                                                    Number(t.secondPref) === tab ||
+                                                    Number(t.thirdPref) === tab)
+                                                );
+                                              })
+                                              .map((p) => p.name);
+
+                                            return (
+                                              <div
+                                                key={`1st-${tab}`}
+                                                className="px-2.5 py-1.5 rounded-xl border border-[#D4AF37] bg-[#D4AF37]/15 text-[#F3F4F0] flex items-center gap-2 font-mono text-xs shadow-sm"
+                                              >
+                                                <span className="w-5 h-5 rounded-md bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                                  {tab}
+                                                </span>
+                                                <span className="font-bold truncate max-w-[140px]">
+                                                  {runner?.horseName || `Horse #${tab}`}
+                                                </span>
+                                                {odds > 0 && (
+                                                  <span className="text-[11px] text-[#D4AF37] font-bold">
+                                                    ${odds.toFixed(2)}
+                                                  </span>
+                                                )}
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#D4AF37] text-[#070B09] font-black uppercase tracking-wider">
+                                                  ⚡ Banker
+                                                </span>
+                                                {pickers.length > 0 && (
+                                                  <span className="text-[10px] text-[#D4AF37]/90 bg-[#16251E] px-1.5 py-0.5 rounded">
+                                                    {pickers.join(", ")}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+
+                                      {/* Row 2: 2nd & 3rd Place Aggregated Syndicate Selections */}
+                                      <div className="flex flex-col sm:flex-row sm:items-start gap-2 pt-2 border-t border-[#16221B]">
+                                        <div className="flex items-center gap-1.5 shrink-0 sm:w-36 pt-1">
+                                          <span className="w-5 h-5 rounded bg-[#10B981] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                            2/3
+                                          </span>
+                                          <span className="text-[11px] font-mono font-bold text-[#10B981]">
+                                            2nd &amp; 3rd Place ({evaluation.positionPicks.second.length}H)
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          {evaluation.positionPicks.second.map((tab) => {
+                                            const runner = race.runners.find((r) => r.tabNumber === tab);
+                                            const odds = Number(runner?.fixedWin || runner?.nswTabWin) || 0;
+                                            const pickers = punters
+                                              .filter((p) => {
+                                                const t = p.selectionsByMeeting?.[meeting.id]?.[race.raceNumber];
+                                                return (
+                                                  t &&
+                                                  (Number(t.firstPref) === tab ||
+                                                    Number(t.secondPref) === tab ||
+                                                    Number(t.thirdPref) === tab)
+                                                );
+                                              })
+                                              .map((p) => p.name);
+
+                                            return (
+                                              <div
+                                                key={`2nd3rd-${tab}`}
+                                                className="px-2.5 py-1.5 rounded-xl border border-[#223329] bg-[#101814] text-[#F3F4F0] flex items-center gap-2 font-mono text-xs hover:border-[#10B981]/50 transition"
+                                              >
+                                                <span className="w-5 h-5 rounded-md bg-[#16231C] text-[#10B981] flex items-center justify-center font-black text-[10px]">
+                                                  {tab}
+                                                </span>
+                                                <span className="font-bold truncate max-w-[140px]">
+                                                  {runner?.horseName || `Horse #${tab}`}
+                                                </span>
+                                                {odds > 0 && (
+                                                  <span className="text-[11px] text-[#8A9990] font-semibold">
+                                                    ${odds.toFixed(2)}
+                                                  </span>
+                                                )}
+                                                {pickers.length > 0 && (
+                                                  <span className="text-[10px] text-[#10B981]/90 bg-[#16251E] px-1.5 py-0.5 rounded">
+                                                    {pickers.join(", ")}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    /* Boxed Flexi across all 3 positions */
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      {evaluation.positionPicks.first.map((tab) => {
+                                        const runner = race.runners.find((r) => r.tabNumber === tab);
+                                        const odds = Number(runner?.fixedWin || runner?.nswTabWin) || 0;
+                                        const pickers = punters
+                                          .filter((p) => {
+                                            const t = p.selectionsByMeeting?.[meeting.id]?.[race.raceNumber];
+                                            return (
+                                              t &&
+                                              (Number(t.firstPref) === tab ||
+                                                Number(t.secondPref) === tab ||
+                                                Number(t.thirdPref) === tab)
+                                            );
+                                          })
+                                          .map((p) => p.name);
+
+                                        return (
+                                          <div
+                                            key={tab}
+                                            className="px-2.5 py-1.5 rounded-xl border border-[#223329] bg-[#101814] text-[#F3F4F0] flex items-center gap-2 font-mono text-xs hover:border-[#D4AF37]/50 transition"
+                                          >
+                                            <span className="w-5 h-5 rounded-md bg-[#16231C] text-[#D4AF37] flex items-center justify-center font-black text-[10px]">
+                                              {tab}
+                                            </span>
+                                            <span className="font-bold truncate max-w-[140px]">
+                                              {runner?.horseName || `Horse #${tab}`}
+                                            </span>
+                                            {odds > 0 && (
+                                              <span className="text-[11px] text-[#8A9990] font-semibold">
+                                                ${odds.toFixed(2)}
+                                              </span>
+                                            )}
+                                            {pickers.length > 0 && (
+                                              <span className="text-[10px] text-[#D4AF37]/90 bg-[#16251E] px-1.5 py-0.5 rounded">
+                                                {pickers.join(", ")}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+
+                                  {/* Individual Punters' Raw Tips on this Race */}
+                                  <div className="pt-1.5 border-t border-[#16221B] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#8A9990]">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[#D5DDD8] font-bold">Syndicate Tips:</span>
+                                      {contributingPunters.length > 0 ? (
+                                        contributingPunters.map((p) => {
+                                          const t = p.selectionsByMeeting?.[meeting.id]?.[race.raceNumber];
+                                          const picks: string[] = [];
+                                          if (t?.firstPref) picks.push(`#${t.firstPref}`);
+                                          if (t?.secondPref) picks.push(`#${t.secondPref}`);
+                                          if (t?.thirdPref) picks.push(`#${t.thirdPref}`);
+                                          return (
+                                            <span
+                                              key={p.id}
+                                              className="px-2 py-0.5 rounded-md bg-[#101814] border border-[#1E2E25] text-[#D5DDD8]"
+                                            >
+                                              <strong className="text-[#D4AF37]">{p.name}:</strong> [{picks.join(", ")}]
+                                            </span>
+                                          );
+                                        })
+                                      ) : (
+                                        <span className="text-[#8A9990] italic">
+                                          Market consensus fallback
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Permutations & Flexi formula */}
+                                    <div className="text-right text-[#D5DDD8]">
+                                      <span>
+                                        {evaluation.positionPicks.first.length} ×{" "}
+                                        {evaluation.positionPicks.second.length} ×{" "}
+                                        {evaluation.positionPicks.third.length} ={" "}
+                                        <strong className="text-[#D4AF37]">{evaluation.combinationsCount} Combos</strong>
+                                      </span>
+                                      <span className="mx-1.5 text-[#8A9990]">·</span>
+                                      <span>
+                                        Flexi:{" "}
+                                        <strong className="text-[#10B981]">
+                                          {evaluation.flexiPercentage.toFixed(2)}%
+                                        </strong>{" "}
+                                        <span className="text-[#8A9990]">
+                                          ({(evaluation.flexiPercentage / Math.max(1, punters.length)).toFixed(2)}% / member)
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* INLINE CUSTOMIZE DRAWER (Shown when editing this race) */}
+                                {isEditing && (
+                                  <div className="mt-4 p-4 rounded-2xl bg-[#09110D] border border-[#D4AF37]/50 space-y-4 animate-in fade-in duration-200">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#1E2E25]">
+                                      <div className="flex items-center gap-2">
+                                        <Edit3 className="w-4 h-4 text-[#D4AF37]" />
+                                        <span className="font-bold text-sm text-[#F3F4F0] font-mono">
+                                          Customize Selections for {meeting.venue} R{race.raceNumber}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono text-[#D4AF37] font-bold">
+                                          {editorPermutations.count} Combos @ {editorFlexiPercentage.toFixed(2)}% Flexi (${trifectaBetAmount} Stake)
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingRaceKey(null)}
+                                          className="text-xs text-[#8A9990] hover:text-[#F3F4F0] font-mono cursor-pointer"
+                                        >
+                                          ✕ Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* 3 Places Columns (1st, 2nd, 3rd) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                      {/* 1st Place */}
+                                      <div className="p-3 rounded-xl bg-[#0E1712] border border-[#D4AF37]/30 space-y-2">
+                                        <div className="flex items-center justify-between border-b border-[#1E2E25] pb-1.5">
+                                          <span className="font-mono text-xs font-bold text-[#D4AF37] flex items-center gap-1.5">
+                                            <span className="w-5 h-5 rounded bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                              1st
+                                            </span>
+                                            1st Place ({editorFirst.length})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditorFirst([])}
+                                            className="text-[10px] font-mono text-rose-400 hover:text-rose-300 cursor-pointer"
+                                          >
+                                            Clear
+                                          </button>
+                                        </div>
+                                        <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                                          {race.runners
+                                            .filter((r) => !isRunnerScratched(r))
+                                            .map((runner) => {
+                                              const isSel = editorFirst.includes(runner.tabNumber);
+                                              const isStandout =
+                                                editorStandoutPos === 1 &&
+                                                editorStandoutTab === runner.tabNumber;
+                                              const winOdds = Number(runner.fixedWin || runner.nswTabWin) || 0;
+                                              return (
+                                                <div
+                                                  key={runner.tabNumber}
+                                                  className={`p-1.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1 transition ${
+                                                    isStandout
+                                                      ? "bg-[#D4AF37]/20 border-[#D4AF37]"
+                                                      : isSel
+                                                      ? "bg-[#18261E] border-[#D4AF37]/60"
+                                                      : "bg-[#080D0B] border-[#1C2C23]"
+                                                  }`}
+                                                >
+                                                  <div className="flex items-center gap-1.5 truncate">
+                                                    <span className="font-bold text-[10px] w-4 text-[#8A9990]">
+                                                      #{runner.tabNumber}
+                                                    </span>
+                                                    <span className="font-bold truncate text-[#F3F4F0] text-[11px]">
+                                                      {runner.horseName}
+                                                    </span>
+                                                    {winOdds > 0 && (
+                                                      <span className="text-[10px] text-[#8A9990]">
+                                                        ${winOdds.toFixed(2)}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  <div className="flex items-center gap-1 shrink-0">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleEditorStandout(1, runner.tabNumber)}
+                                                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold cursor-pointer ${
+                                                        isStandout
+                                                          ? "bg-[#D4AF37] text-[#070B09]"
+                                                          : "bg-[#14231B] text-[#8A9990] hover:text-[#D4AF37]"
+                                                      }`}
+                                                      title="Lock as standout 1st"
+                                                    >
+                                                      ★
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleToggleEditor1st(runner.tabNumber)}
+                                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                                                        isSel
+                                                          ? "bg-[#10B981] text-[#070B09]"
+                                                          : "bg-[#14231B] text-[#D5DDD8] border border-[#23352B]"
+                                                      }`}
+                                                    >
+                                                      {isSel ? "✓" : "+"}
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                        </div>
+                                      </div>
+
+                                      {/* 2nd Place */}
+                                      <div className="p-3 rounded-xl bg-[#0E1712] border border-[#94A3B8]/30 space-y-2">
+                                        <div className="flex items-center justify-between border-b border-[#1E2E25] pb-1.5">
+                                          <span className="font-mono text-xs font-bold text-[#94A3B8] flex items-center gap-1.5">
+                                            <span className="w-5 h-5 rounded bg-[#94A3B8] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                              2nd
+                                            </span>
+                                            2nd Place ({editorSecond.length})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditorSecond([])}
+                                            className="text-[10px] font-mono text-rose-400 hover:text-rose-300 cursor-pointer"
+                                          >
+                                            Clear
+                                          </button>
+                                        </div>
+                                        <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                                          {race.runners
+                                            .filter((r) => !isRunnerScratched(r))
+                                            .map((runner) => {
+                                              const isSel = editorSecond.includes(runner.tabNumber);
+                                              const isStandout =
+                                                editorStandoutPos === 2 &&
+                                                editorStandoutTab === runner.tabNumber;
+                                              const winOdds = Number(runner.fixedWin || runner.nswTabWin) || 0;
+                                              return (
+                                                <div
+                                                  key={runner.tabNumber}
+                                                  className={`p-1.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1 transition ${
+                                                    isStandout
+                                                      ? "bg-[#94A3B8]/20 border-[#94A3B8]"
+                                                      : isSel
+                                                      ? "bg-[#18261E] border-[#94A3B8]/60"
+                                                      : "bg-[#080D0B] border-[#1C2C23]"
+                                                  }`}
+                                                >
+                                                  <div className="flex items-center gap-1.5 truncate">
+                                                    <span className="font-bold text-[10px] w-4 text-[#8A9990]">
+                                                      #{runner.tabNumber}
+                                                    </span>
+                                                    <span className="font-bold truncate text-[#F3F4F0] text-[11px]">
+                                                      {runner.horseName}
+                                                    </span>
+                                                    {winOdds > 0 && (
+                                                      <span className="text-[10px] text-[#8A9990]">
+                                                        ${winOdds.toFixed(2)}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleToggleEditor2nd(runner.tabNumber)}
+                                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                                                      isSel
+                                                        ? "bg-[#10B981] text-[#070B09]"
+                                                        : "bg-[#14231B] text-[#D5DDD8] border border-[#23352B]"
+                                                    }`}
+                                                  >
+                                                    {isSel ? "✓" : "+"}
+                                                  </button>
+                                                </div>
+                                              );
+                                            })}
+                                        </div>
+                                      </div>
+
+                                      {/* 3rd Place */}
+                                      <div className="p-3 rounded-xl bg-[#0E1712] border border-[#CD7F32]/30 space-y-2">
+                                        <div className="flex items-center justify-between border-b border-[#1E2E25] pb-1.5">
+                                          <span className="font-mono text-xs font-bold text-[#CD7F32] flex items-center gap-1.5">
+                                            <span className="w-5 h-5 rounded bg-[#CD7F32] text-[#070B09] flex items-center justify-center font-black text-[10px]">
+                                              3rd
+                                            </span>
+                                            3rd Place ({editorThird.length})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditorThird([])}
+                                            className="text-[10px] font-mono text-rose-400 hover:text-rose-300 cursor-pointer"
+                                          >
+                                            Clear
+                                          </button>
+                                        </div>
+                                        <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                                          {race.runners
+                                            .filter((r) => !isRunnerScratched(r))
+                                            .map((runner) => {
+                                              const isSel = editorThird.includes(runner.tabNumber);
+                                              const isStandout =
+                                                editorStandoutPos === 3 &&
+                                                editorStandoutTab === runner.tabNumber;
+                                              const winOdds = Number(runner.fixedWin || runner.nswTabWin) || 0;
+                                              return (
+                                                <div
+                                                  key={runner.tabNumber}
+                                                  className={`p-1.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-1 transition ${
+                                                    isStandout
+                                                      ? "bg-[#CD7F32]/20 border-[#CD7F32]"
+                                                      : isSel
+                                                      ? "bg-[#18261E] border-[#CD7F32]/60"
+                                                      : "bg-[#080D0B] border-[#1C2C23]"
+                                                  }`}
+                                                >
+                                                  <div className="flex items-center gap-1.5 truncate">
+                                                    <span className="font-bold text-[10px] w-4 text-[#8A9990]">
+                                                      #{runner.tabNumber}
+                                                    </span>
+                                                    <span className="font-bold truncate text-[#F3F4F0] text-[11px]">
+                                                      {runner.horseName}
+                                                    </span>
+                                                    {winOdds > 0 && (
+                                                      <span className="text-[10px] text-[#8A9990]">
+                                                        ${winOdds.toFixed(2)}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleToggleEditor3rd(runner.tabNumber)}
+                                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                                                      isSel
+                                                        ? "bg-[#10B981] text-[#070B09]"
+                                                        : "bg-[#14231B] text-[#D5DDD8] border border-[#23352B]"
+                                                    }`}
+                                                  >
+                                                    {isSel ? "✓" : "+"}
+                                                  </button>
+                                                </div>
+                                              );
+                                            })}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Action buttons inside drawer */}
+                                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#1E2E25] flex-wrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => revertCustomRace(raceKey)}
+                                        className="px-3 py-1.5 rounded-xl bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0] font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5" />
+                                        <span>Revert to Consensus</span>
+                                      </button>
+
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingRaceKey(null)}
+                                          className="px-3 py-1.5 rounded-xl bg-[#121A15] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0] font-mono text-xs font-bold transition cursor-pointer"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => saveCustomRace(raceKey)}
+                                          disabled={editorPermutations.count === 0}
+                                          className="px-4 py-1.5 rounded-xl bg-[#10B981] text-[#070B09] font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:bg-[#10B981]/90"
+                                        >
+                                          <CheckCircle2 className="w-4 h-4" />
+                                          <span>Save Custom (R{race.raceNumber})</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
-                  );
-                })()}
-
-                {/* Save Confirmation Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    onTriggerToast?.(
-                      `Trifecta configured for ${activeMeeting.venue} Race ${activeRace.raceNumber} ($${trifectaBetAmount} Flexi)`
-                    );
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-[#D4AF37] text-[#070B09] font-display font-bold text-sm tracking-wide shadow-md hover:bg-[#e0bc45] transition cursor-pointer"
-                >
-                  Confirm Trifecta for Race {activeRace.raceNumber}
-                </button>
-              </div>
-
-              {/* All Races Meeting Overview Bento Card */}
-              <div className="p-4 rounded-2xl bg-[#121C17]/90 border border-[#23352B] space-y-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#8A9990]">
-                  Meeting Trifecta Ledger
-                </span>
-                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
-                  {allTrifectaEvals.map(({ race, evaluation }) => (
-                    <div
-                      key={race.raceNumber}
-                      onClick={() => setSelectedRaceNo(race.raceNumber)}
-                      className={`p-2 rounded-xl border flex items-center justify-between text-xs font-mono cursor-pointer transition ${
-                        race.raceNumber === activeRace.raceNumber
-                          ? "bg-[#D4AF37]/15 border-[#D4AF37]/50 text-[#F3F4F0]"
-                          : "bg-[#080D0B] border-[#1E2E25] text-[#8A9990] hover:border-[#23352B]"
-                      }`}
-                    >
-                      <span className="font-bold">R{race.raceNumber}</span>
-                      <span className="text-[11px] truncate max-w-[120px]">
-                        {race.raceName}
-                      </span>
-                      <span>
-                        {evaluation.isCombinedBoxedTrifectaHit ? (
-                          <strong className="text-[#10B981]">
-                            +${evaluation.customBetFlexiReturn.toFixed(2)}
-                          </strong>
-                        ) : evaluation.isRaceResulted ? (
-                          <span className="text-[#64756B]">Missed</span>
-                        ) : (
-                          <span className="text-[#D4AF37]">Open</span>
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                  )}
+                  </div>
+                );
+              }
+            )}
           </div>
         </div>
       )}
 
       {/* ====================================================================
-          BENTO SECTION 2: 4-LEG QUADDIE SUITE
+          BENTO SECTION 2: ALL ACTIVE RACE CARD QUADDIES (Collapsible Accordions)
          ==================================================================== */}
-      {(activeFilter === "all" || activeFilter === "quaddies") && quaddieEval && (
-        <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#1E2E25] pb-5">
+      {(activeFilter === "all" || activeFilter === "quaddies") && (
+        <div className="space-y-4">
+          {/* Section Header with Expand / Collapse Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/20 border border-[#10B981]/40 text-[#10B981] font-mono text-xs font-bold uppercase">
-                  Main Quadrella (Quaddie)
+                  All Active Card Quaddies ({allQuaddieEvals.length})
                 </span>
                 <span className="text-xs text-[#8A9990] font-mono">
-                  {quaddieEval.isQuaddieWon ? "STATUS: WON ✓" : quaddieEval.isQuaddieAlive ? "STATUS: ALIVE 🟢" : "STATUS: KNOCKED OUT 🔴"}
+                  {allQuaddieEvals.filter((q) => q.evaluation.isQuaddieAlive).length} Alive · Main Metro &amp; Provincial
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-display font-bold text-[#F3F4F0] mt-1">
-                4-Leg Syndicate Quaddie Matrix ({activeMeeting.venue})
+                4-Leg Syndicate Quaddie Accordions
               </h2>
-              <p className="text-xs text-[#8A9990] font-mono mt-0.5">
-                Combines all punter selections across Races {quaddieEval.legs[0]?.raceNumber}–{quaddieEval.legs[3]?.raceNumber} with custom extra syndicate runners per leg.
-              </p>
             </div>
 
-            {/* Quaddie Buy-In Preset Selector */}
-            <div className="flex items-center gap-2 bg-[#080D0B] p-2 rounded-2xl border border-[#1E2E25]">
-              <span className="text-xs text-[#8A9990] font-mono pl-1">
-                Buy-in/punter:
-              </span>
-              {[20, 50, 100].map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => onChangeQuaddieBuyInPerUser(amt)}
-                  className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer ${
-                    quaddieBuyInPerUser === amt
-                      ? "bg-[#10B981] text-[#070B09]"
-                      : "text-[#8A9990] hover:text-[#F3F4F0]"
-                  }`}
-                >
-                  ${amt}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={expandAllQuaddies}
+                className="px-3 py-1.5 rounded-xl bg-[#121E18] border border-[#23352B] hover:border-[#10B981]/50 text-xs font-mono font-bold text-[#D5DDD8] transition cursor-pointer"
+              >
+                Expand All
+              </button>
+              <button
+                type="button"
+                onClick={collapseAllQuaddies}
+                className="px-3 py-1.5 rounded-xl bg-[#121E18] border border-[#23352B] hover:border-rose-900/50 text-xs font-mono font-bold text-[#8A9990] hover:text-[#F3F4F0] transition cursor-pointer"
+              >
+                Collapse All
+              </button>
             </div>
           </div>
 
-          {/* 4 Quaddie Legs Bento Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quaddieEval.legs.map((leg, legIdx) => {
-              const race = leg.race;
-              const isAlive = leg.isLegHit || !leg.isRaceResulted;
-              const isWon = leg.isLegHit;
-              const isLost = leg.isRaceResulted && !leg.isLegHit;
-              const isExpanded = Boolean(expandedLegs[leg.legIndex]);
-              const displayRunners = isExpanded
-                ? race.runners
-                : race.runners.filter((r) =>
-                    leg.allLegRunners.some((lr) => lr.tabNumber === r.tabNumber)
-                  );
+          {/* Accordion Cards for each meeting */}
+          {(showAllRaces
+            ? allQuaddieEvals
+            : allQuaddieEvals.filter(
+                (q) => q.evaluation.participatingUsersCount > 0
+              ).length > 0
+            ? allQuaddieEvals.filter(
+                (q) => q.evaluation.participatingUsersCount > 0
+              )
+            : allQuaddieEvals
+          ).map(({ meeting, evaluation, sweatScenarios }) => {
+            const isOpen = Boolean(openQuaddieMeetings[meeting.id]);
+            const isWon = evaluation.isQuaddieWon;
+            const isAlive = evaluation.isQuaddieAlive;
 
-              return (
-                <div
-                  key={leg.legIndex}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                    isWon
-                      ? "bg-[#10B981]/10 border-[#10B981]/40"
-                      : isLost
-                      ? "bg-rose-950/20 border-rose-900/40 opacity-70"
-                      : "bg-[#121C17]/90 border-[#23352B]"
-                  }`}
+            return (
+              <div
+                key={meeting.id}
+                className={`rounded-3xl border transition-all ${
+                  isWon
+                    ? "border-[#10B981]/50 bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(16,185,129,0.15)]"
+                    : isAlive
+                    ? "border-white/[0.08] bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                    : "border-rose-950/40 bg-[#0A0F0D]/90 opacity-80"
+                }`}
+              >
+                {/* Accordion Trigger Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleQuaddieMeeting(meeting.id)}
+                  className="w-full p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-left cursor-pointer hover:bg-white/[0.02] rounded-3xl transition"
                 >
-                  {/* Leg Header */}
-                  <div>
-                    <div className="flex items-center justify-between gap-1 mb-2">
-                      <span className="px-2 py-0.5 rounded-md bg-[#080D0B] border border-[#23352B] font-mono font-bold text-xs text-[#D5DDD8]">
-                        Leg {leg.legIndex} · R{leg.raceNumber}
-                      </span>
-                      <span
-                        className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
-                          isWon
-                            ? "bg-[#10B981] text-[#070B09]"
-                            : isLost
-                            ? "bg-rose-500/20 text-rose-300"
-                            : "bg-[#192620] text-[#D4AF37]"
-                        }`}
-                      >
-                        {isWon ? "WON ✓" : isLost ? "OUT ✗" : "UPCOMING"}
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 ${
+                        isWon
+                          ? "bg-[#10B981] text-[#070B09]"
+                          : isAlive
+                          ? "bg-[#14231B] text-[#10B981] border border-[#10B981]/50"
+                          : "bg-rose-950/40 text-rose-300 border border-rose-900/40"
+                      }`}
+                    >
+                      {isWon ? "🏆" : isAlive ? "🟢" : "🔴"}
                     </div>
 
-                    <h3 className="font-display font-bold text-sm text-[#F3F4F0] truncate">
-                      {race.raceName}
-                    </h3>
-                    <p className="text-[11px] text-[#8A9990] font-mono mt-0.5">
-                      Jumps {race.startTime} · {race.distance}m
-                    </p>
-
-                    {/* Quick Selection Toolbar */}
-                    <div className="mt-3 flex items-center justify-between gap-1 text-[11px] font-mono">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setExpandedLegs((prev) => ({
-                            ...prev,
-                            [leg.legIndex]: !isExpanded,
-                          }));
-                        }}
-                        className="px-2 py-0.5 rounded-lg bg-[#080D0B] border border-[#23352B] text-[#D4AF37] hover:text-[#F3F4F0] flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>
-                          {isExpanded
-                            ? `Selected (${leg.allLegRunners.length})`
-                            : `Field (${race.runners.length})`}
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display font-bold text-base sm:text-lg text-[#F3F4F0]">
+                          {meeting.venue} ({meeting.state || "AU"})
                         </span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-3 h-3" />
-                        ) : (
-                          <ChevronDown className="w-3 h-3" />
-                        )}
-                      </button>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const sortedNonScratched = [...race.runners]
-                              .filter((r) => !isRunnerScratched(r))
-                              .sort(
-                                (a, b) =>
-                                  (Number(a.fixedWin || a.nswTabWin) || 99) -
-                                  (Number(b.fixedWin || b.nswTabWin) || 99)
-                              );
-                            const top3 = sortedNonScratched.slice(0, 3);
-                            top3.forEach((r) => {
-                              if (
-                                !leg.allLegRunners.some(
-                                  (lr) => lr.tabNumber === r.tabNumber
-                                )
-                              ) {
-                                onToggleQuaddieExtraRunner(
-                                  activeMeeting.id,
-                                  leg.raceNumber,
-                                  r.tabNumber
-                                );
-                              }
-                            });
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-[#14231B] border border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/20 text-[10px] font-bold cursor-pointer transition"
-                          title="Auto-add top 3 market favourites to this leg"
+                        <span
+                          className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold uppercase ${
+                            isWon
+                              ? "bg-[#10B981] text-[#070B09]"
+                              : isAlive
+                              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40"
+                              : "bg-rose-950 text-rose-300"
+                          }`}
                         >
-                          + Top 3
-                        </button>
-
-                        {leg.extraQuaddieRunners.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onClearQuaddieExtrasForLeg(
-                                activeMeeting.id,
-                                leg.raceNumber
-                              )
-                            }
-                            className="px-1.5 py-0.5 rounded-lg text-[10px] text-rose-400 hover:bg-rose-950/40 border border-rose-900/40 cursor-pointer"
-                            title="Clear extra runners"
-                          >
-                            Clear
-                          </button>
-                        )}
+                          {isWon ? "STATUS: WON ✓" : isAlive ? "STATUS: ALIVE" : "STATUS: KNOCKED OUT"}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981]">
+                          {evaluation.participatingUsersCount > 0
+                            ? `${evaluation.participatingUsersCount} of ${punters.length} Punters Tipped`
+                            : "Market Consensus"}
+                        </span>
                       </div>
+                      <p className="text-xs text-[#8A9990] font-mono mt-0.5">
+                        Races {evaluation.legs[0]?.raceNumber}–{evaluation.legs[3]?.raceNumber} · {evaluation.totalCombinations} Combinations · {evaluation.flexiPercentage.toFixed(2)}% Flexi Coverage
+                      </p>
                     </div>
+                  </div>
 
-                    {/* Runners Interactive Selection List */}
-                    <div className="mt-2.5 space-y-1 max-h-48 overflow-y-auto pr-1">
-                      {displayRunners.map((runner) => {
-                        const isScr = isRunnerScratched(runner);
-                        const isWinner =
-                          leg.isRaceResulted && runner.finishPosition === 1;
-                        const isExtra = leg.extraQuaddieRunners.some(
-                          (lr) => lr.tabNumber === runner.tabNumber
-                        );
-                        const isSyndicateTip =
-                          !isExtra &&
-                          leg.allLegRunners.some(
-                            (lr) => lr.tabNumber === runner.tabNumber
-                          );
-                        const isIncluded = isSyndicateTip || isExtra;
-                        const winOdds =
-                          Number(runner.fixedWin || runner.nswTabWin) || 0;
-
+                  <div className="flex items-center gap-4 self-end md:self-center">
+                    {/* Leg Hit Status Dots */}
+                    <div className="flex items-center gap-1.5">
+                      {evaluation.legs.map((leg) => {
+                        const isLegWon = leg.isLegHit;
+                        const isLegLost = leg.isRaceResulted && !leg.isLegHit;
                         return (
-                          <button
-                            key={runner.tabNumber}
-                            type="button"
-                            disabled={isScr}
-                            onClick={() => {
-                              if (isScr) return;
-                              onToggleQuaddieExtraRunner(
-                                activeMeeting.id,
-                                leg.raceNumber,
-                                runner.tabNumber
-                              );
-                            }}
-                            className={`w-full p-1.5 rounded-lg border flex items-center justify-between text-xs font-mono transition text-left cursor-pointer ${
-                              isScr
-                                ? "opacity-35 bg-[#060A08] border-transparent cursor-not-allowed"
-                                : isWinner
-                                ? "bg-[#10B981] text-[#070B09] font-bold border-[#10B981]"
-                                : isSyndicateTip
-                                ? "bg-[#D4AF37]/15 border-[#D4AF37]/50 text-[#F3F4F0] hover:bg-[#D4AF37]/25"
-                                : isExtra
-                                ? "bg-[#10B981]/15 border-[#10B981]/50 text-[#F3F4F0] hover:bg-[#10B981]/25"
-                                : "bg-[#080D0B] border-[#1E2E25] text-[#8A9990] hover:border-[#D4AF37]/50 hover:text-[#F3F4F0]"
+                          <span
+                            key={leg.legIndex}
+                            className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold flex items-center justify-center ${
+                              isLegWon
+                                ? "bg-[#10B981] text-[#070B09]"
+                                : isLegLost
+                                ? "bg-rose-950 text-rose-300 border border-rose-800"
+                                : "bg-[#14231B] text-[#D4AF37] border border-[#23352B]"
+                            }`}
+                            title={`Leg ${leg.legIndex} (R${leg.raceNumber}): ${
+                              isLegWon ? "HIT" : isLegLost ? "OUT" : "UPCOMING"
                             }`}
                           >
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span
-                                className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
-                                  isWinner
-                                    ? "bg-[#070B09] text-[#10B981]"
-                                    : isSyndicateTip
-                                    ? "bg-[#D4AF37] text-[#070B09]"
-                                    : isExtra
-                                    ? "bg-[#10B981] text-[#070B09]"
-                                    : "bg-[#141F19] text-[#8A9990]"
-                                }`}
-                              >
-                                {runner.tabNumber}
-                              </span>
-                              <span className="truncate">{runner.horseName}</span>
-                              {isSyndicateTip && (
-                                <span className="text-[9px] px-1 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-bold">
-                                  Tip
-                                </span>
-                              )}
-                              {isExtra && (
-                                <span className="text-[9px] px-1 rounded bg-[#10B981]/20 text-[#10B981] font-bold">
-                                  +Extra
-                                </span>
-                              )}
-                              {isScr && (
-                                <span className="text-[9px] px-1 rounded bg-rose-950 text-rose-300 font-bold">
-                                  SCR
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="text-[11px]">
-                                {winOdds > 0 ? `$${winOdds.toFixed(2)}` : "—"}
-                              </span>
-                              {!isScr && (
-                                <span
-                                  className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
-                                    isIncluded
-                                      ? "text-[#10B981]"
-                                      : "text-[#55695D] hover:text-[#D4AF37]"
-                                  }`}
-                                >
-                                  {isIncluded ? "✓" : "+"}
-                                </span>
-                              )}
-                            </div>
-                          </button>
+                            L{leg.legIndex}
+                          </span>
                         );
                       })}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
 
-          {/* Quaddie Mathematical Projection Bento Strip */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-[#121C17]/90 border border-[#23352B] font-mono">
-            <div>
-              <span className="text-xs text-[#8A9990] uppercase block">
-                Combinations
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-[#F3F4F0] mt-1 block">
-                {quaddieEval.legs.map((l) => l.allLegRunners.length).join(" × ")} = {quaddieEval.totalCombinations}
-              </span>
-              <span className="text-[11px] text-[#8A9990]">
-                {quaddieEval.participatingUsersCount} punters participating
-              </span>
-            </div>
-
-            <div>
-              <span className="text-xs text-[#8A9990] uppercase block">
-                Total Flexi Stake
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-[#F3F4F0] mt-1 block">
-                ${quaddieEval.quaddieBetAmount.toFixed(2)}
-              </span>
-              <span className="text-[11px] text-[#10B981]">
-                {quaddieEval.flexiPercentage.toFixed(2)}% Flexi Coverage
-              </span>
-            </div>
-
-            <div>
-              <span className="text-xs text-[#8A9990] uppercase block">
-                Est. $1 Dividend Range
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-[#D4AF37] mt-1 block">
-                ${quaddieEval.minQuaddieDividend.toFixed(0)} – ${quaddieEval.maxQuaddieDividend.toFixed(0)}
-              </span>
-              <span className="text-[11px] text-[#8A9990]">
-                Est. Mean: ${quaddieEval.officialOrEstimatedQuaddieDividend.toFixed(2)}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-xs text-[#8A9990] uppercase block">
-                Projected Syndicate Collect
-              </span>
-              <span
-                className={`text-xl sm:text-2xl font-bold mt-1 block ${
-                  quaddieEval.isQuaddieWon ? "text-[#10B981]" : "text-[#F3F4F0]"
-                }`}
-              >
-                ${quaddieEval.flexiPayoutOnBetAmount.toFixed(2)}
-              </span>
-              <span className="text-[11px] text-[#8A9990]">
-                ${quaddieEval.flexiPayoutPerUser.toFixed(2)} / member share
-              </span>
-            </div>
-          </div>
-
-          {/* Leg 4 "Sweat the Quaddie" Payout Matrix */}
-          {leg4SweatScenarios.length > 0 && (
-            <div className="p-5 rounded-2xl bg-[#080D0B] border border-[#1E2E25] space-y-3 font-mono">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#D4AF37]" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
-                    Leg 4 Live Sweat Matrix (Potential Payout Per Horse)
-                  </span>
-                </div>
-                <span className="text-xs text-[#8A9990]">
-                  R{quaddieEval.legs[3].raceNumber} (Final Leg)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {leg4SweatScenarios.map((scen) => (
-                  <div
-                    key={scen.tabNumber}
-                    className={`p-3 rounded-xl border flex flex-col justify-between ${
-                      scen.isActualWinner
-                        ? "bg-[#10B981]/20 border-[#10B981] text-[#F3F4F0]"
-                        : "bg-[#121C17] border-[#23352B] text-[#D5DDD8]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold">#{scen.tabNumber} {scen.horseName}</span>
-                      <span className="text-xs text-[#D4AF37]">${scen.winOdds.toFixed(2)}</span>
+                    {/* Dividend or Return */}
+                    <div className="text-right font-mono">
+                      <div
+                        className={`text-sm sm:text-base font-bold ${
+                          isWon ? "text-[#10B981]" : "text-[#F3F4F0]"
+                        }`}
+                      >
+                        {isWon
+                          ? `+$${evaluation.flexiPayoutOnBetAmount.toFixed(2)}`
+                          : `$${evaluation.quaddieBetAmount.toFixed(0)} Outlay`}
+                      </div>
+                      <div className="text-[10px] text-[#8A9990]">
+                        {isWon
+                          ? `$${evaluation.flexiPayoutPerUser.toFixed(2)} / member`
+                          : `$${evaluation.buyInPerUser}/punter`}
+                      </div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-[#1E2E25] flex items-center justify-between text-xs">
-                      <span className="text-[#8A9990]">Syndicate Collect:</span>
-                      <strong className="text-[#10B981]">
-                        ${scen.projectedTotalFlexiCollect.toFixed(2)}
-                      </strong>
+
+                    <div className="p-1 rounded-xl bg-[#14231B] text-[#8A9990]">
+                      {isOpen ? (
+                        <ChevronUp className="w-5 h-5 text-[#F3F4F0]" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-[#8A9990]" />
+                      )}
                     </div>
                   </div>
-                ))}
+                </button>
+
+                {/* Accordion Content Body (4-Leg Matrix + Sweat Scenarios) */}
+                {isOpen && (
+                  <div className="p-5 sm:p-7 pt-2 border-t border-[#1E2E25] space-y-6 animate-in fade-in duration-150">
+                    {/* Buy-in selector for this meeting */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-[#080D0B] p-3 rounded-2xl border border-[#1E2E25]">
+                      <div className="text-xs font-mono text-[#8A9990]">
+                        Adjust Buy-In per Syndicate Member for {meeting.venue}:
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {[20, 50, 100].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => onChangeQuaddieBuyInPerUser(amt)}
+                            className={`px-3 py-1 rounded-xl font-mono text-xs font-bold transition cursor-pointer ${
+                              quaddieBuyInPerUser === amt
+                                ? "bg-[#10B981] text-[#070B09]"
+                                : "text-[#8A9990] hover:text-[#F3F4F0] bg-[#121E18]"
+                            }`}
+                          >
+                            ${amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 4 Quaddie Legs Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {evaluation.legs.map((leg) => {
+                        const race = leg.race;
+                        const isLegWon = leg.isLegHit;
+                        const isLegLost = leg.isRaceResulted && !leg.isLegHit;
+                        const legKey = `${meeting.id}_leg_${leg.legIndex}`;
+                        const isExpanded = Boolean(expandedLegs[legKey]);
+                        const displayRunners = isExpanded
+                          ? race.runners
+                          : race.runners.filter((r) =>
+                              leg.allLegRunners.some(
+                                (lr) => lr.tabNumber === r.tabNumber
+                              )
+                            );
+
+                        return (
+                          <div
+                            key={leg.legIndex}
+                            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                              isLegWon
+                                ? "bg-[#10B981]/10 border-[#10B981]/40"
+                                : isLegLost
+                                ? "bg-rose-950/20 border-rose-900/40 opacity-70"
+                                : "bg-[#121C17]/90 border-[#23352B]"
+                            }`}
+                          >
+                            {/* Leg Header */}
+                            <div>
+                              <div className="flex items-center justify-between gap-1 mb-2">
+                                <span className="px-2 py-0.5 rounded-md bg-[#080D0B] border border-[#23352B] font-mono font-bold text-xs text-[#D5DDD8]">
+                                  Leg {leg.legIndex} · R{leg.raceNumber}
+                                </span>
+                                <span
+                                  className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
+                                    isLegWon
+                                      ? "bg-[#10B981] text-[#070B09]"
+                                      : isLegLost
+                                      ? "bg-rose-500/20 text-rose-300"
+                                      : "bg-[#192620] text-[#D4AF37]"
+                                  }`}
+                                >
+                                  {isLegWon ? "WON ✓" : isLegLost ? "OUT ✗" : "UPCOMING"}
+                                </span>
+                              </div>
+
+                              <h3 className="font-display font-bold text-sm text-[#F3F4F0] truncate">
+                                {race.raceName}
+                              </h3>
+                              <p className="text-[11px] text-[#8A9990] font-mono mt-0.5">
+                                Jumps {race.startTime} · {race.distance}m
+                              </p>
+
+                              {/* Quick Selection Toolbar */}
+                              <div className="mt-3 flex items-center justify-between gap-1 text-[11px] font-mono">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExpandedLegs((prev) => ({
+                                      ...prev,
+                                      [legKey]: !isExpanded,
+                                    }));
+                                  }}
+                                  className="px-2 py-0.5 rounded-lg bg-[#080D0B] border border-[#23352B] text-[#D4AF37] hover:text-[#F3F4F0] flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>
+                                    {isExpanded
+                                      ? `Selected (${leg.allLegRunners.length})`
+                                      : `Field (${race.runners.length})`}
+                                  </span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-3 h-3" />
+                                  ) : (
+                                    <ChevronDown className="w-3 h-3" />
+                                  )}
+                                </button>
+
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const sortedNonScratched = [...race.runners]
+                                        .filter((r) => !isRunnerScratched(r))
+                                        .sort(
+                                          (a, b) =>
+                                            (Number(a.fixedWin || a.nswTabWin) || 99) -
+                                            (Number(b.fixedWin || b.nswTabWin) || 99)
+                                        );
+                                      const top3 = sortedNonScratched.slice(0, 3);
+                                      top3.forEach((r) => {
+                                        if (
+                                          !leg.allLegRunners.some(
+                                            (lr) => lr.tabNumber === r.tabNumber
+                                          )
+                                        ) {
+                                          onToggleQuaddieExtraRunner(
+                                            meeting.id,
+                                            leg.raceNumber,
+                                            r.tabNumber
+                                          );
+                                        }
+                                      });
+                                    }}
+                                    className="px-2 py-0.5 rounded-lg bg-[#14231B] border border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/20 text-[10px] font-bold cursor-pointer transition"
+                                    title="Auto-add top 3 market favourites to this leg"
+                                  >
+                                    + Top 3
+                                  </button>
+
+                                  {leg.extraQuaddieRunners.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        onClearQuaddieExtrasForLeg(
+                                          meeting.id,
+                                          leg.raceNumber
+                                        )
+                                      }
+                                      className="px-1.5 py-0.5 rounded-lg text-[10px] text-rose-400 hover:bg-rose-950/40 border border-rose-900/40 cursor-pointer"
+                                      title="Clear extra runners"
+                                    >
+                                      Clear
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Runners Interactive Selection List */}
+                              <div className="mt-2.5 space-y-1 max-h-48 overflow-y-auto pr-1">
+                                {displayRunners.map((runner) => {
+                                  const isScr = isRunnerScratched(runner);
+                                  const isWinner =
+                                    leg.isRaceResulted && runner.finishPosition === 1;
+                                  const isExtra = leg.extraQuaddieRunners.some(
+                                    (lr) => lr.tabNumber === runner.tabNumber
+                                  );
+                                  const isSyndicateTip =
+                                    !isExtra &&
+                                    leg.allLegRunners.some(
+                                      (lr) => lr.tabNumber === runner.tabNumber
+                                    );
+                                  const isIncluded = isSyndicateTip || isExtra;
+                                  const winOdds =
+                                    Number(runner.fixedWin || runner.nswTabWin) || 0;
+
+                                  return (
+                                    <button
+                                      key={runner.tabNumber}
+                                      type="button"
+                                      disabled={isScr}
+                                      onClick={() => {
+                                        if (isScr) return;
+                                        onToggleQuaddieExtraRunner(
+                                          meeting.id,
+                                          leg.raceNumber,
+                                          runner.tabNumber
+                                        );
+                                      }}
+                                      className={`w-full p-1.5 rounded-lg border flex items-center justify-between text-xs font-mono transition text-left cursor-pointer ${
+                                        isScr
+                                          ? "opacity-35 bg-[#060A08] border-transparent cursor-not-allowed"
+                                          : isWinner
+                                          ? "bg-[#10B981] text-[#070B09] font-bold border-[#10B981]"
+                                          : isSyndicateTip
+                                          ? "bg-[#D4AF37]/15 border-[#D4AF37]/50 text-[#F3F4F0] hover:bg-[#D4AF37]/25"
+                                          : isExtra
+                                          ? "bg-[#10B981]/15 border-[#10B981]/50 text-[#F3F4F0] hover:bg-[#10B981]/25"
+                                          : "bg-[#080D0B] border-[#1E2E25] text-[#8A9990] hover:border-[#D4AF37]/50 hover:text-[#F3F4F0]"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1.5 truncate">
+                                        <span
+                                          className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
+                                            isWinner
+                                              ? "bg-[#070B09] text-[#10B981]"
+                                              : isSyndicateTip
+                                              ? "bg-[#D4AF37] text-[#070B09]"
+                                              : isExtra
+                                              ? "bg-[#10B981] text-[#070B09]"
+                                              : "bg-[#141F19] text-[#8A9990]"
+                                          }`}
+                                        >
+                                          {runner.tabNumber}
+                                        </span>
+                                        <span className="truncate">{runner.horseName}</span>
+                                        {isSyndicateTip && (
+                                          <span className="text-[9px] px-1 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-bold">
+                                            Tip
+                                          </span>
+                                        )}
+                                        {isExtra && (
+                                          <span className="text-[9px] px-1 rounded bg-[#10B981]/20 text-[#10B981] font-bold">
+                                            +Extra
+                                          </span>
+                                        )}
+                                        {isScr && (
+                                          <span className="text-[9px] px-1 rounded bg-rose-950 text-rose-300 font-bold">
+                                            SCR
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className="text-[11px]">
+                                          {winOdds > 0 ? `$${winOdds.toFixed(2)}` : "—"}
+                                        </span>
+                                        {!isScr && (
+                                          <span
+                                            className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
+                                              isIncluded
+                                                ? "text-[#10B981]"
+                                                : "text-[#55695D] hover:text-[#D4AF37]"
+                                            }`}
+                                          >
+                                            {isIncluded ? "✓" : "+"}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Leg Footer Summary */}
+                            <div className="mt-3 pt-2 border-t border-[#1E2E25] flex items-center justify-between text-[11px] font-mono text-[#8A9990]">
+                              <span>Runners in Leg:</span>
+                              <strong className="text-[#F3F4F0]">
+                                {leg.allLegRunners.length} horses
+                              </strong>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Quaddie Ticket Breakdown Strip */}
+                    <div className="p-4 rounded-2xl bg-[#080D0B] border border-[#1E2E25] grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+                      <div>
+                        <span className="text-[#8A9990] block text-[10px] uppercase">
+                          Formula / Combos
+                        </span>
+                        <div className="text-sm font-bold text-[#F3F4F0] mt-0.5">
+                          {evaluation.legs.map((l) => l.allLegRunners.length).join(" × ")} = {evaluation.totalCombinations}
+                        </div>
+                        <div className="text-[10px] text-[#8A9990]">
+                          {evaluation.participatingUsersCount} punters participating
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[#8A9990] block text-[10px] uppercase">
+                          Syndicate Ticket Cost
+                        </span>
+                        <div className="text-sm font-bold text-[#F3F4F0] mt-0.5">
+                          ${evaluation.quaddieBetAmount.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-[#10B981] font-bold">
+                          {evaluation.flexiPercentage.toFixed(2)}% Flexi Coverage
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[#8A9990] block text-[10px] uppercase">
+                          Estimated Quaddie Dividend
+                        </span>
+                        <div className="text-sm font-bold text-[#D4AF37] mt-0.5">
+                          ${evaluation.minQuaddieDividend.toFixed(0)} – ${evaluation.maxQuaddieDividend.toFixed(0)}
+                        </div>
+                        <div className="text-[10px] text-[#8A9990]">
+                          Est. Mean: ${evaluation.officialOrEstimatedQuaddieDividend.toFixed(2)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[#8A9990] block text-[10px] uppercase">
+                          Potential Flexi Collect
+                        </span>
+                        <div
+                          className={`text-sm font-bold mt-0.5 ${
+                            isWon ? "text-[#10B981]" : "text-[#F3F4F0]"
+                          }`}
+                        >
+                          ${evaluation.flexiPayoutOnBetAmount.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-[#10B981]">
+                          ${evaluation.flexiPayoutPerUser.toFixed(2)} / member share
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sweat Scenarios if Alive in Leg 4 */}
+                    {sweatScenarios.length > 0 && evaluation.isQuaddieAlive && (
+                      <div className="p-4 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-[#D4AF37]" />
+                          <h4 className="font-display font-bold text-sm text-[#F3F4F0]">
+                            Leg 4 Sweat Scenarios · R{evaluation.legs[3].raceNumber} ({meeting.venue})
+                          </h4>
+                        </div>
+                        <p className="text-xs text-[#8A9990] font-mono">
+                          Live syndicate payouts across all live runners in the final leg:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+                          {sweatScenarios.map((scen) => (
+                            <div
+                              key={scen.tabNumber}
+                              className="p-2.5 rounded-xl bg-[#080D0B] border border-[#1E2E25] flex items-center justify-between text-xs font-mono"
+                            >
+                              <div>
+                                <span className="font-bold text-[#D4AF37]">
+                                  #{scen.tabNumber} {scen.horseName}
+                                </span>
+                                <span className="text-[10px] text-[#8A9990] block">
+                                  ${scen.winOdds.toFixed(2)} Win
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-bold text-[#10B981] block">
+                                  +${(scen.projectedTotalFlexiCollect || 0).toFixed(0)}
+                                </span>
+                                <span className="text-[10px] text-[#8A9990]">
+                                  ${(scen.projectedPerUserCollect || 0).toFixed(0)}/ea
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
     </div>
