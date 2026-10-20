@@ -1310,45 +1310,45 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                 return (
                   <div
                     key={meeting.id}
-                    className={`rounded-3xl border transition-all ${
+                    className={`rounded-2xl border transition-all overflow-hidden ${
                       totalWon > 0
-                        ? "border-[#D4AF37]/50 bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(212,175,55,0.15)]"
+                        ? "border-[#34C759]/40 bg-white shadow-sm"
                         : isAlive
-                        ? "border-white/[0.08] bg-[#0E1512]/95 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
-                        : "border-[#1E2E25] bg-[#0A0F0D]/90 opacity-80"
+                        ? "border-[#E5E5EA] bg-white shadow-xs"
+                        : "border-[#E5E5EA] bg-[#FAF9FA] opacity-90"
                     }`}
                   >
                     {/* Accordion Trigger Header */}
                     <button
                       type="button"
                       onClick={() => toggleTrifectaMeeting(meeting.id)}
-                      className="w-full p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-left cursor-pointer hover:bg-white/[0.02] rounded-3xl transition"
+                      className="w-full p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left cursor-pointer hover:bg-[#F2F2F7]/50 rounded-2xl transition"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3.5">
                         <div
                           className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 ${
                             totalWon > 0
-                              ? "bg-[#D4AF37] text-[#070B09]"
+                              ? "bg-[#EAFBF0] text-[#34C759]"
                               : isAlive
-                              ? "bg-[#14231B] text-[#D4AF37] border border-[#D4AF37]/50"
-                              : "bg-[#121A15] text-[#8A9990] border border-[#23352B]"
+                              ? "bg-[#EBF5FF] text-[#0071E3]"
+                              : "bg-[#F2F2F7] text-[#86868B]"
                           }`}
                         >
-                          {totalWon > 0 ? "🏆" : isAlive ? "🟢" : "⚪"}
+                          {totalWon > 0 ? "🏆" : isAlive ? "🏇" : "⚪"}
                         </div>
 
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-display font-bold text-base sm:text-lg text-[#F3F4F0]">
+                            <span className="font-display font-bold text-base sm:text-lg text-[#1D1D1F]">
                               {meeting.venue} ({meeting.state || "AU"})
                             </span>
                             <span
-                              className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold uppercase ${
+                              className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold uppercase ${
                                 totalWon > 0
-                                  ? "bg-[#D4AF37] text-[#070B09]"
+                                  ? "bg-[#EAFBF0] text-[#34C759]"
                                   : isAlive
-                                  ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40"
-                                  : "bg-[#14231B] text-[#8A9990]"
+                                  ? "bg-[#EBF5FF] text-[#0071E3]"
+                                  : "bg-[#F2F2F7] text-[#86868B]"
                               }`}
                             >
                               {totalWon > 0
@@ -1357,11 +1357,11 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                                 ? "STATUS: ACTIVE"
                                 : "STATUS: COMPLETED"}
                             </span>
-                            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981]">
+                            <span className="px-2.5 py-0.5 rounded-full font-mono text-[10px] font-semibold bg-[#F2F2F7] text-[#1D1D1F] border border-[#E5E5EA]">
                               {participatedCount} of {meeting.races.length} Races Tipped
                             </span>
                             {meeting.date && (
-                              <span className="text-[11px] text-[#8A9990] font-mono">
+                              <span className="text-[11px] text-[#86868B] font-mono">
                                 {meeting.date}
                               </span>
                             )}
@@ -1482,12 +1482,12 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                               key={raceKey}
                               className={`rounded-2xl border transition-all ${
                                 isHit
-                                  ? "border-[#10B981]/50 bg-[#0A1610] shadow-[0_4px_20px_rgba(16,185,129,0.12)]"
+                                  ? "border-[#34C759]/40 bg-[#EAFBF0]/40 shadow-xs"
                                   : isEditing
-                                  ? "border-[#D4AF37] bg-[#121A15]"
+                                  ? "border-[#0071E3] ring-2 ring-[#0071E3]/20 bg-white shadow-sm"
                                   : isCustomized
-                                  ? "border-[#D4AF37]/40 bg-[#0E1512]"
-                                  : "border-white/[0.06] bg-[#0A0F0D] hover:border-white/[0.12]"
+                                  ? "border-[#0071E3]/30 bg-white shadow-xs"
+                                  : "border-[#E5E5EA] bg-white hover:border-[#D2D2D7] shadow-xs"
                               }`}
                             >
                               {/* RACE EVENT CARD */}
@@ -1495,37 +1495,37 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                                 {/* Race Event Top Bar: Header & Badges & Action Buttons */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                   <div className="flex items-center gap-2.5 flex-wrap">
-                                    <span className="w-8 h-8 rounded-xl bg-[#D4AF37] text-[#070B09] font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                    <span className="w-8 h-8 rounded-full bg-[#0071E3] text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                                       R{race.raceNumber}
                                     </span>
                                     <div>
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <h3 className="font-display font-bold text-sm sm:text-base text-[#F3F4F0]">
+                                        <h3 className="font-display font-bold text-sm sm:text-base text-[#1D1D1F]">
                                           {race.raceName || `Race ${race.raceNumber}`}
                                         </h3>
                                         {/* Status Badge */}
                                         {isHit && (
-                                          <span className="px-2 py-0.5 rounded-md bg-[#10B981] text-[#070B09] font-mono text-[10px] font-black uppercase">
+                                          <span className="px-2.5 py-0.5 rounded-full bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/30 font-mono text-[10px] font-bold uppercase">
                                             WON ✓ +${(evaluation.customBetFlexiReturn || 0).toFixed(2)}
                                           </span>
                                         )}
                                         {isMissed && (
-                                          <span className="px-2 py-0.5 rounded-md bg-rose-950/70 border border-rose-900/40 text-rose-300 font-mono text-[10px] font-bold uppercase">
+                                          <span className="px-2.5 py-0.5 rounded-full bg-[#FEECEB] border border-[#FF3B30]/30 text-[#FF3B30] font-mono text-[10px] font-bold uppercase">
                                             MISSED (Podium: #{evaluation.officialPodium.first?.tabNumber ?? "?"}-#{evaluation.officialPodium.second?.tabNumber ?? "?"}-#{evaluation.officialPodium.third?.tabNumber ?? "?"})
                                           </span>
                                         )}
                                         {isUpcoming && (
-                                          <span className="px-2 py-0.5 rounded-md bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-mono text-[10px] font-bold uppercase">
+                                          <span className="px-2.5 py-0.5 rounded-full bg-[#EBF5FF] text-[#0071E3] font-mono text-[10px] font-bold uppercase">
                                             ACTIVE SWEAT
                                           </span>
                                         )}
                                         {isCustomized && (
-                                          <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[10px] font-bold">
+                                          <span className="px-2.5 py-0.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#1D1D1F] font-mono text-[10px] font-bold">
                                             Custom Override
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-xs text-[#8A9990] font-mono mt-0.5">
+                                      <p className="text-xs text-[#86868B] font-mono mt-0.5">
                                         {race.distance ? `${race.distance}m` : ""} {race.classGrade ? `· ${race.classGrade}` : ""} {meeting.trackCondition ? `· ${meeting.trackCondition}` : ""}
                                       </p>
                                     </div>
@@ -1534,10 +1534,10 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                                   {/* Right side: Flexi % Metric Pill & Customize Action */}
                                   <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
                                     {/* Official Flexi % Badge based on defined bet ($20 default) */}
-                                    <div className="px-3 py-1.5 rounded-xl bg-[#080D0B] border border-[#1E2E25] font-mono text-right">
+                                    <div className="px-3.5 py-1.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] font-mono text-right">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-[#8A9990] text-[10px]">Flexi:</span>
-                                        <span className="text-[#10B981] font-bold text-sm">
+                                        <span className="text-[#86868B] text-[10px]">Flexi:</span>
+                                        <span className="text-[#34C759] font-bold text-sm">
                                           {evaluation.flexiPercentage.toFixed(2)}%
                                         </span>
                                       </div>

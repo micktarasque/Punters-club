@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
+import { RaceCardCountdownClock } from "./RaceCardCountdownClock";
 
 interface MajorRaceDaysOverviewProps {
   meetings: RaceMeeting[];
@@ -57,9 +58,9 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
   onInspectRace,
   onJumpToSelectionsForMeeting,
   verifiedSourcesUsed = [
-    "Ladbrokes AU API (v1)",
-    "Neds AU API (v1)",
-    "PointsBet AU API (v3)",
+    "Ladbrokes AU API",
+    "Neds AU API",
+    "PointsBet AU API",
     "Racing & Sports AU",
   ],
 }) => {
@@ -101,25 +102,18 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
     onChangeSelectedMeetingIds?.(nextIds);
   };
 
-  const displayedMeetings = useMemo(
-    () => sorted.filter((m) => activeSelectedIds.includes(m.id)),
-    [sorted, activeSelectedIds]
-  );
+  const displayedMeetings = useMemo(() => {
+    const set = new Set(activeSelectedIds);
+    const result = sorted.filter((m) => set.has(m.id));
+    return result.length > 0 ? result : sorted.slice(0, 2);
+  }, [sorted, activeSelectedIds]);
 
   const renderMeetingColumn = (
-    meeting: RaceMeeting | null,
+    meeting: RaceMeeting,
     stateBadgeLabel: string,
     stateAccentClass: string,
     onRemoveExtraCard?: () => void
   ) => {
-    if (!meeting) {
-      return (
-        <div className="rounded-2xl border border-[#1E2E26] bg-[#0E1713] p-6 text-center text-sm text-[#8A9990]">
-          No scheduled {stateBadgeLabel} thoroughbred race meeting on this date.
-        </div>
-      );
-    }
-
     const completedCount = meeting.races.filter((r) =>
       isRaceOfficialOrCompleted(r, meeting.date)
     ).length;
@@ -127,23 +121,23 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
     return (
       <div
         key={meeting.id}
-        className="flex flex-col rounded-2xl border border-[#23352C] bg-[#0D1612] shadow-xl overflow-hidden"
+        className="apple-card flex flex-col overflow-hidden"
       >
         {/* Major Meeting Header */}
-        <div className="border-b border-[#1E2E26] bg-gradient-to-r from-[#13221B] via-[#101C16] to-[#0D1612] p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs text-[#9BA8A1]">
+        <div className="bg-[#FAF9FA] border-b border-[#E5E5EA] p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#86868B]">
               <span
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${stateAccentClass}`}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${stateAccentClass}`}
               >
                 <MapPin className="h-3 w-3" />
                 {stateBadgeLabel}
               </span>
-              <span>·</span>
-              <span className="font-mono text-[#D4AF37] font-semibold">
+              <span>•</span>
+              <span className="font-mono text-[#1D1D1F] font-semibold">
                 {meeting.races.length} Races
               </span>
-              <span>·</span>
+              <span>•</span>
               <span>{meeting.tier}</span>
             </div>
 
@@ -151,9 +145,9 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
               <button
                 type="button"
                 onClick={() => onJumpToSelectionsForMeeting(meeting.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-xs font-bold text-[#D4AF37] hover:bg-[#D4AF37]/25 transition cursor-pointer"
+                className="apple-btn-primary"
               >
-                Enter Selections ({meeting.races.length}R)
+                <span>Selections ({meeting.races.length}R)</span>
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
               {onRemoveExtraCard && (
@@ -161,7 +155,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                   type="button"
                   onClick={onRemoveExtraCard}
                   title={`Hide ${meeting.venue} card`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#2E4237] bg-[#14221B] px-2 py-1 text-xs text-[#9BA8A1] hover:border-rose-500/50 hover:text-rose-300 transition cursor-pointer"
+                  className="apple-btn-secondary"
                 >
                   <X className="h-3.5 w-3.5" />
                   <span>Hide</span>
@@ -170,33 +164,34 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3">
             <div>
-              <h3 className="font-serif text-2xl font-bold tracking-tight text-[#F3F4F0]">
+              <h3 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">
                 {meeting.venue}{" "}
-                <span className="text-base font-normal text-[#8A9990]">
+                <span className="text-base font-normal text-[#86868B]">
                   ({meeting.state})
                 </span>
               </h3>
-              <p className="mt-0.5 text-xs text-[#8A9990]">
+              <p className="mt-1 text-xs text-[#86868B]">
                 Track:{" "}
-                <strong className="text-emerald-300">
+                <strong className="text-[#1D1D1F] font-semibold">
                   {meeting.trackRating}
                 </strong>{" "}
                 · Weather:{" "}
-                <strong className="text-[#D5DDD8]">{meeting.weather}</strong> ·
-                Rail:{" "}
-                <span className="text-[#9BA8A1]">{meeting.railPosition}</span>
+                <strong className="text-[#1D1D1F] font-semibold">
+                  {meeting.weather}
+                </strong>{" "}
+                · Rail: <span>{meeting.railPosition}</span>
               </p>
             </div>
-            <div className="text-right font-mono text-xs text-[#9BA8A1]">
+            <div className="text-right font-mono text-xs text-[#86868B]">
               {completedCount > 0 ? (
-                <span className="inline-flex items-center gap-1 text-emerald-300 font-semibold">
+                <span className="inline-flex items-center gap-1.5 text-[#34C759] font-semibold">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   {completedCount}/{meeting.races.length} Final
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-amber-300">
+                <span className="inline-flex items-center gap-1.5 text-[#0071E3] font-medium">
                   <Clock className="h-3.5 w-3.5" />
                   Upcoming Card ({meeting.races.length} Races)
                 </span>
@@ -206,7 +201,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
         </div>
 
         {/* Individual Races List with Top Favourites */}
-        <div className="divide-y divide-[#1A2921]">
+        <div className="divide-y divide-[#E5E5EA]">
           {meeting.races.map((race: RaceEvent) => {
             const isCompleted = isRaceOfficialOrCompleted(race, meeting.date);
             const topFavs = getTopFavourites(race.runners, 3);
@@ -227,52 +222,52 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             return (
               <div
                 key={race.raceNumber}
-                className={`p-4 transition ${
+                className={`p-5 transition-colors ${
                   isSelected
-                    ? "bg-[#15251D] ring-1 ring-inset ring-[#D4AF37]/40"
-                    : "hover:bg-[#111D17]"
+                    ? "bg-[#F2F7FF]"
+                    : "hover:bg-[#FAF9FA]"
                 }`}
               >
                 {/* Race Header Row */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-9 items-center justify-center rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 font-mono text-xs font-bold text-[#D4AF37]">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-10 items-center justify-center rounded-xl bg-[#F2F2F7] font-mono text-xs font-bold text-[#1D1D1F] border border-[#E5E5EA]">
                       R{race.raceNumber}
                     </span>
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-semibold text-sm sm:text-base text-[#F3F4F0]">
+                        <h4 className="font-semibold text-sm sm:text-base text-[#1D1D1F]">
                           {race.raceName}
                         </h4>
                         {getFeatureRaceNumberForMeeting(meeting) ===
                           race.raceNumber && (
-                          <span className="rounded border border-[#D4AF37]/60 bg-[#D4AF37]/20 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-[#D4AF37]">
-                            ★ FEATURE · 🃏 DEFAULT JOKER (2×)
+                          <span className="rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-[#FF9500]">
+                            ★ FEATURE · 🃏 JOKER (2×)
                           </span>
                         )}
                         {race.classGrade &&
                           race.classGrade !== "Thoroughbred" && (
-                            <span className="text-[11px] font-medium text-[#9BD4B5]">
+                            <span className="text-[11px] font-medium text-[#86868B]">
                               · {race.classGrade}
                             </span>
                           )}
                       </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-[#8A9990]">
-                        <span className="inline-flex items-center gap-1 text-[#D5DDD8]">
-                          <Clock className="h-3 w-3 text-[#D4AF37]" />
+                      <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-[#86868B]">
+                        <span className="inline-flex items-center gap-1 text-[#1D1D1F] font-medium">
+                          <Clock className="h-3 w-3 text-[#0071E3]" />
                           {race.startTime} AEDT
                         </span>
-                        <span>·</span>
+                        <span>•</span>
                         <span>{race.distance}m</span>
                         {race.prizeMoney && race.prizeMoney !== "-" && (
                           <>
-                            <span>·</span>
-                            <span className="text-emerald-300">
+                            <span>•</span>
+                            <span className="text-[#34C759] font-medium">
                               {race.prizeMoney}
                             </span>
                           </>
                         )}
-                        <span>·</span>
+                        <span>•</span>
                         <span>{race.runners.length} Runners</span>
                       </div>
                     </div>
@@ -280,14 +275,21 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
 
                   <div className="flex items-center gap-2">
                     {isCompleted ? (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-300">
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#34C759] bg-[#EAFBF0] px-2.5 py-1 rounded-full">
                         <CheckCircle2 className="h-3 w-3" />
                         OFFICIAL FINAL
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-[#D4AF37]">
-                        FIXED ODDS OPEN
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <RaceCardCountdownClock
+                          meeting={meeting}
+                          race={race}
+                          compact
+                        />
+                        <span className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-[#0071E3] bg-[#EBF5FF] px-2.5 py-1 rounded-full">
+                          FIXED ODDS OPEN
+                        </span>
+                      </div>
                     )}
                     <button
                       type="button"
@@ -298,57 +300,57 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                             : `${meeting.id}-R${race.raceNumber}`
                         )
                       }
-                      className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition cursor-pointer ${
                         expandedProbRaceKey === `${meeting.id}-R${race.raceNumber}`
-                          ? "border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37]"
-                          : "border-[#283D32] bg-[#16261E] text-[#9BA8A1] hover:border-[#D4AF37] hover:text-[#D4AF37]"
+                          ? "border-[#0071E3] bg-[#0071E3] text-white font-semibold"
+                          : "border-[#E5E5EA] bg-[#F2F2F7] text-[#1D1D1F] hover:bg-[#E5E5EA]"
                       }`}
                       title="Toggle Runner Win Likelihood & Market Probability Chart"
                     >
                       <BarChart3 className="h-3.5 w-3.5" />
-                      <span>Win Likelihood</span>
+                      <span>Probabilities</span>
                     </button>
                     <button
                       type="button"
                       onClick={() =>
                         onInspectRace(meeting.id, race.raceNumber)
                       }
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#283D32] bg-[#16261E] px-2.5 py-1 text-xs font-semibold text-[#D5DDD8] hover:border-[#D4AF37] hover:text-[#D4AF37] transition cursor-pointer"
+                      className="apple-btn-secondary"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      Full Field ({race.runners.length})
+                      <span>Full Field ({race.runners.length})</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Official Podium Banner if Race is Completed */}
                 {isCompleted && winner && (
-                  <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-950/25 px-3 py-2">
+                  <div className="mt-3.5 rounded-2xl border border-[#34C759]/25 bg-[#EAFBF0] p-3.5">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-300">
-                        <Trophy className="h-3.5 w-3.5 text-[#D4AF37]" />
+                      <span className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-[#34C759]">
+                        <Trophy className="h-3.5 w-3.5 text-[#FF9500]" />
                         Official Result:
                       </span>
                       <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-                        <span className="font-bold text-[#F3F4F0]">
+                        <span className="font-bold text-[#1D1D1F]">
                           1st: #{winner.tabNumber} {winner.horseName}{" "}
-                          <span className="text-emerald-300">
+                          <span className="text-[#34C759]">
                             (${winner.nswTabWin.toFixed(2)} / $
                             {winner.nswTabPlace.toFixed(2)})
                           </span>
                         </span>
                         {second && (
-                          <span className="text-[#C2CEC7]">
+                          <span className="text-[#48484A]">
                             2nd: #{second.tabNumber} {second.horseName}{" "}
-                            <span className="text-[#8A9990]">
+                            <span className="text-[#86868B]">
                               (${second.nswTabPlace.toFixed(2)})
                             </span>
                           </span>
                         )}
                         {third && (
-                          <span className="text-[#C2CEC7]">
+                          <span className="text-[#48484A]">
                             3rd: #{third.tabNumber} {third.horseName}{" "}
-                            <span className="text-[#8A9990]">
+                            <span className="text-[#86868B]">
                               (${third.nswTabPlace.toFixed(2)})
                             </span>
                           </span>
@@ -359,26 +361,26 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                 )}
 
                 {/* Top Favourites in this Race */}
-                <div className="mt-3">
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#D4AF37]">
-                      <Flame className="h-3.5 w-3.5 text-amber-400" />
-                      Top Market Favourites (Verified Live Fixed Odds)
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[#86868B]">
+                      <Flame className="h-3.5 w-3.5 text-[#0071E3]" />
+                      Market Favourites (Verified Fixed Odds)
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                     {topFavs.map((fav, idx) => (
                       <div
                         key={fav.tabNumber}
                         onClick={() =>
                           onInspectRace(meeting.id, race.raceNumber)
                         }
-                        className="group flex flex-col justify-between rounded-xl border border-[#21332A] bg-[#111D17] p-2.5 hover:border-[#D4AF37]/50 transition cursor-pointer"
+                        className="group flex flex-col justify-between rounded-xl border border-[#E5E5EA] bg-[#F9F9FB] p-3 hover:border-[#0071E3]/40 hover:bg-white transition cursor-pointer shadow-xs"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
                             <span
-                              className="h-5 w-5 shrink-0 rounded-full border border-white/20 shadow-inner flex items-center justify-center font-mono text-[10px] font-bold"
+                              className="h-6 w-6 shrink-0 rounded-full shadow-xs flex items-center justify-center font-mono text-[10px] font-bold"
                               style={{
                                 background: `linear-gradient(135deg, ${fav.silkPrimary} 55%, ${fav.silkSecondary} 45%)`,
                                 color: "#FFFFFF",
@@ -388,32 +390,34 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                               {fav.tabNumber}
                             </span>
                             <div className="min-w-0">
-                              <div className="truncate font-semibold text-xs text-[#F3F4F0] group-hover:text-[#D4AF37]">
+                              <div className="truncate font-semibold text-xs text-[#1D1D1F] group-hover:text-[#0071E3]">
                                 #{fav.tabNumber} {fav.horseName}
                               </div>
-                              <div className="truncate text-[10px] text-[#8A9990]">
+                              <div className="truncate text-[10px] text-[#86868B]">
                                 B{fav.barrier} · {fav.jockey}
                               </div>
                             </div>
                           </div>
                           <span
-                            className={`shrink-0 font-mono text-[10px] font-bold ${
-                              idx === 0 ? "text-[#D4AF37]" : "text-[#9BA8A1]"
+                            className={`shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              idx === 0
+                                ? "bg-[#EBF5FF] text-[#0071E3]"
+                                : "bg-[#E5E5EA] text-[#86868B]"
                             }`}
                           >
                             FAV #{idx + 1}
                           </span>
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between border-t border-[#1B2A22] pt-1.5 font-mono text-[11px]">
-                          <span className="truncate text-[10px] text-[#7A8A81] max-w-[110px]">
+                        <div className="mt-2.5 flex items-center justify-between border-t border-[#E5E5EA] pt-2 font-mono text-[11px]">
+                          <span className="truncate text-[10px] text-[#86868B] max-w-[110px]">
                             {fav.trainer}
                           </span>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-emerald-300">
+                            <span className="font-bold text-[#1D1D1F]">
                               ${(fav.fixedWin || fav.nswTabWin || 0).toFixed(2)}W
                             </span>
-                            <span className="text-[#8A9990]">
+                            <span className="text-[#86868B]">
                               $
                               {(fav.fixedPlace || fav.nswTabPlace || 0).toFixed(
                                 2
@@ -429,7 +433,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
 
                 {/* Harville Plackett-Luce Runner Win Likelihood Chart */}
                 {expandedProbRaceKey === `${meeting.id}-R${race.raceNumber}` && (
-                  <div className="mt-3 pt-2 border-t border-[#1F2D26]">
+                  <div className="mt-3.5 pt-3 border-t border-[#E5E5EA]">
                     <HarvillePlackettLuceModel race={race} compact />
                   </div>
                 )}
@@ -442,29 +446,29 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
   };
 
   return (
-    <section id="section-todays-races" className="scroll-mt-28 space-y-5">
+    <section
+      id="section-todays-races"
+      style={{ scrollMarginTop: "calc(var(--app-header-height, 68px) + 28px)" }}
+      className="scroll-section-clearance space-y-6"
+    >
       {/* Section Header + Multi-Select Checkbox Race Card Dropdown */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-2xl border border-[#23352C] bg-[#0E1813] p-4 sm:p-5">
+      <div className="apple-card p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[#8A9990]">
-            <span className="inline-flex items-center gap-1.5 font-bold text-emerald-300">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#86868B]">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-[#0071E3] bg-[#EBF5FF] px-2.5 py-0.5 rounded-full">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Default View: Sydney &amp; Melbourne Feature Race Cards
+              Sydney &amp; Melbourne Feature Race Cards
             </span>
-            <span>·</span>
+            <span>•</span>
             <span>Sources: {verifiedSourcesUsed.join(" · ")}</span>
           </div>
-          <h2 className="mt-1.5 font-serif text-2xl sm:text-3xl font-bold text-[#F3F4F0]">
+          <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[#1D1D1F]">
             Active Race Cards ({displayedMeetings.length} Selected:{" "}
             {displayedMeetings.map((m) => m.venue).join(" · ")})
           </h2>
-          <p className="mt-1 text-xs sm:text-sm text-[#9BA8A1]">
-            Showing the primary <strong>Melbourne (VIC)</strong> and{" "}
-            <strong>Sydney (NSW)</strong> race cards by default. Use the{" "}
-            <strong className="text-[#D4AF37]">
-              Race Cards / Locations checkbox dropdown
-            </strong>{" "}
-            to select one or multiple race cards across the day.
+          <p className="mt-1 text-xs sm:text-sm text-[#86868B] max-w-3xl leading-relaxed">
+            Displaying primary <strong>Melbourne (VIC)</strong> and{" "}
+            <strong>Sydney (NSW)</strong> metro meetings by default. Select one or multiple race cards across today's schedule using the selector.
           </p>
         </div>
 
@@ -475,7 +479,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             selectedMeetingIds={activeSelectedIds}
             onChangeSelectedMeetingIds={handleUpdateSelectedIds}
             punters={punters}
-            labelPrefix="Race Cards / Locations"
+            labelPrefix="Race Cards"
             align="right"
           />
 
@@ -483,24 +487,24 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             <button
               type="button"
               onClick={() => handleUpdateSelectedIds(defaultSelectedIds)}
-              className="min-h-[40px] rounded-lg border border-[#23352C] bg-[#121F18] px-3 py-2 text-xs font-semibold text-[#9BA8A1] hover:border-[#D4AF37] hover:text-[#F3F4F0] transition cursor-pointer"
+              className="apple-btn-secondary"
               title="Reset to showing only Sydney and Melbourne cards"
             >
-              Reset to Sydney &amp; Melbourne Default
+              Reset to Syd &amp; Melb
             </button>
           )}
         </div>
       </div>
 
       {/* Active Race Cards Quick-Toggle Bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#1E2E26] bg-[#101A15] px-4 py-2.5 text-xs">
-        <span className="font-semibold text-[#D4AF37]">
-          Checked Race Cards ({displayedMeetings.length}/{sorted.length}):
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#E5E5EA] bg-white p-3 text-xs shadow-xs">
+        <span className="font-semibold text-[#86868B] ml-1">
+          Checked Cards ({displayedMeetings.length}/{sorted.length}):
         </span>
         {displayedMeetings.map((m) => (
           <span
             key={m.id}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#10B981]/40 bg-[#152920] px-2.5 py-1 font-medium text-[#F3F4F0]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] bg-[#F2F2F7] px-3 py-1 font-medium text-[#1D1D1F]"
           >
             <span>
               {m.venue} ({m.state} · {m.races.length}R)
@@ -513,7 +517,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                     activeSelectedIds.filter((id) => id !== m.id)
                   )
                 }
-                className="text-[#8A9990] hover:text-rose-300 cursor-pointer"
+                className="text-[#86868B] hover:text-[#FF3B30] cursor-pointer"
                 title={`Uncheck ${m.venue}`}
               >
                 <X className="h-3.5 w-3.5" />
@@ -523,8 +527,8 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
         ))}
       </div>
 
-      {/* Selected Race Cards Grid (Side-by-Side) */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {/* Selected Race Cards Grid (Side-by-Side on iPad Pro Landscape & Desktop) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {displayedMeetings.map((mtg) => {
           const isMelb = mtg.id === melbourneMeeting?.id;
           const isSyd = mtg.id === sydneyMeeting?.id;
@@ -534,10 +538,10 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             ? "Sydney Feature Card (NSW)"
             : `${mtg.state || "TAB"} Race Card`;
           const accentClass = isMelb
-            ? "bg-blue-950/80 text-blue-200 border border-blue-400/40"
+            ? "bg-[#EBF5FF] text-[#0071E3] border border-[#0071E3]/20"
             : isSyd
-            ? "bg-sky-950/80 text-sky-200 border border-sky-400/40"
-            : "bg-emerald-950/80 text-emerald-200 border border-emerald-400/40";
+            ? "bg-[#EBF5FF] text-[#0071E3] border border-[#0071E3]/20"
+            : "bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/20";
 
           return renderMeetingColumn(
             mtg,

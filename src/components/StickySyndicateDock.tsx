@@ -68,25 +68,25 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
     <div
       role="region"
       aria-label="Active Race Syndicate Selection Dock"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-[#0B110E]/95 backdrop-blur-md border-t border-[#1F2D26] shadow-2xl transition-all"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-md border-t border-[#E5E5EA] shadow-lg transition-all"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+      <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Left: Active Race Context & Stepper */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1 bg-[#121A16] border border-[#1F2D26] rounded-lg p-0.5">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-full p-0.5">
             <button
               type="button"
               onClick={handlePrev}
               disabled={activeRaceNumber <= 1}
-              className="p-1 rounded text-[#8A9990] hover:text-[#F3F4F0] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="p-1 rounded-full text-[#86868B] hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               title="Previous Race"
               aria-label="Previous Race"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-mono text-xs font-bold text-[#F3F4F0] px-1.5 tabular-nums">
+            <span className="font-mono text-xs font-semibold text-[#1D1D1F] px-2 tabular-nums">
               R{activeRaceNumber}
-              <span className="text-[10px] text-[#8A9990] font-normal">
+              <span className="text-[10px] text-[#86868B] font-normal">
                 /{totalRaces}
               </span>
             </span>
@@ -94,7 +94,7 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
               type="button"
               onClick={handleNext}
               disabled={activeRaceNumber >= totalRaces}
-              className="p-1 rounded text-[#8A9990] hover:text-[#F3F4F0] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="p-1 rounded-full text-[#86868B] hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               title="Next Race"
               aria-label="Next Race"
             >
@@ -103,11 +103,11 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
           </div>
 
           <div className="hidden md:flex flex-col text-left">
-            <span className="text-[11px] font-mono text-[#D4AF37] font-semibold truncate max-w-[130px]">
+            <span className="text-xs font-semibold text-[#1D1D1F] truncate max-w-[130px]">
               {meeting.venue} R{activeRaceNumber}
             </span>
-            <span className="text-[10px] text-[#8A9990] font-mono">
-              {completedRacesCount}/{totalRaces} Card Locked
+            <span className="text-[10px] text-[#86868B] font-mono">
+              {completedRacesCount}/{totalRaces} Tipped
             </span>
           </div>
 
@@ -115,28 +115,28 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
           <button
             type="button"
             onClick={onToggleJoker}
-            className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer border ${
+            className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-all cursor-pointer border ${
               isJokerActive
-                ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.3)]"
-                : "bg-[#121A16] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15"
+                ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                : "bg-white text-[#FF9500] border-[#FF9500]/40 hover:bg-[#FFF5E6]"
             }`}
-            title="Double points if your 1st Preference horse wins"
+            title="Double points if your selections win"
           >
-            {isJokerActive ? "🃏 Joker 2× Active" : "🃏 Play Joker (2×)"}
+            {isJokerActive ? "🃏 Joker 2× Active" : "🃏 Play Joker"}
           </button>
         </div>
 
         {/* Center: Selected Preference Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto justify-center py-0.5">
+        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto justify-center py-0.5">
           {/* 1st Preference */}
           <div
-            className={`px-2.5 py-1 rounded-md border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1 rounded-full border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
               runner1
-                ? "bg-[#262010] border-[#D4AF37] text-[#F3F4F0]"
-                : "bg-[#121A16] border-[#1F2D26] text-[#8A9990] border-dashed"
+                ? "bg-[#FFF5E6] border-[#FF9500]/40 text-[#1D1D1F]"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B] border-dashed"
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B110E] font-bold text-[10px] flex items-center justify-center shrink-0">
+            <span className="w-4 h-4 rounded-full bg-[#FF9500] text-white font-bold text-[10px] flex items-center justify-center shrink-0">
               1
             </span>
             {runner1 ? (
@@ -144,19 +144,19 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
                 #{runner1.tabNumber} {runner1.horseName}
               </span>
             ) : (
-              <span className="italic text-[11px]">1st Pref (3pts)</span>
+              <span className="text-[11px] text-[#86868B]">1st (3pts)</span>
             )}
           </div>
 
           {/* 2nd Preference */}
           <div
-            className={`px-2.5 py-1 rounded-md border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1 rounded-full border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
               runner2
-                ? "bg-[#1E2522] border-slate-300 text-[#F3F4F0]"
-                : "bg-[#121A16] border-[#1F2D26] text-[#8A9990] border-dashed"
+                ? "bg-[#EBF5FF] border-[#0071E3]/40 text-[#1D1D1F]"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B] border-dashed"
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-slate-200 text-[#0B110E] font-bold text-[10px] flex items-center justify-center shrink-0">
+            <span className="w-4 h-4 rounded-full bg-[#0071E3] text-white font-bold text-[10px] flex items-center justify-center shrink-0">
               2
             </span>
             {runner2 ? (
@@ -164,19 +164,19 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
                 #{runner2.tabNumber} {runner2.horseName}
               </span>
             ) : (
-              <span className="italic text-[11px]">2nd Pref (2pts)</span>
+              <span className="text-[11px] text-[#86868B]">2nd (2pts)</span>
             )}
           </div>
 
           {/* 3rd Preference */}
           <div
-            className={`px-2.5 py-1 rounded-md border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1 rounded-full border text-xs font-mono flex items-center gap-1.5 shrink-0 ${
               runner3
-                ? "bg-[#122219] border-[#10B981] text-[#F3F4F0]"
-                : "bg-[#121A16] border-[#1F2D26] text-[#8A9990] border-dashed"
+                ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#1D1D1F]"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B] border-dashed"
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-[#10B981] text-[#0B110E] font-bold text-[10px] flex items-center justify-center shrink-0">
+            <span className="w-4 h-4 rounded-full bg-[#34C759] text-white font-bold text-[10px] flex items-center justify-center shrink-0">
               3
             </span>
             {runner3 ? (
@@ -184,18 +184,18 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
                 #{runner3.tabNumber} {runner3.horseName}
               </span>
             ) : (
-              <span className="italic text-[11px]">3rd Pref (1pt)</span>
+              <span className="text-[11px] text-[#86868B]">3rd (1pt)</span>
             )}
           </div>
         </div>
 
         {/* Right: Smart Strategy Auto-Pick & Action */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="hidden lg:flex items-center gap-1 text-[11px] font-mono">
             <button
               type="button"
               onClick={() => onApplyStrategy("market-consensus")}
-              className="px-2 py-1 rounded bg-[#121A16] border border-[#1F2D26] text-[#8A9990] hover:text-[#D4AF37] hover:border-[#D4AF37] transition cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white border border-[#E5E5EA] text-[#86868B] hover:text-[#0071E3] hover:border-[#0071E3] transition cursor-pointer"
               title="Auto pick top 3 market favourites in order"
             >
               Consensus
@@ -203,16 +203,16 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
             <button
               type="button"
               onClick={() => onApplyStrategy("value-hunter")}
-              className="px-2 py-1 rounded bg-[#121A16] border border-[#1F2D26] text-[#8A9990] hover:text-[#10B981] hover:border-[#10B981] transition cursor-pointer"
-              title="Auto pick sweet-spot value contenders ($3.50-$12)"
+              className="px-2.5 py-1 rounded-full bg-white border border-[#E5E5EA] text-[#86868B] hover:text-[#34C759] hover:border-[#34C759] transition cursor-pointer"
+              title="Auto pick sweet-spot value contenders"
             >
               Value
             </button>
             <button
               type="button"
               onClick={() => onApplyStrategy("front-runner")}
-              className="px-2 py-1 rounded bg-[#121A16] border border-[#1F2D26] text-[#8A9990] hover:text-[#38BDF8] hover:border-[#38BDF8] transition cursor-pointer"
-              title="Auto pick low barrier on-pace runners"
+              className="px-2.5 py-1 rounded-full bg-white border border-[#E5E5EA] text-[#86868B] hover:text-[#0071E3] hover:border-[#0071E3] transition cursor-pointer"
+              title="Auto pick on-pace runners"
             >
               Speed
             </button>
@@ -221,8 +221,8 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
           <button
             type="button"
             onClick={() => onApplyStrategy("balanced")}
-            className="px-2.5 py-1 rounded-md bg-[#192620] border border-[#10B981]/50 text-[#10B981] text-xs font-mono font-bold hover:bg-[#10B981]/20 transition cursor-pointer inline-flex items-center gap-1"
-            title="Randomly pick 1 top-3 favourite + 2 other runners"
+            className="px-3 py-1 rounded-full bg-[#EBF5FF] border border-[#0071E3]/20 text-[#0071E3] text-xs font-medium hover:bg-[#D6EBFF] transition cursor-pointer inline-flex items-center gap-1.5"
+            title="Auto pick consensus trio"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Auto Pick</span>
@@ -232,7 +232,7 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
             <button
               type="button"
               onClick={onClearActiveRace}
-              className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#EF4444] transition cursor-pointer"
+              className="px-2.5 py-1 rounded-full text-xs font-mono text-[#86868B] hover:text-[#FF3B30] transition cursor-pointer"
               title="Clear selections for this race"
             >
               Clear
@@ -243,7 +243,7 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
             <button
               type="button"
               onClick={handleNext}
-              className="px-3 py-1 rounded-md bg-[#D4AF37] text-[#0B110E] text-xs font-mono font-bold hover:bg-[#e0bc46] transition cursor-pointer inline-flex items-center gap-1 shadow-sm"
+              className="apple-btn-primary"
             >
               <span>Next</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export const StickySyndicateDock: React.FC<StickySyndicateDockProps> = ({
             <button
               type="button"
               onClick={onNavigateToResults}
-              className="px-3 py-1 rounded-md bg-emerald-600 text-[#0B110E] text-xs font-mono font-bold hover:bg-emerald-500 transition cursor-pointer inline-flex items-center gap-1 shadow-sm"
+              className="px-3.5 py-1.5 rounded-full bg-[#34C759] text-white text-xs font-semibold hover:bg-[#2EB84E] transition cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Results →</span>

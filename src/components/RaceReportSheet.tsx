@@ -18,6 +18,7 @@ import {
   Printer,
   RotateCcw,
   Send,
+  Share2,
   Target,
   TrendingUp,
   Trophy,
@@ -40,6 +41,7 @@ import {
   computeRaceEachWayParUnits,
   formatHtmlReportForEmail,
   formatPlainTextReportForEmail,
+  formatSafeExecutiveBriefingForEmail,
   loadLocalSixMonthReports,
   pruneAndSortSixMonthReports,
   saveLocalSixMonthReports,
@@ -48,6 +50,10 @@ import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { SyndicateSuccessTrendD3Chart } from "./SyndicateSuccessTrendD3Chart";
 import { PunterRoiD3BarChart } from "./PunterRoiD3BarChart";
 import { BklitReportVisualizer } from "./bklit/BklitReportVisualizer";
+import { InteractiveRunnerTelemetry } from "./reports/InteractiveRunnerTelemetry";
+import { DynamicReportVisualizations } from "./reports/DynamicReportVisualizations";
+import { PunterHeadToHeadDuel } from "./reports/PunterHeadToHeadDuel";
+import { TabDividendFlexiCalculator } from "./reports/TabDividendFlexiCalculator";
 
 interface RaceReportSheetProps {
   meetings: RaceMeeting[];
@@ -691,20 +697,46 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
       : DEFAULT_REPORT_EMAIL_RECIPIENTS;
 
   const emailSubjectText = `${REPORT_SENDER_NAME}: ${activeReport.venue} (${activeReport.raceDate}) — ${activeReport.assessment.headline}`;
+  const safeExecutiveBriefing = formatSafeExecutiveBriefingForEmail(activeReport);
   const emailPlainTextBody = formatPlainTextReportForEmail(activeReport);
   const emailHtmlBody = formatHtmlReportForEmail(activeReport);
 
+  // Safe Mailto URI strictly under 1,200 chars - never breaks or cuts off in any client
   const mailtoHref = `mailto:${encodeURIComponent(
     activeMailtoRecipients.join(",")
   )}?subject=${encodeURIComponent(emailSubjectText)}&body=${encodeURIComponent(
-    emailPlainTextBody
+    safeExecutiveBriefing
   )}`;
 
   const gmailWebHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
     activeMailtoRecipients.join(",")
   )}&su=${encodeURIComponent(emailSubjectText)}&body=${encodeURIComponent(
-    emailPlainTextBody
+    safeExecutiveBriefing
   )}`;
+
+  const handleShareReport = async () => {
+    if (!activeReport) return;
+    const shareText = formatSafeExecutiveBriefingForEmail(activeReport);
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${REPORT_SENDER_NAME}: ${activeReport.venue} (${activeReport.raceDate})`,
+          text: shareText,
+          url: window.location.href,
+        });
+        onTriggerToast?.("Shared syndicate briefing via device share sheet.");
+        return;
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
+      }
+    }
+    // Fallback to clipboard
+    handleCopyReportText();
+  };
+
+  const handlePrintReport = () => {
+    window.print();
+  };
 
   const leader = activeReport.standings[0];
   const runnerUp = activeReport.standings[1];
@@ -869,12 +901,32 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
 
             <button
               type="button"
+              onClick={handleShareReport}
+              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B110E] border border-[#1F2D26] text-[#38BDF8] text-xs font-semibold hover:border-[#38BDF8] transition-colors cursor-pointer"
+              title="Share report via device share sheet (Email, Messages, WhatsApp, Slack)"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrintReport}
+              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B110E] border border-[#1F2D26] text-[#D5DDD8] text-xs font-semibold hover:border-[#D4AF37] transition-colors cursor-pointer"
+              title="Print executive briefing or save as PDF"
+            >
+              <Printer className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Print / PDF</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleDownloadGraphicalHtmlReport}
               className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B110E] border border-[#1F2D26] text-[#D5DDD8] text-xs font-semibold hover:border-[#D4AF37] transition-colors cursor-pointer"
               title="Download standalone Graphical HTML Report file"
             >
-              <Printer className="w-3.5 h-3.5 text-[#8A9990]" />
-              <span>HTML / PDF</span>
+              <FileText className="w-3.5 h-3.5 text-[#8A9990]" />
+              <span>Export HTML</span>
             </button>
           </div>
         </div>
@@ -1504,6 +1556,9 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
                 Syndicate Success Rate · Punter ROI (vs 1u/Pick) · Points · Cash ROI · Trifecta &amp; Quaddie
               </span>
             </div>
+
+            {/* Dynamic Visual Analytics Suite: Cumulative Equity, Punter Heatmap, Track Bias Radar & Exotics Funnel */}
+            <DynamicReportVisualizations report={activeReport} />
 
             {/* bklit.ui Interactive Report Visualizer: 6-Month Trend Area, Punter Par vs Return Bar, Barrier/Fav Donut Rings & Sortable Archive Table */}
             <BklitReportVisualizer
@@ -2243,12 +2298,15 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
         {/* ====================================================================
             SECTION 3: FINAL USER RESULTS — $1 EACH-WAY RETURN SCORE VS PAR BENCHMARK
            ==================================================================== */}
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Head-to-Head Duel & Leaderboard Matrix */}
+          <PunterHeadToHeadDuel report={activeReport} />
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-bold">
               <Trophy className="w-4 h-4" />
               <span>
-                Final User Results — $1 Each-Way Return Score vs Par Benchmark (
+                Detailed $1 Each-Way Par Benchmark Breakdown (
                 {activeReport.venue} · {activeReport.raceDate})
               </span>
             </div>
@@ -2735,6 +2793,17 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
             </div>
           );
         })()}
+
+        {/* Interactive Runner Telemetry & Official Margin Breakdown */}
+        {activeMeetingObj && (
+          <InteractiveRunnerTelemetry
+            meeting={activeMeetingObj}
+            punters={punters}
+          />
+        )}
+
+        {/* Live TAB Dividend Flexi Calculator & Exotic Payout Simulator */}
+        <TabDividendFlexiCalculator report={activeReport} />
 
         {/* ====================================================================
             SECTION 4: RACE-BY-RACE USER SCORING & COMBINED TRIFECTA TABLE

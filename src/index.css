@@ -2,15 +2,51 @@
 
 @layer base {
   :root {
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Default Turf Dark Theme Tokens */
+    --turf-canvas: #070B09;
+    --turf-surface: #0E1512;
+    --turf-surface-subtle: #121A16;
+    --turf-surface-card: #0B110E;
+    --turf-border: #1F2D26;
+    --turf-border-strong: #2A3F33;
+    --turf-text-primary: #F3F4F0;
+    --turf-text-secondary: #8A9990;
+    --turf-gold: #D4AF37;
+    --turf-emerald: #10B981;
+
+    /* Apple-Style Minimalist Design Tokens */
+    --apple-canvas: #F5F5F7;
+    --apple-surface: #FFFFFF;
+    --apple-surface-secondary: #F2F2F7;
+    --apple-surface-tertiary: #E5E5EA;
+    --apple-border: #E5E5EA;
+    --apple-border-strong: #D2D2D7;
+    --apple-text-primary: #1D1D1F;
+    --apple-text-secondary: #86868B;
+    --apple-accent: #0071E3;
+    --apple-accent-hover: #0077ED;
+    --apple-accent-subtle: #EBF5FF;
+    --apple-green: #34C759;
+    --apple-red: #FF3B30;
+    --apple-amber: #FF9500;
+
+    /* Dynamic Header & Clearance Height for iPad Pro and Mobile */
+    --app-header-height: 68px;
   }
 
-  body {
+  /* Default html/body: TURF DARK THEME */
+  html, body {
+    margin: 0;
+    padding: 0;
     font-family: var(--font-sans);
-    background-color: #0B110E;
+    background-color: #070B09;
     color: #F3F4F0;
+    line-height: 1.55;
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
@@ -18,10 +54,10 @@
     text-size-adjust: 100%;
     touch-action: manipulation;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  /* Prevent iOS/iPadOS Safari & Chrome auto-zoom when focusing inputs on mobile viewports */
+  /* Prevent iOS/iPadOS Safari & Chrome auto-zoom when focusing inputs */
   @media screen and (max-width: 767px) {
     input,
     select,
@@ -30,25 +66,28 @@
     }
   }
 
-  /* Safari WebKit button, input, and backdrop-filter normalization */
   button,
   input,
-  select {
+  select,
+  textarea {
     -webkit-appearance: none;
     appearance: none;
+    font-family: inherit;
   }
 
   .backdrop-blur-md {
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
   }
 
-  h1, h2, .font-display {
+  h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    font-weight: 600;
   }
 
   .font-mono, .tabular-nums {
@@ -58,190 +97,592 @@
 }
 
 /* ============================================================================
-   THEME 2: MIDNIGHT OBSIDIAN DARK (data-theme="dark")
-   Deep carbon-slate obsidian with high-contrast silver & gold accents
+   Dynamic Scroll Clearance & Viewport Protection for iPad Pro & Tablet Screens
    ============================================================================ */
-html[data-theme="dark"],
-html[data-theme="dark"] body {
-  background-color: #06080C !important;
-  color: #F8FAFC !important;
+[id^="section-"],
+.scroll-section-clearance,
+#tab-workspace-anchor {
+  scroll-margin-top: calc(var(--app-header-height, 68px) + 24px) !important;
 }
 
-html[data-theme="dark"] [class*="bg-[#0B110E]"],
-html[data-theme="dark"] [class*="bg-[#070B09]"],
-html[data-theme="dark"] [class*="bg-[#0D1612]"],
-html[data-theme="dark"] [class*="bg-[#0E1713]"],
-html[data-theme="dark"] [class*="bg-[#0E1813]"],
-html[data-theme="dark"] [class*="bg-[#0E1612]"] {
-  background-color: #090D14 !important;
-}
-
-html[data-theme="dark"] [class*="bg-[#121A16]"],
-html[data-theme="dark"] [class*="bg-[#111C16]"],
-html[data-theme="dark"] [class*="bg-[#132019]"],
-html[data-theme="dark"] [class*="bg-[#121F18]"],
-html[data-theme="dark"] [class*="bg-[#121C17]"],
-html[data-theme="dark"] [class*="bg-[#16221C]"],
-html[data-theme="dark"] [class*="bg-[#15251D]"],
-html[data-theme="dark"] [class*="bg-[#17281F]"],
-html[data-theme="dark"] [class*="bg-[#192620]"] {
-  background-color: #111722 !important;
-}
-
-html[data-theme="dark"] [class*="border-[#1F2D26]"],
-html[data-theme="dark"] [class*="border-[#23352C]"],
-html[data-theme="dark"] [class*="border-[#1E2E26]"],
-html[data-theme="dark"] [class*="border-[#2B3E34]"] {
-  border-color: #1E293B !important;
-}
-
-html[data-theme="dark"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1E293B !important;
+@media screen and (min-width: 768px) and (max-width: 1366px) {
+  /* iPad Pro / Tablet landscape & portrait breathing clearance */
+  [id^="section-"],
+  .scroll-section-clearance,
+  #tab-workspace-anchor {
+    scroll-margin-top: calc(var(--app-header-height, 68px) + 36px) !important;
+  }
 }
 
 /* ============================================================================
-   THEME 3: DAYLIGHT RACEDAY LIGHT (data-theme="light")
-   Crisp warm parchment & ivory race-book aesthetic for bright daylight reading
+   1. DEFAULT TURF DARK THEME (The Previous Appearance)
    ============================================================================ */
-html[data-theme="light"],
-html[data-theme="light"] body {
-  background-color: #F4F1EA !important;
-  color: #0F2419 !important;
+
+/* Surface Cards in Turf Dark Mode */
+.apple-card {
+  background-color: #0E1512;
+  border: 1px solid #1F2D26;
+  border-radius: 18px;
+  color: #F3F4F0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html[data-theme="light"] [class*="bg-[#0B110E]"],
-html[data-theme="light"] [class*="bg-[#070B09]"],
-html[data-theme="light"] [class*="bg-[#0D1612]"],
-html[data-theme="light"] [class*="bg-[#0E1713]"],
-html[data-theme="light"] [class*="bg-[#0E1813]"],
-html[data-theme="light"] [class*="bg-[#0E1612]"] {
-  background-color: #FAF8F3 !important;
+.apple-card:hover {
+  border-color: #2A3F33;
 }
 
-html[data-theme="light"] [class*="bg-[#121A16]"],
-html[data-theme="light"] [class*="bg-[#111C16]"],
-html[data-theme="light"] [class*="bg-[#132019]"],
-html[data-theme="light"] [class*="bg-[#121F18]"],
-html[data-theme="light"] [class*="bg-[#121C17]"] {
+/* Primary Action Button in Turf Dark Mode: Racing Emerald Pill */
+.apple-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  background-color: #10B981;
+  color: #070B09;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-btn-primary:hover {
+  background-color: #059669;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.4);
+}
+
+.apple-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Secondary Button in Turf Dark Mode: Dark Slate Pill */
+.apple-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: #121A16;
+  color: #F3F4F0;
+  border: 1px solid #1F2D26;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-btn-secondary:hover {
+  background-color: #192620;
+  border-color: #2A3F33;
+}
+
+/* Default Inputs in Turf Dark Mode */
+:root:not([data-theme="apple"]) input[type="text"],
+:root:not([data-theme="apple"]) input[type="date"],
+:root:not([data-theme="apple"]) input[type="search"],
+:root:not([data-theme="apple"]) input[type="number"],
+:root:not([data-theme="apple"]) select,
+[data-theme="default"] input[type="text"],
+[data-theme="default"] input[type="date"],
+[data-theme="default"] input[type="search"],
+[data-theme="default"] input[type="number"],
+[data-theme="default"] select {
+  background-color: #0B110E !important;
+  color: #F3F4F0 !important;
+  border: 1px solid #1F2D26 !important;
+  border-radius: 10px !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.875rem !important;
+  transition: all 0.18s ease !important;
+}
+
+:root:not([data-theme="apple"]) input[type="text"]:focus,
+:root:not([data-theme="apple"]) input[type="date"]:focus,
+:root:not([data-theme="apple"]) input[type="search"]:focus,
+:root:not([data-theme="apple"]) input[type="number"]:focus,
+:root:not([data-theme="apple"]) select:focus,
+[data-theme="default"] input[type="text"]:focus,
+[data-theme="default"] input[type="date"]:focus,
+[data-theme="default"] input[type="search"]:focus,
+[data-theme="default"] input[type="number"]:focus,
+[data-theme="default"] select:focus {
+  outline: none !important;
+  border-color: #D4AF37 !important;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25) !important;
+}
+
+/* Revert Apple utility classes to Turf Dark when NOT in Apple theme */
+:root:not([data-theme="apple"]) [class*="text-[#1D1D1F]"],
+[data-theme="default"] [class*="text-[#1D1D1F]"],
+.theme-turf [class*="text-[#1D1D1F]"] {
+  color: #F3F4F0 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="text-[#86868B]"],
+[data-theme="default"] [class*="text-[#86868B]"],
+.theme-turf [class*="text-[#86868B]"] {
+  color: #8A9990 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="border-[#E5E5EA]"],
+[data-theme="default"] [class*="border-[#E5E5EA]"],
+.theme-turf [class*="border-[#E5E5EA]"] {
+  border-color: #1F2D26 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="border-[#D2D2D7]"],
+[data-theme="default"] [class*="border-[#D2D2D7]"],
+.theme-turf [class*="border-[#D2D2D7]"] {
+  border-color: #23352C !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#FAF9FA]"],
+[data-theme="default"] [class*="bg-[#FAF9FA]"],
+.theme-turf [class*="bg-[#FAF9FA]"] {
+  background-color: #0E1813 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#F2F2F7]"],
+[data-theme="default"] [class*="bg-[#F2F2F7]"],
+.theme-turf [class*="bg-[#F2F2F7]"] {
+  background-color: #14231B !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#F5F5F7]"],
+[data-theme="default"] [class*="bg-[#F5F5F7]"],
+.theme-turf [class*="bg-[#F5F5F7]"] {
+  background-color: #070B09 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-white"],
+[data-theme="default"] [class*="bg-white"],
+.theme-turf [class*="bg-white"] {
+  background-color: #0E1512 !important;
+  color: #F3F4F0 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="text-[#0071E3]"],
+[data-theme="default"] [class*="text-[#0071E3]"],
+.theme-turf [class*="text-[#0071E3]"] {
+  color: #10B981 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="border-[#0071E3]"],
+[data-theme="default"] [class*="border-[#0071E3]"],
+.theme-turf [class*="border-[#0071E3]"] {
+  border-color: #10B981 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#0071E3]"],
+[data-theme="default"] [class*="bg-[#0071E3]"],
+.theme-turf [class*="bg-[#0071E3]"] {
+  background-color: #10B981 !important;
+  color: #070B09 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#EBF5FF]"],
+[data-theme="default"] [class*="bg-[#EBF5FF]"],
+.theme-turf [class*="bg-[#EBF5FF]"] {
+  background-color: #152920 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#FFF9F2]"],
+[data-theme="default"] [class*="bg-[#FFF9F2]"],
+.theme-turf [class*="bg-[#FFF9F2]"] {
+  background-color: #1E190E !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#F2F7FF]"],
+[data-theme="default"] [class*="bg-[#F2F7FF]"],
+.theme-turf [class*="bg-[#F2F7FF]"] {
+  background-color: #16201B !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#F2FBF5]"],
+:root:not([data-theme="apple"]) [class*="bg-[#EAFBF0]"],
+[data-theme="default"] [class*="bg-[#F2FBF5]"],
+[data-theme="default"] [class*="bg-[#EAFBF0]"],
+.theme-turf [class*="bg-[#F2FBF5]"],
+.theme-turf [class*="bg-[#EAFBF0]"] {
+  background-color: #152920 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#FFF5E6]"],
+[data-theme="default"] [class*="bg-[#FFF5E6]"],
+.theme-turf [class*="bg-[#FFF5E6]"] {
+  background-color: #262010 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#FEECEB]"],
+[data-theme="default"] [class*="bg-[#FEECEB]"],
+.theme-turf [class*="bg-[#FEECEB]"] {
+  background-color: #291414 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="text-[#34C759]"],
+[data-theme="default"] [class*="text-[#34C759]"],
+.theme-turf [class*="text-[#34C759]"] {
+  color: #10B981 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="border-[#34C759]"],
+[data-theme="default"] [class*="border-[#34C759]"],
+.theme-turf [class*="border-[#34C759]"] {
+  border-color: #10B981 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#34C759]"],
+[data-theme="default"] [class*="bg-[#34C759]"],
+.theme-turf [class*="bg-[#34C759]"] {
+  background-color: #10B981 !important;
+  color: #070B09 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="text-[#FF9500]"],
+[data-theme="default"] [class*="text-[#FF9500]"],
+.theme-turf [class*="text-[#FF9500]"] {
+  color: #D4AF37 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="border-[#FF9500]"],
+[data-theme="default"] [class*="border-[#FF9500]"],
+.theme-turf [class*="border-[#FF9500]"] {
+  border-color: #D4AF37 !important;
+}
+
+:root:not([data-theme="apple"]) [class*="bg-[#FF9500]"],
+[data-theme="default"] [class*="bg-[#FF9500]"],
+.theme-turf [class*="bg-[#FF9500]"] {
+  background-color: #D4AF37 !important;
+  color: #070B09 !important;
+}
+
+
+/* ============================================================================
+   2. SELECTABLE APPLE MINIMALIST THEME (data-theme="apple" or .theme-apple)
+   ============================================================================ */
+
+html[data-theme="apple"],
+body[data-theme="apple"],
+html.theme-apple,
+body.theme-apple,
+[data-theme="apple"] {
+  background-color: #F5F5F7 !important;
+  color: #1D1D1F !important;
+}
+
+[data-theme="apple"] .apple-card,
+.theme-apple .apple-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E5EA !important;
+  border-radius: 18px !important;
+  color: #1D1D1F !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="apple"] .apple-card:hover,
+.theme-apple .apple-card:hover {
+  border-color: #D2D2D7 !important;
+}
+
+[data-theme="apple"] .apple-btn-primary,
+.theme-apple .apple-btn-primary {
+  background-color: #0071E3 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 113, 227, 0.2) !important;
+}
+
+[data-theme="apple"] .apple-btn-primary:hover,
+.theme-apple .apple-btn-primary:hover {
+  background-color: #0077ED !important;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3) !important;
+}
+
+[data-theme="apple"] .apple-btn-secondary,
+.theme-apple .apple-btn-secondary {
+  background-color: #F2F2F7 !important;
+  color: #1D1D1F !important;
+  border: 1px solid #E5E5EA !important;
+}
+
+[data-theme="apple"] .apple-btn-secondary:hover,
+.theme-apple .apple-btn-secondary:hover {
+  background-color: #E5E5EA !important;
+}
+
+[data-theme="apple"] input[type="text"],
+[data-theme="apple"] input[type="date"],
+[data-theme="apple"] input[type="search"],
+[data-theme="apple"] input[type="number"],
+[data-theme="apple"] select,
+.theme-apple input[type="text"],
+.theme-apple input[type="date"],
+.theme-apple input[type="search"],
+.theme-apple input[type="number"],
+.theme-apple select {
+  background-color: #FFFFFF !important;
+  color: #1D1D1F !important;
+  border: 1px solid #D2D2D7 !important;
+  border-radius: 12px !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.875rem !important;
+}
+
+[data-theme="apple"] input[type="text"]:focus,
+[data-theme="apple"] input[type="date"]:focus,
+[data-theme="apple"] input[type="search"]:focus,
+[data-theme="apple"] input[type="number"]:focus,
+[data-theme="apple"] select:focus,
+.theme-apple input[type="text"]:focus,
+.theme-apple input[type="date"]:focus,
+.theme-apple input[type="search"]:focus,
+.theme-apple input[type="number"]:focus,
+.theme-apple select:focus {
+  outline: none !important;
+  border-color: #0071E3 !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18) !important;
+}
+
+/* Scoped Apple Mappings for any Turf Dark tokens */
+[data-theme="apple"] [class*="bg-[#0B110E]"],
+[data-theme="apple"] [class*="bg-[#070B09]"],
+[data-theme="apple"] [class*="bg-[#06080C]"],
+[data-theme="apple"] [class*="bg-[#080E0B]"],
+[data-theme="apple"] [class*="bg-[#0D1612]"],
+[data-theme="apple"] [class*="bg-[#0E1512]"],
+[data-theme="apple"] [class*="bg-[#0E1612]"],
+[data-theme="apple"] [class*="bg-[#0E1713]"],
+[data-theme="apple"] [class*="bg-[#0E1813]"],
+[data-theme="apple"] [class*="bg-[#121A16]"],
+[data-theme="apple"] [class*="bg-[#111C16]"],
+[data-theme="apple"] [class*="bg-[#132019]"],
+[data-theme="apple"] [class*="bg-[#121F18]"],
+[data-theme="apple"] [class*="bg-[#121C17]"],
+[data-theme="apple"] [class*="bg-[#0F1713]"],
+[data-theme="apple"] [class*="bg-[#16221C]"],
+[data-theme="apple"] [class*="bg-[#15251D]"],
+[data-theme="apple"] [class*="bg-[#17281F]"],
+.theme-apple [class*="bg-[#0B110E]"],
+.theme-apple [class*="bg-[#070B09]"],
+.theme-apple [class*="bg-[#0E1512]"],
+.theme-apple [class*="bg-[#121A16]"],
+.theme-apple [class*="bg-[#0E1813]"] {
   background-color: #FFFFFF !important;
 }
 
-html[data-theme="light"] [class*="bg-[#16221C]"],
-html[data-theme="light"] [class*="bg-[#15251D]"],
-html[data-theme="light"] [class*="bg-[#17281F]"],
-html[data-theme="light"] [class*="bg-[#192620]"],
-html[data-theme="light"] [class*="bg-[#152920]"] {
-  background-color: #E8F3EC !important;
+[data-theme="apple"] [class*="bg-[#192620]"],
+[data-theme="apple"] [class*="bg-[#152920]"],
+[data-theme="apple"] [class*="bg-[#14231B]"],
+[data-theme="apple"] [class*="bg-[#14201A]"],
+[data-theme="apple"] [class*="bg-[#18241E]"],
+.theme-apple [class*="bg-[#192620]"],
+.theme-apple [class*="bg-[#152920]"],
+.theme-apple [class*="bg-[#14231B]"] {
+  background-color: #F5F5F7 !important;
 }
 
-html[data-theme="light"] [class*="bg-[#291414]"],
-html[data-theme="light"] [class*="bg-[#241316]"] {
-  background-color: #FEE2E2 !important;
+[data-theme="apple"] [class*="border-[#1F2D26]"],
+[data-theme="apple"] [class*="border-[#23352C]"],
+[data-theme="apple"] [class*="border-[#1E2E26]"],
+[data-theme="apple"] [class*="border-[#2B3E34]"],
+[data-theme="apple"] [class*="border-[#2A3F33]"],
+[data-theme="apple"] [class*="border-[#23352B]"],
+[data-theme="apple"] [class*="border-[#1A2820]"],
+.theme-apple [class*="border-[#1F2D26]"],
+.theme-apple [class*="border-[#23352C]"] {
+  border-color: #E5E5EA !important;
 }
 
-html[data-theme="light"] [class*="border-[#1F2D26]"],
-html[data-theme="light"] [class*="border-[#23352C]"],
-html[data-theme="light"] [class*="border-[#1E2E26]"],
-html[data-theme="light"] [class*="border-[#2B3E34]"] {
-  border-color: #CBD5CE !important;
+[data-theme="apple"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]),
+.theme-apple [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #E5E5EA !important;
 }
 
-html[data-theme="light"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
-  border-color: #CBD5CE !important;
+[data-theme="apple"] [class*="text-[#F3F4F0]"],
+[data-theme="apple"] [class*="text-[#F8FAFC]"],
+[data-theme="apple"] [class*="text-[#D5DDD8]"],
+.theme-apple [class*="text-[#F3F4F0]"],
+.theme-apple [class*="text-[#D5DDD8]"] {
+  color: #1D1D1F !important;
 }
 
-html[data-theme="light"] [class*="text-[#F3F4F0]"],
-html[data-theme="light"] [class*="text-[#D5DDD8]"] {
-  color: #0D2117 !important;
+[data-theme="apple"] [class*="text-[#8A9990]"],
+[data-theme="apple"] [class*="text-[#9BA8A1]"],
+[data-theme="apple"] [class*="text-[#6E8075]"],
+[data-theme="apple"] [class*="text-[#55695D]"],
+.theme-apple [class*="text-[#8A9990]"],
+.theme-apple [class*="text-[#9BA8A1]"] {
+  color: #86868B !important;
 }
 
-html[data-theme="light"] [class*="text-[#8A9990]"],
-html[data-theme="light"] [class*="text-[#9BA8A1]"] {
-  color: #43594D !important;
+[data-theme="apple"] [class*="text-[#D4AF37]"],
+.theme-apple [class*="text-[#D4AF37]"] {
+  color: #0071E3 !important;
 }
 
-html[data-theme="light"] [class*="text-[#D4AF37]"] {
-  color: #9A6F05 !important;
+[data-theme="apple"] [class*="border-[#D4AF37]"],
+.theme-apple [class*="border-[#D4AF37]"] {
+  border-color: #0071E3 !important;
 }
 
-html[data-theme="light"] [class*="text-[#10B981]"] {
-  color: #047857 !important;
-}
-
-html[data-theme="light"] [class*="bg-[#D4AF37]"] {
-  background-color: #D4AF37 !important;
-  color: #0B110E !important;
-}
-
-html[data-theme="light"] [class*="bg-[#10B981]"] {
-  background-color: #059669 !important;
+[data-theme="apple"] [class*="bg-[#D4AF37]"],
+.theme-apple [class*="bg-[#D4AF37]"] {
+  background-color: #0071E3 !important;
   color: #FFFFFF !important;
 }
 
-html[data-theme="light"] svg rect[fill="#080D0B"],
-html[data-theme="light"] svg rect[fill="#0B110E"] {
-  fill: #F1EFE8 !important;
+[data-theme="apple"] [class*="text-[#10B981]"],
+.theme-apple [class*="text-[#10B981]"] {
+  color: #34C759 !important;
 }
 
-/* ============================================================================
-   THEME 4: RACE / ROYAL TURF GREEN (data-theme="race")
-   Lush Randwick & Flemington Championship Turf Green with vibrant gold rail trim
-   ============================================================================ */
-html[data-theme="race"],
-html[data-theme="race"] body {
-  background-color: #052616 !important;
-  color: #F2FDF7 !important;
+[data-theme="apple"] [class*="border-[#10B981]"],
+.theme-apple [class*="border-[#10B981]"] {
+  border-color: #34C759 !important;
 }
 
-html[data-theme="race"] [class*="bg-[#0B110E]"],
-html[data-theme="race"] [class*="bg-[#070B09]"],
-html[data-theme="race"] [class*="bg-[#0D1612]"],
-html[data-theme="race"] [class*="bg-[#0E1713]"],
-html[data-theme="race"] [class*="bg-[#0E1813]"],
-html[data-theme="race"] [class*="bg-[#0E1612]"] {
-  background-color: #072E1B !important;
+[data-theme="apple"] [class*="bg-[#10B981]"],
+.theme-apple [class*="bg-[#10B981]"] {
+  background-color: #34C759 !important;
+  color: #FFFFFF !important;
 }
 
-html[data-theme="race"] [class*="bg-[#121A16]"],
-html[data-theme="race"] [class*="bg-[#111C16]"],
-html[data-theme="race"] [class*="bg-[#132019]"],
-html[data-theme="race"] [class*="bg-[#121F18]"],
-html[data-theme="race"] [class*="bg-[#121C17]"],
-html[data-theme="race"] [class*="bg-[#16221C]"],
-html[data-theme="race"] [class*="bg-[#15251D]"],
-html[data-theme="race"] [class*="bg-[#17281F]"],
-html[data-theme="race"] [class*="bg-[#192620]"] {
-  background-color: #0C3D24 !important;
+[data-theme="apple"] [class*="text-[#38BDF8]"],
+.theme-apple [class*="text-[#38BDF8]"] {
+  color: #0071E3 !important;
 }
 
-html[data-theme="race"] [class*="border-[#1F2D26]"],
-html[data-theme="race"] [class*="border-[#23352C]"],
-html[data-theme="race"] [class*="border-[#1E2E26]"],
-html[data-theme="race"] [class*="border-[#2B3E34]"] {
-  border-color: #19613C !important;
+[data-theme="apple"] [class*="border-[#38BDF8]"],
+.theme-apple [class*="border-[#38BDF8]"] {
+  border-color: #0071E3 !important;
 }
 
-html[data-theme="race"] [class*="divide-[#1F2D26]"] > :not([hidden]) ~ :not([hidden]) {
-  border-color: #19613C !important;
+[data-theme="apple"] [class*="bg-[#38BDF8]"],
+.theme-apple [class*="bg-[#38BDF8]"] {
+  background-color: #0071E3 !important;
+  color: #FFFFFF !important;
 }
 
-html[data-theme="race"] svg rect[fill="#080D0B"],
-html[data-theme="race"] svg rect[fill="#0B110E"] {
-  fill: #062817 !important;
+[data-theme="apple"] [class*="bg-[#291414]"],
+[data-theme="apple"] [class*="bg-[#241316]"],
+.theme-apple [class*="bg-[#291414]"] {
+  background-color: #FEECEB !important;
 }
 
-/* Custom subtle scrollbars for high-density racing sheets */
+[data-theme="apple"] [class*="text-[#EF4444]"],
+.theme-apple [class*="text-[#EF4444]"] {
+  color: #FF3B30 !important;
+}
+
+[data-theme="apple"] [class*="border-[#EF4444]"],
+.theme-apple [class*="border-[#EF4444]"] {
+  border-color: #FFB3AE !important;
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B110E;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #23332B;
-  border-radius: 3px;
+  background: #1F2D26;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #344B3F;
+  background: #2A3F33;
 }
+
+[data-theme="apple"] ::-webkit-scrollbar-thumb,
+.theme-apple ::-webkit-scrollbar-thumb {
+  background: #D2D2D7 !important;
+}
+[data-theme="apple"] ::-webkit-scrollbar-thumb:hover,
+.theme-apple ::-webkit-scrollbar-thumb:hover {
+  background: #A1A1A6 !important;
+}
+
+/* =========================================================================
+   Executive Print & PDF Export Stylesheet
+   ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 12mm 10mm;
+  }
+
+  /* Hide interactive controls, navigation bars, headers, and buttons */
+  header,
+  footer,
+  nav,
+  .no-print,
+  button,
+  input,
+  select,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  /* Force white background and dark text for clean, sharp, ink-saving printing */
+  html,
+  body,
+  #root,
+  [data-theme] {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Ensure card containers don't waste black ink */
+  [class*="bg-[#070B09]"],
+  [class*="bg-[#0B110E]"],
+  [class*="bg-[#0E1512]"],
+  [class*="bg-[#121A16]"],
+  [class*="bg-[#14201A]"] {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  /* Text color corrections for print */
+  [class*="text-[#F3F4F0]"],
+  [class*="text-[#D5DDD8]"],
+  [class*="text-[#A5B4AA]"] {
+    color: #1f2937 !important;
+  }
+
+  [class*="text-[#D4AF37]"] {
+    color: #92400e !important;
+    font-weight: 700 !important;
+  }
+
+  [class*="text-[#10B981]"] {
+    color: #065f46 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Prevent awkward page break clipping inside cards and tables */
+  .rounded-xl,
+  .rounded-2xl,
+  table,
+  tr,
+  figure {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure tables stretch to full width without scrolling */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+}
+

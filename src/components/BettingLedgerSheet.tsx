@@ -764,14 +764,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Venue Selection Scope Bar + Scoring Mode Toggle */}
-      <div className="bg-[#121A16] border border-[#1F2D26] rounded-lg p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#1F2D26] pb-4">
-          <div className="space-y-2.5">
+      <div className="apple-card p-6 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#F2F2F7] pb-5">
+          <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-semibold">
-                  Select Race Cards / Locations (Check 1 or Multiple Cards):
+                <MapPin className="w-4 h-4 text-[#0071E3]" />
+                <span className="text-xs uppercase tracking-wider text-[#86868B] font-semibold">
+                  Select Race Cards / Venues:
                 </span>
               </div>
 
@@ -780,7 +780,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                 selectedMeetingIds={effectiveSelectedIds}
                 onChangeSelectedMeetingIds={updateSelectedMeetingIds}
                 punters={punters}
-                labelPrefix="Betting Race Cards"
+                labelPrefix="Race Cards"
                 compact
               />
             </div>
@@ -801,35 +801,35 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     role="checkbox"
                     aria-checked={isChecked}
                     onClick={() => toggleMeetingCheckbox(m.id)}
-                    className={`min-h-[38px] px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2 border cursor-pointer ${
+                    className={`min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 border cursor-pointer ${
                       isChecked
-                        ? "bg-[#152920] text-[#F3F4F0] border-[#10B981] font-semibold shadow-sm"
-                        : "bg-[#0B110E] text-[#8A9990] border-[#1F2D26] hover:border-[#10B981] hover:text-[#F3F4F0]"
+                        ? "bg-[#0071E3] text-white border-[#0071E3] font-semibold shadow-xs"
+                        : "bg-[#F2F2F7] text-[#1D1D1F] border-[#E5E5EA] hover:bg-[#E5E5EA]"
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border shrink-0 ${
                         isChecked
-                          ? "bg-[#10B981] border-[#10B981] text-[#0B110E]"
-                          : "bg-[#0B110E] border-[#52665B]"
+                          ? "bg-white border-white text-[#0071E3]"
+                          : "bg-white border-[#D2D2D7]"
                       }`}
                     >
-                      {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                     </span>
                     <span
-                      className={`font-mono text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                      className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                         isChecked
-                          ? "bg-[#0B110E]/40 text-[#D4AF37]"
+                          ? "bg-white/20 text-white"
                           : isMetro
-                          ? "bg-[#192620] text-[#D4AF37]"
-                          : "bg-[#16201B] text-[#8A9990]"
+                          ? "bg-white text-[#0071E3]"
+                          : "bg-white text-[#86868B]"
                       }`}
                     >
                       {m.state} {isMetro ? "METRO" : "TAB"}
                     </span>
                     <span>{m.venue}</span>
                     <span className="font-mono text-[11px] opacity-85">
-                      ({m.races.length}R · R{firstR}–R{lastR})
+                      ({m.races.length}R)
                     </span>
                   </button>
                 );
@@ -844,11 +844,11 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       combinedRequiredMeetings.map((m) => m.id)
                     );
                   }}
-                  className="min-h-[38px] px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 border bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15 cursor-pointer"
+                  className="min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 border bg-[#EBF5FF] text-[#0071E3] border-[#0071E3]/20 hover:bg-[#D6EBFF] cursor-pointer"
                 >
                   <Layers className="w-3.5 h-3.5" />
                   <span>
-                    Sydney &amp; Melb (
+                    Syd &amp; Melb (
                     {sydneyMeeting ? sydneyMeeting.venue : "NSW"} +{" "}
                     {melbourneMeeting ? melbourneMeeting.venue : "VIC"})
                   </span>
@@ -862,7 +862,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   onClick={() =>
                     updateSelectedMeetingIds(sortedMeetings.map((m) => m.id))
                   }
-                  className="min-h-[38px] px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 border bg-[#0B110E] text-[#10B981] border-[#10B981]/40 hover:bg-[#10B981]/15 cursor-pointer"
+                  className="min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 border bg-[#F2F2F7] text-[#1D1D1F] border-[#E5E5EA] hover:bg-[#E5E5EA] cursor-pointer"
                 >
                   <span>Check All ({sortedMeetings.length})</span>
                 </button>
@@ -871,45 +871,45 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Toggle Switch: Points vs $ Return */}
+            {/* Toggle Switch: Points vs $ Return (Apple Segmented Control) */}
             <div
               role="group"
               aria-label="Scoring Mode Switch"
-              className="flex items-center p-1 bg-[#0B110E] border border-[#1F2D26] rounded-md"
+              className="flex items-center p-0.5 bg-[#E5E5EA]/70 rounded-full border border-black/[0.04]"
             >
               <button
                 type="button"
                 onClick={() => onToggleScoringMode("points")}
-                className={`min-h-[36px] sm:min-h-[30px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                className={`min-h-[32px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer ${
                   scoringMode === "points"
-                    ? "bg-[#D4AF37] text-[#0B110E] font-semibold"
-                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                    : "text-[#86868B] hover:text-[#1D1D1F]"
                 }`}
               >
                 <Trophy className="w-3.5 h-3.5" />
-                <span>Points (3 / 2 / 1)</span>
+                <span>Points (3/2/1)</span>
               </button>
               <button
                 type="button"
                 onClick={() => onToggleScoringMode("dollars")}
-                className={`min-h-[36px] sm:min-h-[30px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                className={`min-h-[32px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer ${
                   scoringMode === "dollars"
-                    ? "bg-[#10B981] text-[#0B110E] font-semibold"
-                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                    : "text-[#86868B] hover:text-[#1D1D1F]"
                 }`}
               >
                 <DollarSign className="w-3.5 h-3.5" />
-                <span>$ Return (Win/Place)</span>
+                <span>$ Return</span>
               </button>
             </div>
 
             <button
               type="button"
               onClick={handleJumpToResults}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#192620] border border-[#10B981]/50 text-[#10B981] text-xs font-semibold hover:bg-[#21332B] transition-colors cursor-pointer"
+              className="apple-btn-secondary"
             >
               <Users className="w-3.5 h-3.5" />
-              <span>View Selection Results Sheet</span>
+              <span>Results Sheet</span>
             </button>
           </div>
         </div>
@@ -917,8 +917,8 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
         {/* User / Punter Selector Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="text-xs font-mono uppercase tracking-wider text-[#8A9990]">
-              Active Punter Making Selections
+            <div className="text-xs font-medium uppercase tracking-wider text-[#86868B]">
+              Active Punter
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {punters.map((p) => {
@@ -940,23 +940,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                 return (
                   <div
                     key={p.id}
-                    className={`min-h-[40px] rounded-md text-xs font-medium transition-colors flex items-center border overflow-hidden ${
+                    className={`min-h-[38px] rounded-full text-xs font-medium transition-all flex items-center border overflow-hidden ${
                       isSelected
-                        ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37] font-semibold"
-                        : "bg-[#0B110E] text-[#F3F4F0] border-[#1F2D26] hover:border-[#8A9990]"
+                        ? "bg-[#0071E3] text-white border-[#0071E3] font-semibold shadow-xs"
+                        : "bg-[#F2F2F7] text-[#1D1D1F] border-[#E5E5EA] hover:bg-[#E5E5EA]"
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => onSelectPunter(p.id)}
-                      className="px-3.5 py-2 flex items-center gap-2 cursor-pointer"
+                      className="px-3.5 py-1.5 flex items-center gap-2 cursor-pointer"
                     >
                       <span>{p.name}</span>
                       <span
-                        className={`font-mono px-1.5 py-0.5 rounded text-[11px] tabular-nums ${
+                        className={`font-mono px-2 py-0.5 rounded-full text-[11px] tabular-nums ${
                           isSelected
-                            ? "bg-[#0B110E]/20 text-[#0B110E] font-bold"
-                            : "bg-[#121A16] text-[#D4AF37]"
+                            ? "bg-white/20 text-white font-bold"
+                            : "bg-white text-[#1D1D1F] border border-[#E5E5EA]"
                         }`}
                       >
                         {summary?.completedRaces ?? 0}/
@@ -973,10 +973,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         }}
                         title={`Remove user "${p.name}" from Punters Club`}
                         aria-label={`Remove user ${p.name}`}
-                        className={`px-2 py-2 border-l transition-colors cursor-pointer flex items-center justify-center ${
+                        className={`px-2.5 py-1.5 border-l transition-colors cursor-pointer flex items-center justify-center ${
                           isSelected
-                            ? "border-[#0B110E]/20 text-[#0B110E] hover:bg-[#EF4444] hover:text-white"
-                            : "border-[#1F2D26] text-[#8A9990] hover:bg-[#EF4444]/20 hover:text-[#EF4444]"
+                            ? "border-white/20 text-white hover:bg-rose-500"
+                            : "border-[#E5E5EA] text-[#86868B] hover:text-[#FF3B30]"
                         }`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -989,11 +989,11 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddMember((prev) => !prev)}
-                className="min-h-[40px] px-3 py-2 rounded-md text-xs font-medium bg-[#0B110E] text-[#10B981] border border-[#1F2D26] hover:border-[#10B981] transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="apple-btn-secondary"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>
-                  {showAddMember ? "Close User Manager" : "Add / Manage Users"}
+                  {showAddMember ? "Close Member Manager" : "Add Member"}
                 </span>
               </button>
 
@@ -1005,7 +1005,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   <button
                     type="button"
                     onClick={() => onRemovePunter(activePunter.id)}
-                    className="min-h-[40px] px-3 py-2 rounded-md text-xs font-medium bg-[#291414] text-[#EF4444] border border-[#EF4444]/40 hover:bg-[#EF4444] hover:text-[#0B110E] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="min-h-[38px] px-3 py-1.5 rounded-full text-xs font-medium bg-[#FEECEB] text-[#FF3B30] border border-[#FF3B30]/30 hover:bg-[#FF3B30] hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                     title={`Remove user "${activePunter.name}"`}
                   >
                     <UserMinus className="w-3.5 h-3.5" />
@@ -1020,14 +1020,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
             <button
               type="button"
               onClick={() => onManualCloudSync?.()}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#D4AF37] text-[#0B110E] text-xs font-bold hover:bg-[#e3be42] transition-colors cursor-pointer shadow-sm"
-              title="Immediately save and sync all user selections across all devices (iPad, Phone, Desktop)"
+              className="apple-btn-primary"
+              title="Immediately save and sync all user selections across all devices"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>
                 {cloudSyncState === "saving"
                   ? "Saving to Cloud..."
-                  : `Save & Sync Selections${
+                  : `Save Selections${
                       lastSyncedTime ? ` (${lastSyncedTime})` : ""
                     }`}
               </span>
@@ -1035,20 +1035,19 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
             <button
               type="button"
               onClick={handleAutoFillRequiredScope}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#192620] border border-[#10B981]/40 text-[#10B981] text-xs font-medium hover:bg-[#21332B] transition-colors cursor-pointer"
+              className="apple-btn-secondary"
               title="Auto-fill 3 top-rated TAB runners for every race in the selected scope"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-[#0071E3]" />
               <span>
-                Auto-Fill {displayedMeetings.length} Checked Card
-                {displayedMeetings.length > 1 ? "s" : ""} (
+                Auto-Fill {displayedMeetings.length} Cards (
                 {activeSummary.totalRacesInScope} Races)
               </span>
             </button>
             <button
               type="button"
               onClick={handleClearRequiredScope}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:text-[#EF4444] hover:border-[#EF4444]/50 text-xs font-medium transition-colors cursor-pointer"
+              className="min-h-[38px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#86868B] hover:text-[#FF3B30] hover:border-[#FF3B30]/30 text-xs font-medium transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Clear Scope Picks</span>
@@ -1221,18 +1220,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-5 grid grid-cols-3 gap-2">
-            <div className="p-2.5 rounded bg-[#0B110E] border border-[#1F2D26] font-mono">
-              <div className="text-[10px] uppercase text-[#8A9990]">
+          <div className="lg:col-span-5 grid grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] font-mono">
+              <div className="text-[10px] uppercase font-semibold text-[#86868B]">
                 {activePunter.name} {scoringMode === "dollars" ? "$ Return" : "Points"}
               </div>
               <div
-                className={`text-lg font-bold tabular-nums mt-0.5 ${
+                className={`text-lg font-bold tabular-nums mt-1 ${
                   activeSummary.resultedRacesCount === 0
-                    ? "text-[#8A9990]"
+                    ? "text-[#86868B]"
                     : scoringMode === "dollars"
-                    ? "text-[#10B981]"
-                    : "text-[#D4AF37]"
+                    ? "text-[#34C759]"
+                    : "text-[#0071E3]"
                 }`}
               >
                 {activeSummary.resultedRacesCount === 0
@@ -1242,26 +1241,26 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   : `${activeSummary.totalPoints} pts`}
               </div>
             </div>
-            <div className="p-2.5 rounded bg-[#0B110E] border border-[#1F2D26] font-mono">
-              <div className="text-[10px] uppercase text-[#8A9990]">
-                Races Picked
+            <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] font-mono">
+              <div className="text-[10px] uppercase font-semibold text-[#86868B]">
+                Picks Logged
               </div>
               <div
-                className={`text-lg font-bold tabular-nums mt-0.5 ${
+                className={`text-lg font-bold tabular-nums mt-1 ${
                   activeSummary.completedRaces ===
                   activeSummary.totalRacesInScope
-                    ? "text-[#10B981]"
-                    : "text-[#F3F4F0]"
+                    ? "text-[#34C759]"
+                    : "text-[#1D1D1F]"
                 }`}
               >
                 {activeSummary.completedRaces}/{activeSummary.totalRacesInScope}
               </div>
             </div>
-            <div className="p-2.5 rounded bg-[#0B110E] border border-[#1F2D26] font-mono">
-              <div className="text-[10px] uppercase text-[#8A9990]">
-                Resulted Races
+            <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] font-mono">
+              <div className="text-[10px] uppercase font-semibold text-[#86868B]">
+                Resulted
               </div>
-              <div className="text-lg font-bold text-[#10B981] tabular-nums mt-0.5">
+              <div className="text-lg font-bold text-[#34C759] tabular-nums mt-1">
                 {activeSummary.resultedRacesCount}/
                 {activeSummary.totalRacesInScope}
               </div>
@@ -1297,23 +1296,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
         return (
           <div
             key={meetingCard.id}
-            className="bg-[#121A16] border border-[#1F2D26] rounded-lg overflow-hidden"
+            className="apple-card overflow-hidden"
           >
-            <div className="px-4 py-3 border-b border-[#1F2D26] space-y-2.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="px-2 py-0.5 rounded bg-[#192620] border border-[#10B981]/40 text-[#10B981] font-mono text-xs font-bold">
+            <div className="px-5 py-4 border-b border-[#E5E5EA] bg-[#FAF9FA] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#EBF5FF] text-[#0071E3] font-mono text-xs font-semibold">
                     {meetingCard.state} · {meetingCard.races.length} RACES (R
                     {firstRaceNum}–R{lastRaceNum})
                   </span>
                   <div>
-                    <h2 className="text-sm font-semibold text-[#F3F4F0]">
+                    <h2 className="text-base font-semibold text-[#1D1D1F]">
                       {meetingCard.venue} ({meetingCard.date}) —{" "}
-                      <span className="text-[#D4AF37]">
+                      <span className="text-[#0071E3]">
                         {activePunter.name}
                       </span>
                     </h2>
-                    <p className="text-xs text-[#8A9990]">
+                    <p className="text-xs text-[#86868B]">
                       Select 3 horses in order of preference (1st, 2nd, 3rd)
                       across all {meetingCard.races.length} scheduled races at{" "}
                       {meetingCard.venue} ({venueStat.resultedRaces} of{" "}
@@ -1322,27 +1321,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* View Mode Switcher */}
-                  <div className="flex items-center gap-0.5 bg-[#0B110E] p-0.5 rounded-lg border border-[#1F2D26]">
+                  {/* View Mode Switcher (Apple Segmented Control) */}
+                  <div className="flex items-center p-0.5 bg-[#E5E5EA]/70 rounded-full border border-black/[0.04]">
                     <button
                       type="button"
                       onClick={() => setSelectionViewMode("cards")}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                         selectionViewMode === "cards"
-                          ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
+                          ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                          : "text-[#86868B] hover:text-[#1D1D1F]"
                       }`}
                     >
                       <LayoutList className="w-3.5 h-3.5" />
-                      <span>All Race Cards</span>
+                      <span>All Cards</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectionViewMode("stepper")}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                         selectionViewMode === "stepper"
-                          ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
+                          ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                          : "text-[#86868B] hover:text-[#1D1D1F]"
                       }`}
                     >
                       <Zap className="w-3.5 h-3.5" />
@@ -1351,14 +1350,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     <button
                       type="button"
                       onClick={() => setSelectionViewMode("table")}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                         selectionViewMode === "table"
-                          ? "bg-[#D4AF37] text-[#0B110E] shadow-sm"
-                          : "text-[#8A9990] hover:text-[#F3F4F0]"
+                          ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                          : "text-[#86868B] hover:text-[#1D1D1F]"
                       }`}
                     >
                       <TableIcon className="w-3.5 h-3.5" />
-                      <span>Full Table</span>
+                      <span>Table</span>
                     </button>
                   </div>
 
@@ -1379,17 +1378,17 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       <button
                         type="button"
                         onClick={() => expandAllRaces(meetingCard)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0] hover:border-[#D4AF37] text-xs font-mono font-medium transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA] text-xs font-mono font-medium transition cursor-pointer"
                         title="Expand all race cards"
                       >
-                        <ChevronDown className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <ChevronDown className="w-3.5 h-3.5 text-[#0071E3]" />
                         <span>Expand All</span>
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={() => collapseAllCompletedRaces(meetingCard)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#102017] border border-[#10B981]/50 text-[#10B981] hover:bg-[#162a1f] text-xs font-mono font-medium transition cursor-pointer shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF5FF] border border-[#0071E3]/20 text-[#0071E3] hover:bg-[#D6EBFF] text-xs font-mono font-semibold transition cursor-pointer shadow-xs"
                         title="Collapse all fully tipped races into simplified summary cards"
                       >
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -1398,10 +1397,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     );
                   })()}
 
-                  <span className="px-2 py-1 rounded bg-[#0B110E] border border-[#10B981]/40 text-[11px] font-mono text-[#10B981]">
+                  <span className="px-2.5 py-1 rounded-full bg-[#EAFBF0] border border-[#34C759]/30 text-[11px] font-mono text-[#34C759] font-medium">
                     ✓ TAB Auto-Sub Active
                   </span>
-                  <span className="font-mono text-xs text-[#D4AF37] font-semibold">
+                  <span className="font-mono text-xs text-[#1D1D1F] font-semibold">
                     {venueStat.completed}/{venueStat.totalRaces} Picked ·{" "}
                     {venueStat.resultedRaces === 0
                       ? "Awaiting Result"
@@ -1412,7 +1411,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   <button
                     type="button"
                     onClick={handleJumpToResults}
-                    className="text-xs font-semibold text-[#10B981] hover:underline whitespace-nowrap cursor-pointer"
+                    className="text-xs font-semibold text-[#0071E3] hover:underline whitespace-nowrap cursor-pointer"
                   >
                     Live Results →
                   </button>
@@ -1420,23 +1419,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
               </div>
 
               {/* JOKER ROUND SELECTOR BAR FOR THIS MEETING */}
-              <div className="p-2.5 rounded-lg bg-[#0B110E] border border-[#D4AF37]/40 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-[#FFF9F2] border border-[#FF9500]/30 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2 py-0.5 rounded bg-[#D4AF37] text-[#0B110E] font-mono text-[11px] font-bold uppercase whitespace-nowrap">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#FF9500] text-white font-mono text-[11px] font-bold uppercase whitespace-nowrap shadow-xs">
                     🃏 Joker Round (2× Points)
                   </span>
-                  <span className="text-xs text-[#D5DDD8]">
+                  <span className="text-xs text-[#1D1D1F]">
                     Defaults to{" "}
-                    <strong className="text-[#D4AF37]">
+                    <strong className="text-[#FF9500]">
                       Feature Race R{featureRaceNo ?? "-"}
                       {featureRaceObj ? ` (${featureRaceObj.raceName})` : ""}
                     </strong>{" "}
-                    for <strong className="text-[#D4AF37]">{activePunter.name}</strong>{" "}
+                    for <strong className="text-[#0071E3]">{activePunter.name}</strong>{" "}
                     — earn{" "}
-                    <strong className="text-[#10B981]">
+                    <strong className="text-[#34C759]">
                       double points (2×)
                     </strong>{" "}
-                    for all successful selections (1st, 2nd, or 3rd)!
+                    for all successful selections!
                   </span>
                 </div>
 
@@ -1455,12 +1454,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             isJokerSelected ? null : r.raceNumber
                           )
                         }
-                        className={`px-2.5 py-1 rounded font-mono text-xs font-semibold transition-colors cursor-pointer border ${
+                        className={`px-3 py-1 rounded-full font-mono text-xs font-semibold transition-all cursor-pointer border ${
                           isJokerSelected
-                            ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37] font-bold shadow-sm"
+                            ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
                             : isFeature
-                            ? "bg-[#192620] text-[#D4AF37] border-[#D4AF37]/50 hover:border-[#D4AF37]"
-                            : "bg-[#121A16] text-[#8A9990] border-[#1F2D26] hover:border-[#D4AF37] hover:text-[#F3F4F0]"
+                            ? "bg-white text-[#FF9500] border-[#FF9500]/40 hover:border-[#FF9500]"
+                            : "bg-white text-[#86868B] border-[#E5E5EA] hover:border-[#FF9500] hover:text-[#1D1D1F]"
                         }`}
                         title={
                           isJokerSelected
@@ -1485,7 +1484,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             featureRaceNo
                           )
                         }
-                        className="px-2 py-1 rounded text-[11px] font-mono text-[#D4AF37] hover:underline cursor-pointer"
+                        className="px-2.5 py-1 rounded-full text-[11px] font-mono text-[#0071E3] hover:underline cursor-pointer"
                       >
                         Reset to Feature (R{featureRaceNo})
                       </button>
@@ -1496,7 +1495,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       onClick={() =>
                         onToggleJokerRace?.(activePunter.id, meetingCard.id, null)
                       }
-                      className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#EF4444] cursor-pointer"
+                      className="px-2.5 py-1 rounded-full text-[11px] font-mono text-[#86868B] hover:text-[#FF3B30] cursor-pointer"
                     >
                       Clear Joker
                     </button>
@@ -1542,12 +1541,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           }
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-lg border font-mono text-xs tabular-nums shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full border font-mono text-xs tabular-nums shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                         isCurrentActive
-                          ? "bg-[#262010] border-[#D4AF37] text-[#D4AF37] font-bold shadow-sm"
+                          ? "bg-[#0071E3] border-[#0071E3] text-white font-semibold shadow-xs"
                           : ev.isComplete
-                          ? "bg-[#152920] border-[#10B981]/40 text-[#10B981] hover:border-[#10B981]"
-                          : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:border-[#D4AF37]/40 hover:text-[#F3F4F0]"
+                          ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#34C759]"
+                          : "bg-white border-[#E5E5EA] text-[#86868B] hover:border-[#D2D2D7] hover:text-[#1D1D1F]"
                       }`}
                     >
                       <span>
@@ -1556,9 +1555,9 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       </span>
                       <span className="text-[10px]">
                         {ev.isComplete ? (
-                          <strong className="text-[#10B981]">3/3 ✓</strong>
+                          <strong className={isCurrentActive ? "text-white" : "text-[#34C759]"}>3/3 ✓</strong>
                         ) : pickCount > 0 ? (
-                          <span className="text-[#D4AF37]">{pickCount}/3</span>
+                          <span className={isCurrentActive ? "text-white" : "text-[#0071E3]"}>{pickCount}/3</span>
                         ) : (
                           "Pick 3"
                         )}
@@ -1616,39 +1615,39 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       <div
                         key={race.raceNumber}
                         id={`race-card-${meetingCard.id}-${race.raceNumber}`}
-                        className={`rounded-xl border transition-all overflow-hidden ${
+                        className={`rounded-2xl border transition-all overflow-hidden ${
                           isJokerRace
-                            ? "border-[#D4AF37]/70 bg-[#0F1713] shadow-[0_4px_24px_rgba(212,175,55,0.08)] ring-1 ring-[#D4AF37]/30"
-                            : "border-[#1F2D26] bg-[#0E1612] hover:border-[#2E4237]"
+                            ? "border-[#FF9500]/50 bg-white shadow-xs ring-1 ring-[#FF9500]/30"
+                            : "border-[#E5E5EA] bg-white hover:border-[#D2D2D7] shadow-xs"
                         }`}
                       >
-                        <div className="p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+                        <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                           {/* Left: Race Badge, Name, Jump Time, Distance, Track */}
                           <div className="flex items-start sm:items-center gap-3">
-                            <span className="px-2.5 py-1 rounded-md bg-[#192620] border border-[#2A3F33] text-[#F3F4F0] font-mono font-black text-sm tracking-wide shrink-0">
+                            <span className="px-3 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#1D1D1F] font-mono font-bold text-xs shrink-0">
                               R{race.raceNumber}
                             </span>
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-display font-bold text-base text-[#F3F4F0]">
+                                <span className="font-semibold text-base text-[#1D1D1F]">
                                   {race.raceName}
                                 </span>
                                 {isFeature && (
-                                  <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-mono font-bold uppercase tracking-wider">
+                                  <span className="px-2.5 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] text-[10px] font-mono font-bold uppercase tracking-wider">
                                     ★ FEATURE
                                   </span>
                                 )}
                                 {isJokerRace && (
-                                  <span className="px-2 py-0.5 rounded bg-[#D4AF37] text-[#070B09] text-[10px] font-mono font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                  <span className="px-2.5 py-0.5 rounded-full bg-[#FF9500] text-white text-[10px] font-mono font-bold uppercase tracking-wider shadow-xs flex items-center gap-1">
                                     <span>🃏</span>
                                     <span>2× Joker Active</span>
                                   </span>
                                 )}
                                 <span
-                                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider ${
                                     evaluated.isRaceResulted
-                                      ? "bg-[#152920] text-[#10B981] border border-[#10B981]/40"
-                                      : "bg-[#192620] text-[#D4AF37] border border-[#D4AF37]/40"
+                                      ? "bg-[#EAFBF0] text-[#34C759]"
+                                      : "bg-[#EBF5FF] text-[#0071E3]"
                                   }`}
                                 >
                                   {evaluated.isRaceResulted
@@ -1656,20 +1655,20 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     : "UPCOMING"}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-[#8A9990] font-mono mt-1 flex-wrap">
-                                <span className="text-[#F3F4F0] font-medium">
+                              <div className="flex items-center gap-2 text-xs text-[#86868B] font-mono mt-1 flex-wrap">
+                                <span className="text-[#1D1D1F] font-medium">
                                   Jumps {race.startTime}
                                 </span>
-                                <span>·</span>
+                                <span>•</span>
                                 <span>{race.distance}m</span>
-                                <span>·</span>
+                                <span>•</span>
                                 <span>
                                   Track: {meetingCard.trackCondition || "Good 4"}
                                 </span>
                                 {evaluated.isRaceResulted && (
                                   <>
-                                    <span>·</span>
-                                    <span className="text-[#D4AF37] font-bold">
+                                    <span>•</span>
+                                    <span className="text-[#34C759] font-semibold">
                                       Result:{" "}
                                       {scoringMode === "dollars"
                                         ? formatDollarReturn(
@@ -1686,18 +1685,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           {/* Center: The 3 Selections */}
                           <div className="flex items-center gap-2 flex-wrap">
                             {/* 1st Selection */}
-                            <div className="px-3 py-1.5 rounded-lg bg-[#18150B] border border-[#D4AF37]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
-                              <span className="px-1.5 py-0.5 rounded bg-[#D4AF37] text-[#070B09] font-black text-[10px] tracking-wider">
+                            <div className="px-3.5 py-1.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/30 flex items-center gap-2 text-xs font-mono">
+                              <span className="px-2 py-0.5 rounded-full bg-[#FF9500] text-white font-bold text-[10px]">
                                 1ST
                               </span>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-[#F3F4F0]">
+                                <span className="font-semibold text-[#1D1D1F]">
                                   #{sel1Runner?.tabNumber}{" "}
                                   {sel1Runner?.horseName}
                                 </span>
                                 {(sel1Runner?.fixedWin ||
                                   sel1Runner?.nswTabWin) && (
-                                  <span className="text-[#D4AF37] font-semibold">
+                                  <span className="text-[#FF9500] font-semibold">
                                     $
                                     {Number(
                                       sel1Runner.fixedWin ||
@@ -1709,18 +1708,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             </div>
 
                             {/* 2nd Selection */}
-                            <div className="px-3 py-1.5 rounded-lg bg-[#0C1720] border border-[#38BDF8]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
-                              <span className="px-1.5 py-0.5 rounded bg-[#38BDF8] text-[#070B09] font-black text-[10px] tracking-wider">
+                            <div className="px-3.5 py-1.5 rounded-full bg-[#EBF5FF] border border-[#0071E3]/30 flex items-center gap-2 text-xs font-mono">
+                              <span className="px-2 py-0.5 rounded-full bg-[#0071E3] text-white font-bold text-[10px]">
                                 2ND
                               </span>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-[#F3F4F0]">
+                                <span className="font-semibold text-[#1D1D1F]">
                                   #{sel2Runner?.tabNumber}{" "}
                                   {sel2Runner?.horseName}
                                 </span>
                                 {(sel2Runner?.fixedWin ||
                                   sel2Runner?.nswTabWin) && (
-                                  <span className="text-[#38BDF8] font-semibold">
+                                  <span className="text-[#0071E3] font-semibold">
                                     $
                                     {Number(
                                       sel2Runner.fixedWin ||
@@ -1732,18 +1731,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             </div>
 
                             {/* 3rd Selection */}
-                            <div className="px-3 py-1.5 rounded-lg bg-[#0C1A14] border border-[#10B981]/50 flex items-center gap-2 text-xs font-mono shadow-sm">
-                              <span className="px-1.5 py-0.5 rounded bg-[#10B981] text-[#070B09] font-black text-[10px] tracking-wider">
+                            <div className="px-3.5 py-1.5 rounded-full bg-[#EAFBF0] border border-[#34C759]/30 flex items-center gap-2 text-xs font-mono">
+                              <span className="px-2 py-0.5 rounded-full bg-[#34C759] text-white font-bold text-[10px]">
                                 3RD
                               </span>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-[#F3F4F0]">
+                                <span className="font-semibold text-[#1D1D1F]">
                                   #{sel3Runner?.tabNumber}{" "}
                                   {sel3Runner?.horseName}
                                 </span>
                                 {(sel3Runner?.fixedWin ||
                                   sel3Runner?.nswTabWin) && (
-                                  <span className="text-[#10B981] font-semibold">
+                                  <span className="text-[#34C759] font-semibold">
                                     $
                                     {Number(
                                       sel3Runner.fixedWin ||
@@ -1765,7 +1764,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   race.raceNumber
                                 )
                               }
-                              className="px-3 py-1.5 rounded-lg bg-[#15231B] border border-[#23352B] hover:border-[#D4AF37] hover:bg-[#1D2F24] text-[#D4AF37] text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                              className="apple-btn-secondary"
                               title="Expand race to view full runners table and modify selections"
                             >
                               <ChevronDown className="w-3.5 h-3.5" />
@@ -1780,7 +1779,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   race.raceNumber
                                 )
                               }
-                              className="p-1.5 rounded-lg text-xs font-mono text-[#8A9990] hover:text-rose-400 bg-[#0B110E] border border-[#1F2D26] hover:border-rose-500/40 transition cursor-pointer"
+                              className="p-2 rounded-full text-xs font-mono text-[#86868B] hover:text-[#FF3B30] bg-[#F2F2F7] border border-[#E5E5EA] hover:border-[#FF3B30]/30 transition cursor-pointer"
                               title="Clear picks for this race"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
@@ -1795,55 +1794,55 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                     <div
                       key={race.raceNumber}
                       id={`race-card-${meetingCard.id}-${race.raceNumber}`}
-                      className={`rounded-xl border transition-all overflow-hidden ${
+                      className={`rounded-2xl border transition-all overflow-hidden ${
                         isJokerRace
-                          ? "border-[#D4AF37]/70 bg-[#0F1713] shadow-[0_4px_24px_rgba(212,175,55,0.08)] ring-1 ring-[#D4AF37]/30"
-                          : "border-[#1F2D26] bg-[#0E1612] hover:border-[#2E4237]"
+                          ? "border-[#FF9500]/50 bg-white shadow-xs ring-1 ring-[#FF9500]/30"
+                          : "border-[#E5E5EA] bg-white hover:border-[#D2D2D7] shadow-xs"
                       }`}
                     >
                       {/* Race Card Header */}
-                      <div className="px-4 py-3 bg-[#080E0B] border-b border-[#1F2D26] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                      <div className="px-5 py-4 bg-[#FAF9FA] border-b border-[#E5E5EA] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 flex-wrap">
-                          <span className="px-2.5 py-1 rounded-md bg-[#192620] border border-[#2A3F33] text-[#F3F4F0] font-mono font-black text-sm tracking-wide">
+                          <span className="px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#1D1D1F] font-mono font-bold text-xs">
                             R{race.raceNumber}
                           </span>
-                          <span className="font-display font-bold text-base text-[#F3F4F0]">
+                          <span className="font-semibold text-base text-[#1D1D1F]">
                             {race.raceName}
                           </span>
 
                           {isFeature && (
-                            <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-mono font-bold uppercase tracking-wider">
+                            <span className="px-2.5 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] text-[10px] font-mono font-bold uppercase tracking-wider">
                               ★ FEATURE RACE
                             </span>
                           )}
 
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider ${
                               evaluated.isRaceResulted
-                                ? "bg-[#152920] text-[#10B981] border border-[#10B981]/40"
-                                : "bg-[#192620] text-[#D4AF37] border border-[#D4AF37]/40"
+                                ? "bg-[#EAFBF0] text-[#34C759]"
+                                : "bg-[#EBF5FF] text-[#0071E3]"
                             }`}
                           >
                             {evaluated.isRaceResulted ? "OFFICIAL FINAL" : "UPCOMING"}
                           </span>
 
-                          <span className="text-xs text-[#8A9990] font-mono">
-                            Jumps {race.startTime} · {race.distance}m · Track: {meetingCard.trackCondition || "Good 4"} · Rail: {meetingCard.railPosition || "True"}
+                          <span className="text-xs text-[#86868B] font-mono">
+                            Jumps {race.startTime} · {race.distance}m · Track: {meetingCard.trackCondition || "Good 4"}
                           </span>
                         </div>
 
                         {/* Quick Controls & Joker Toggle */}
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Pick Count Badge */}
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F1B15] border border-[#23352C] text-xs font-mono">
-                            <span className="text-[#8A9990]">Picks:</span>
+                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-xs font-mono">
+                            <span className="text-[#86868B]">Picks:</span>
                             {pickCount === 3 ? (
-                              <span className="text-[#10B981] font-bold flex items-center gap-1">
+                              <span className="text-[#34C759] font-bold flex items-center gap-1">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>3/3 Complete</span>
                               </span>
                             ) : (
-                              <span className="text-[#D4AF37] font-semibold">
+                              <span className="text-[#0071E3] font-semibold">
                                 {pickCount}/3 Selected
                               </span>
                             )}
@@ -1859,7 +1858,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   race.raceNumber
                                 )
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-[#10B981] bg-[#12241B] border border-[#10B981]/50 hover:bg-[#183024] hover:border-[#10B981] transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                              className="px-3 py-1 rounded-full text-xs font-mono font-semibold text-[#0071E3] bg-[#EBF5FF] border border-[#0071E3]/20 hover:bg-[#D6EBFF] transition cursor-pointer flex items-center gap-1.5 shadow-xs"
                               title="Collapse race into simplified summary view"
                             >
                               <ChevronUp className="w-3.5 h-3.5" />
@@ -1877,7 +1876,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 isJokerRace ? null : race.raceNumber
                               )
                             }
-                            className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3 py-1 rounded-full text-xs font-mono font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
                               isJokerRace
                                 ? "bg-[#D4AF37] text-[#070B09] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.4)]"
                                 : "bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15"
@@ -1997,26 +1996,26 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="border-b border-[#1F2D26] bg-[#0A120E] text-[11px] font-mono text-[#8A9990] uppercase tracking-wider">
-                              <th className="py-2.5 px-3 w-12 text-center">#</th>
-                              <th className="py-2.5 px-3 min-w-[170px]">Runner</th>
-                              <th className="py-2.5 px-3 min-w-[220px]">Form &amp; Brief Analysis</th>
-                              <th className="py-2.5 px-3 w-36 text-center">Odds &amp; Dynamics</th>
-                              <th className="py-2.5 px-2 w-24 text-center bg-[#16140C]/80 border-l border-[#262010]">
-                                <span className="text-[#D4AF37] font-bold block">1st Pref</span>
-                                <span className="text-[9px] text-[#A6882C] lowercase font-normal">Selection 1</span>
+                            <tr className="border-b border-[#E5E5EA] bg-[#FAF9FA] text-[11px] font-mono text-[#86868B] uppercase tracking-wider">
+                              <th className="py-3 px-3 w-12 text-center">#</th>
+                              <th className="py-3 px-3 min-w-[170px]">Runner</th>
+                              <th className="py-3 px-3 min-w-[220px]">Form &amp; Brief Analysis</th>
+                              <th className="py-3 px-3 w-36 text-center">Odds &amp; Dynamics</th>
+                              <th className="py-3 px-2 w-24 text-center bg-[#FFF9F2] border-l border-[#E5E5EA]">
+                                <span className="text-[#FF9500] font-bold block">1st Pref</span>
+                                <span className="text-[9px] text-[#86868B] lowercase font-normal">Selection 1</span>
                               </th>
-                              <th className="py-2.5 px-2 w-24 text-center bg-[#0B1520]/80 border-l border-[#142334]">
-                                <span className="text-[#38BDF8] font-bold block">2nd Pref</span>
-                                <span className="text-[9px] text-[#227299] lowercase font-normal">Selection 2</span>
+                              <th className="py-3 px-2 w-24 text-center bg-[#F2F7FF] border-l border-[#E5E5EA]">
+                                <span className="text-[#0071E3] font-bold block">2nd Pref</span>
+                                <span className="text-[9px] text-[#86868B] lowercase font-normal">Selection 2</span>
                               </th>
-                              <th className="py-2.5 px-2 w-24 text-center bg-[#0B1A14]/80 border-l border-[#132A22]">
-                                <span className="text-[#10B981] font-bold block">3rd Pref</span>
-                                <span className="text-[9px] text-[#0C805A] lowercase font-normal">Selection 3</span>
+                              <th className="py-3 px-2 w-24 text-center bg-[#F2FBF5] border-l border-[#E5E5EA]">
+                                <span className="text-[#34C759] font-bold block">3rd Pref</span>
+                                <span className="text-[9px] text-[#86868B] lowercase font-normal">Selection 3</span>
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#17231D] text-xs">
+                          <tbody className="divide-y divide-[#E5E5EA] text-xs">
                             {race.runners.map((runner) => {
                               const isScratched =
                                 runner.isScratched || runner.margin === "SCR";
@@ -2053,27 +2052,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   key={runner.tabNumber}
                                   className={`transition-colors ${
                                     isScratched
-                                      ? "opacity-40 bg-[#080D0B]"
+                                      ? "opacity-40 bg-[#FAF9FA]"
                                       : isSelected
                                       ? is1st
-                                        ? "bg-[#211B0D]/70 hover:bg-[#282110]"
+                                        ? "bg-[#FFFDF9] hover:bg-[#FFF8EC]"
                                         : is2nd
-                                        ? "bg-[#0F1D2A]/70 hover:bg-[#142537]"
-                                        : "bg-[#0E221B]/70 hover:bg-[#122A22]"
-                                      : "hover:bg-[#121B16]"
+                                        ? "bg-[#F7FAFF] hover:bg-[#EFF5FF]"
+                                        : "bg-[#F7FCF9] hover:bg-[#EEFAF2]"
+                                      : "hover:bg-[#FAF9FA]"
                                   }`}
                                 >
                                   {/* Tab Number Badge */}
                                   <td className="py-3 px-3 text-center align-middle">
                                     <span
-                                      className={`inline-flex items-center justify-center w-7 h-7 rounded font-mono font-black text-xs ${
+                                      className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-mono font-bold text-xs ${
                                         isSelected
                                           ? is1st
-                                            ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-black"
+                                            ? "bg-[#FF9500] text-white shadow-xs"
                                             : is2nd
-                                            ? "bg-[#38BDF8] text-[#070B09] shadow-sm font-black"
-                                            : "bg-[#10B981] text-[#070B09] shadow-sm font-black"
-                                          : "bg-[#15221B] text-[#D5DDD8] border border-[#23352C]"
+                                            ? "bg-[#0071E3] text-white shadow-xs"
+                                            : "bg-[#34C759] text-white shadow-xs"
+                                          : "bg-[#F2F2F7] text-[#1D1D1F] border border-[#E5E5EA]"
                                       }`}
                                     >
                                       {runner.tabNumber}
@@ -2084,31 +2083,31 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   <td className="py-3 px-3 align-middle">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                       <span
-                                        className={`font-display font-bold text-sm ${
+                                        className={`font-semibold text-sm ${
                                           isSelected
-                                            ? "text-[#F3F4F0]"
-                                            : "text-[#E1E7E3]"
+                                            ? "text-[#1D1D1F]"
+                                            : "text-[#1D1D1F]"
                                         }`}
                                       >
                                         {runner.horseName}
                                       </span>
                                       {isScratched && (
-                                        <span className="px-1.5 py-0.2 rounded bg-rose-950/80 border border-rose-500/50 text-rose-300 font-mono text-[9px] font-bold">
+                                        <span className="px-1.5 py-0.2 rounded-full bg-[#FEECEB] border border-[#FF3B30]/30 text-[#FF3B30] font-mono text-[9px] font-bold">
                                           SCR
                                         </span>
                                       )}
                                       {finishPos === 1 && (
-                                        <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold">
+                                        <span className="px-2 py-0.5 rounded-full bg-[#FFF5E6] text-[#FF9500] font-mono text-[10px] font-bold">
                                           1st 🏆
                                         </span>
                                       )}
                                       {finishPos === 2 && (
-                                        <span className="px-1.5 py-0.2 rounded bg-slate-500/20 text-slate-300 font-mono text-[10px] font-bold">
+                                        <span className="px-2 py-0.5 rounded-full bg-[#F2F2F7] text-[#86868B] font-mono text-[10px] font-bold">
                                           2nd 🥈
                                         </span>
                                       )}
                                       {finishPos === 3 && (
-                                        <span className="px-1.5 py-0.2 rounded bg-amber-700/20 text-amber-400 font-mono text-[10px] font-bold">
+                                        <span className="px-2 py-0.5 rounded-full bg-[#FFF5E6] text-[#FF9500] font-mono text-[10px] font-bold">
                                           3rd 🥉
                                         </span>
                                       )}
@@ -2119,14 +2118,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         size="xs"
                                       />
                                     </div>
-                                    <div className="text-[11px] text-[#8A9990] font-mono mt-0.5">
+                                    <div className="text-[11px] text-[#86868B] font-mono mt-0.5">
                                       <span>
                                         B{runner.barrier} ·{" "}
                                         {runner.weight ? `${runner.weight}kg · ` : ""}
                                         {runner.jockey || "Jockey TBA"}
                                       </span>
                                       {runner.trainer && (
-                                        <span className="text-[#64756B]">
+                                        <span className="text-[#86868B]">
                                           {" "}
                                           (T: {runner.trainer})
                                         </span>
@@ -2138,24 +2137,24 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   <td className="py-3 px-3 align-middle">
                                     <div className="space-y-1">
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="px-1.5 py-0.5 rounded bg-[#16231D] border border-[#26382F] font-mono text-[10px] font-semibold text-[#D5DDD8]">
+                                        <span className="px-2 py-0.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] font-mono text-[10px] font-medium text-[#1D1D1F]">
                                           Form: {runner.form || "—"}
                                         </span>
                                         <span
-                                          className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
+                                          className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-semibold ${
                                             speedMapPos === "Leader"
-                                              ? "bg-amber-950/60 text-amber-300 border border-amber-600/30"
+                                              ? "bg-[#FFF5E6] text-[#FF9500] border border-[#FF9500]/30"
                                               : speedMapPos === "On Pace"
-                                              ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/30"
+                                              ? "bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/30"
                                               : speedMapPos === "Midfield"
-                                              ? "bg-sky-950/60 text-sky-300 border border-sky-600/30"
-                                              : "bg-purple-950/60 text-purple-300 border border-purple-600/30"
+                                              ? "bg-[#EBF5FF] text-[#0071E3] border border-[#0071E3]/30"
+                                              : "bg-[#F2F2F7] text-[#86868B] border border-[#E5E5EA]"
                                           }`}
                                         >
                                           {speedMapPos}
                                         </span>
                                       </div>
-                                      <p className="text-[11px] text-[#A6B5AD] leading-relaxed">
+                                      <p className="text-[11px] text-[#86868B] leading-relaxed">
                                         {comment}
                                       </p>
                                     </div>
@@ -2165,11 +2164,11 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
                                     <div className="font-mono">
                                       <div className="flex items-center justify-center gap-1.5">
-                                        <span className="font-bold text-sm text-[#F3F4F0]">
+                                        <span className="font-bold text-sm text-[#1D1D1F]">
                                           {winOdds > 0 ? `$${winOdds.toFixed(2)}` : "—"}
                                         </span>
                                         {placeOdds > 0 && (
-                                          <span className="text-[10px] text-[#8A9990]">
+                                          <span className="text-[10px] text-[#86868B]">
                                             / ${placeOdds.toFixed(2)}
                                           </span>
                                         )}
@@ -2197,7 +2196,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   </td>
 
                                   {/* Selection 1 Column Checkbox */}
-                                  <td className="py-3 px-2 text-center align-middle bg-[#16140C]/50 border-l border-[#262010]">
+                                  <td className="py-3 px-2 text-center align-middle bg-[#FFF9F2] border-l border-[#E5E5EA]">
                                     <button
                                       type="button"
                                       disabled={isScratched}
@@ -2211,27 +2210,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         )
                                       }
                                       aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 1`}
-                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                      className={`w-14 h-8 mx-auto rounded-full border font-mono text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                                         isScratched
-                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#E5E5EA]"
                                           : is1st
-                                          ? "bg-[#D4AF37] text-[#070B09] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.5)] scale-105"
-                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-[#1A180E]"
+                                          ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs scale-102"
+                                          : "bg-white border-[#E5E5EA] text-[#86868B] hover:border-[#FF9500] hover:text-[#FF9500]"
                                       }`}
                                     >
                                       {is1st ? (
                                         <>
-                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <Check className="w-3.5 h-3.5 stroke-[3]" />
                                           <span>1st</span>
                                         </>
                                       ) : (
-                                        <span className="text-[11px] text-[#55695D]">1st</span>
+                                        <span className="text-[11px] text-[#86868B]">1st</span>
                                       )}
                                     </button>
                                   </td>
 
                                   {/* Selection 2 Column Checkbox */}
-                                  <td className="py-3 px-2 text-center align-middle bg-[#0B1520]/50 border-l border-[#142334]">
+                                  <td className="py-3 px-2 text-center align-middle bg-[#F2F7FF] border-l border-[#E5E5EA]">
                                     <button
                                       type="button"
                                       disabled={isScratched}
@@ -2245,27 +2244,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         )
                                       }
                                       aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 2`}
-                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                      className={`w-14 h-8 mx-auto rounded-full border font-mono text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                                         isScratched
-                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#E5E5EA]"
                                           : is2nd
-                                          ? "bg-[#38BDF8] text-[#070B09] border-[#38BDF8] shadow-[0_0_12px_rgba(56,189,248,0.5)] scale-105"
-                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#38BDF8] hover:text-[#38BDF8] hover:bg-[#0E1A26]"
+                                          ? "bg-[#0071E3] text-white border-[#0071E3] shadow-xs scale-102"
+                                          : "bg-white border-[#E5E5EA] text-[#86868B] hover:border-[#0071E3] hover:text-[#0071E3]"
                                       }`}
                                     >
                                       {is2nd ? (
                                         <>
-                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <Check className="w-3.5 h-3.5 stroke-[3]" />
                                           <span>2nd</span>
                                         </>
                                       ) : (
-                                        <span className="text-[11px] text-[#55695D]">2nd</span>
+                                        <span className="text-[11px] text-[#86868B]">2nd</span>
                                       )}
                                     </button>
                                   </td>
 
                                   {/* Selection 3 Column Checkbox */}
-                                  <td className="py-3 px-2 text-center align-middle bg-[#0B1A14]/50 border-l border-[#132A22]">
+                                  <td className="py-3 px-2 text-center align-middle bg-[#F2FBF5] border-l border-[#E5E5EA]">
                                     <button
                                       type="button"
                                       disabled={isScratched}
@@ -2279,21 +2278,21 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         )
                                       }
                                       aria-label={`Select #${runner.tabNumber} ${runner.horseName} as Selection 3`}
-                                      className={`w-14 h-9 mx-auto rounded-lg border font-mono text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                      className={`w-14 h-8 mx-auto rounded-full border font-mono text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                                         isScratched
-                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#1F2D26]"
+                                          ? "opacity-30 cursor-not-allowed bg-transparent border-[#E5E5EA]"
                                           : is3rd
-                                          ? "bg-[#10B981] text-[#070B09] border-[#10B981] shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105"
-                                          : "bg-[#0B120E] border-[#2A3F33] text-[#6E8075] hover:border-[#10B981] hover:text-[#10B981] hover:bg-[#0E1E18]"
+                                          ? "bg-[#34C759] text-white border-[#34C759] shadow-xs scale-102"
+                                          : "bg-white border-[#E5E5EA] text-[#86868B] hover:border-[#34C759] hover:text-[#34C759]"
                                       }`}
                                     >
                                       {is3rd ? (
                                         <>
-                                          <Check className="w-4 h-4 stroke-[3]" />
+                                          <Check className="w-3.5 h-3.5 stroke-[3]" />
                                           <span>3rd</span>
                                         </>
                                       ) : (
-                                        <span className="text-[11px] text-[#55695D]">3rd</span>
+                                        <span className="text-[11px] text-[#86868B]">3rd</span>
                                       )}
                                     </button>
                                   </td>
@@ -2338,33 +2337,33 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                 );
 
                 return (
-                  <div className="p-4 space-y-3.5">
+                  <div className="p-4 space-y-4">
                     {/* Active Race Header Strip */}
-                    <div className="rounded-xl border border-[#23352C] bg-[#0E1813] p-4 space-y-3">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1F2D26] pb-3">
+                    <div className="apple-card p-5 space-y-4">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#E5E5EA] pb-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-base font-bold text-[#F3F4F0]">
+                            <span className="text-base font-bold text-[#1D1D1F] tracking-tight">
                               Race {activeRace.raceNumber}: {activeRace.raceName}
                             </span>
                             {featureRaceNo === activeRace.raceNumber && (
-                              <span className="px-2 py-0.5 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-mono font-bold uppercase">
-                                ★ FEATURE RACE
+                              <span className="px-2.5 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] text-[10px] font-mono font-bold uppercase">
+                                ★ Feature Race
                               </span>
                             )}
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
                                 activeEvaluated.isRaceResulted
-                                  ? "bg-[#152920] text-[#10B981] border border-[#10B981]/40"
-                                  : "bg-[#192620] text-[#D4AF37] border border-[#D4AF37]/40"
+                                  ? "bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/30"
+                                  : "bg-[#F2F2F7] text-[#86868B] border border-[#E5E5EA]"
                               }`}
                             >
                               {activeEvaluated.isRaceResulted
-                                ? "OFFICIAL FINAL"
-                                : "UPCOMING"}
+                                ? "Official Final"
+                                : "Upcoming"}
                             </span>
                           </div>
-                          <p className="text-xs text-[#8A9990] font-mono mt-1">
+                          <p className="text-xs text-[#86868B] mt-1">
                             Jumps {activeRace.startTime} · {activeRace.distance}m · Track:{" "}
                             {meetingCard.trackCondition || "Good 4"} · Rail:{" "}
                             {meetingCard.railPosition || "True"}
@@ -2382,10 +2381,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 isJokerOnActiveRace ? null : activeRace.raceNumber
                               )
                             }
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                               isJokerOnActiveRace
-                                ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.3)]"
-                                : "bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15"
+                                ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                                : "bg-white text-[#1D1D1F] border-[#E5E5EA] hover:border-[#FF9500] hover:text-[#FF9500]"
                             }`}
                           >
                             {isJokerOnActiveRace
@@ -2394,7 +2393,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           </button>
 
                           {/* Smart Strategy Auto-Pick Bar */}
-                          <div className="flex items-center gap-1 bg-[#0B110E] p-1 rounded-lg border border-[#1F2D26]">
+                          <div className="flex items-center gap-1 bg-[#F2F2F7] p-1 rounded-full border border-[#E5E5EA]">
                             <button
                               type="button"
                               onClick={() =>
@@ -2405,7 +2404,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "market-consensus"
                                 )
                               }
-                              className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#D4AF37] hover:bg-[#192620] transition cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#1D1D1F] hover:bg-white transition-all cursor-pointer"
                               title="Pick top 3 favourites in market order"
                             >
                               Consensus
@@ -2420,7 +2419,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "value-hunter"
                                 )
                               }
-                              className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#10B981] hover:bg-[#192620] transition cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer"
                               title="Pick $3.50-$12 value contenders"
                             >
                               Value
@@ -2435,7 +2434,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "front-runner"
                                 )
                               }
-                              className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#38BDF8] hover:bg-[#192620] transition cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer"
                               title="Pick low barrier speed map leaders"
                             >
                               Speed
@@ -2450,10 +2449,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "balanced"
                                 )
                               }
-                              className="px-2.5 py-1 rounded text-[11px] font-mono font-bold text-[#10B981] bg-[#152920] hover:bg-[#1c362a] transition cursor-pointer inline-flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#0071E3] bg-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
                               title="Randomly pick 1 top-3 favourite + 2 other runners"
                             >
-                              <Sparkles className="w-3 h-3" />
+                              <Sparkles className="w-3 h-3 text-[#0071E3]" />
                               <span>Auto</span>
                             </button>
                           </div>
@@ -2463,10 +2462,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             onClick={() =>
                               toggleHarvilleModel(meetingCard.id, activeRace.raceNumber)
                             }
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                               isHarvilleExpanded
-                                ? "bg-[#152920] border-[#10B981] text-[#10B981]"
-                                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                                ? "bg-[#EBF5FF] border-[#0071E3] text-[#0071E3]"
+                                : "bg-white border-[#E5E5EA] text-[#86868B] hover:text-[#1D1D1F]"
                             }`}
                           >
                             <BarChart3 className="w-3.5 h-3.5" />
@@ -2485,7 +2484,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   activeRace.raceNumber
                                 )
                               }
-                              className="px-2 py-1 rounded text-[11px] font-mono text-[#8A9990] hover:text-[#EF4444] transition cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#FF3B30] transition-colors cursor-pointer"
                             >
                               Clear
                             </button>
@@ -2495,21 +2494,21 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
 
                       {/* Official Placegetters (if resulted) */}
                       {activeEvaluated.isRaceResulted && (
-                        <div className="p-3 rounded-lg bg-[#0B110E] border border-[#10B981]/40 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                        <div className="p-3.5 rounded-2xl bg-[#EAFBF0] border border-[#34C759]/30 flex flex-wrap items-center justify-between gap-3 text-xs">
                           <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-[#10B981] font-bold">Official Placings:</span>
+                            <span className="text-[#34C759] font-bold">Official Placings:</span>
                             {activeRace.runners
                               .filter((r) => r.finishPosition >= 1 && r.finishPosition <= 3)
                               .sort((a, b) => a.finishPosition - b.finishPosition)
                               .map((r) => (
-                                <span key={r.tabNumber} className="text-[#F3F4F0]">
+                                <span key={r.tabNumber} className="text-[#1D1D1F]">
                                   <strong
                                     className={
                                       r.finishPosition === 1
-                                        ? "text-[#D4AF37]"
+                                        ? "text-[#FF9500]"
                                         : r.finishPosition === 2
-                                        ? "text-slate-200"
-                                        : "text-[#10B981]"
+                                        ? "text-[#86868B]"
+                                        : "text-[#34C759]"
                                     }
                                   >
                                     {r.finishPosition === 1
@@ -2526,8 +2525,8 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               ))}
                           </div>
                           <div className="text-right">
-                            <span className="text-[#8A9990]">Punter Return: </span>
-                            <strong className="text-[#10B981] text-sm">
+                            <span className="text-[#86868B]">Punter Return: </span>
+                            <strong className="text-[#34C759] text-sm">
                               {scoringMode === "dollars"
                                 ? formatDollarReturn(activeEvaluated.raceDollarReturn)
                                 : `${activeEvaluated.racePointsTally} pts`}
@@ -2539,27 +2538,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       {/* Syndicate Consensus & Clash Banner */}
                       {consensusInfo && (
                         <div
-                          className={`px-3.5 py-2.5 rounded-lg border text-xs font-mono flex items-center justify-between gap-2.5 ${
+                          className={`px-3.5 py-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2.5 ${
                             consensusInfo.type === "consensus"
-                              ? "bg-[#262010] border-[#D4AF37] text-[#D4AF37]"
+                              ? "bg-[#FFF9F2] border-[#FF9500]/30 text-[#FF9500]"
                               : consensusInfo.type === "clash"
-                              ? "bg-[#1E1925] border-purple-500/50 text-purple-200"
-                              : "bg-[#121A16] border-[#1F2D26] text-[#8A9990]"
+                              ? "bg-[#FBF5FF] border-[#AF52DE]/30 text-[#AF52DE]"
+                              : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B]"
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             {consensusInfo.type === "consensus" ? (
-                              <Flame className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                              <Flame className="w-4 h-4 text-[#FF9500] shrink-0" />
                             ) : consensusInfo.type === "clash" ? (
-                              <Swords className="w-4 h-4 text-purple-400 shrink-0" />
+                              <Swords className="w-4 h-4 text-[#AF52DE] shrink-0" />
                             ) : (
-                              <Sparkles className="w-4 h-4 text-[#8A9990] shrink-0" />
+                              <Sparkles className="w-4 h-4 text-[#86868B] shrink-0" />
                             )}
                             <div>
-                              <span className="font-bold text-[#F3F4F0] mr-2">
+                              <span className="font-bold text-[#1D1D1F] mr-2">
                                 {consensusInfo.headline}:
                               </span>
-                              <span>{consensusInfo.text}</span>
+                              <span className="text-[#86868B]">{consensusInfo.text}</span>
                             </div>
                           </div>
                         </div>
@@ -2567,9 +2566,9 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
 
                       {/* Deep Analysis Drawer (Harville Win Probabilities) */}
                       {isHarvilleExpanded && (
-                        <div className="p-3 bg-[#0B110E] rounded-lg border border-[#1F2D26] space-y-3">
-                          <div className="flex items-center justify-between text-xs font-mono">
-                            <span className="text-[#10B981] font-bold">
+                        <div className="p-4 bg-[#FAF9FA] rounded-2xl border border-[#E5E5EA] space-y-3">
+                          <div className="flex items-center justify-between text-xs font-medium">
+                            <span className="text-[#0071E3] font-semibold">
                               Runner Win Likelihood Analytics
                             </span>
                             <button
@@ -2577,7 +2576,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               onClick={() =>
                                 toggleHarvilleModel(meetingCard.id, activeRace.raceNumber)
                               }
-                              className="text-[#8A9990] hover:text-[#F3F4F0] text-[11px] cursor-pointer"
+                              className="text-[#86868B] hover:text-[#1D1D1F] text-[11px] cursor-pointer"
                             >
                               Close Analytics ✕
                             </button>
@@ -2587,7 +2586,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       )}
 
                       {/* High-Density Quick-Pick Runner Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         {activeRace.runners.map((runner) => {
                           const is1st = activeTrio?.firstPref === runner.tabNumber;
                           const is2nd = activeTrio?.secondPref === runner.tabNumber;
@@ -2642,37 +2641,47 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           return (
                             <div
                               key={runner.tabNumber}
-                              className={`p-3 rounded-lg border transition-all ${
+                              className={`p-3.5 rounded-2xl border transition-all ${
                                 is1st
-                                  ? "bg-[#1E190E] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)]"
+                                  ? "bg-[#FFF9F2] border-[#FF9500] shadow-sm"
                                   : is2nd
-                                  ? "bg-[#161B19] border-slate-300/60"
+                                  ? "bg-[#F2F7FF] border-[#0071E3] shadow-sm"
                                   : is3rd
-                                  ? "bg-[#121E18] border-[#10B981]/60"
+                                  ? "bg-[#F2FBF5] border-[#34C759] shadow-sm"
                                   : runner.isScratched
-                                  ? "bg-[#0B110E]/60 border-[#1F2D26]/60 opacity-50"
-                                  : "bg-[#0B110E] border-[#1F2D26] hover:border-[#2F4538]"
+                                  ? "bg-[#FAF9FA] border-[#E5E5EA] opacity-40"
+                                  : "bg-white border-[#E5E5EA] hover:border-[#0071E3]/40 shadow-xs"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="w-6 h-6 rounded-md bg-[#121A16] border border-[#1F2D26] font-mono font-bold text-xs flex items-center justify-center text-[#F3F4F0]">
+                                    <span
+                                      className={`w-6 h-6 rounded-full font-mono font-bold text-xs flex items-center justify-center ${
+                                        is1st
+                                          ? "bg-[#FF9500] text-white"
+                                          : is2nd
+                                          ? "bg-[#0071E3] text-white"
+                                          : is3rd
+                                          ? "bg-[#34C759] text-white"
+                                          : "bg-[#F2F2F7] text-[#1D1D1F] border border-[#E5E5EA]"
+                                      }`}
+                                    >
                                       {runner.tabNumber}
                                     </span>
-                                    <span className="font-bold text-sm text-[#F3F4F0]">
+                                    <span className="font-semibold text-sm text-[#1D1D1F]">
                                       {runner.horseName}
                                     </span>
-                                    <span className="text-[11px] font-mono text-[#8A9990]">
+                                    <span className="text-[11px] font-mono text-[#86868B]">
                                       (B{runner.barrier})
                                     </span>
                                     {runner.form && (
-                                      <span className="text-[11px] font-mono text-[#10B981] font-semibold">
+                                      <span className="text-[11px] font-mono text-[#34C759] font-medium">
                                         {runner.form}
                                       </span>
                                     )}
                                     {mapShort && (
-                                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#121A16] text-[#8A9990]">
+                                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F2F2F7] text-[#86868B]">
                                         {mapShort}
                                       </span>
                                     )}
@@ -2683,7 +2692,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                       size="xs"
                                     />
                                   </div>
-                                  <div className="text-[11px] text-[#8A9990] font-mono">
+                                  <div className="text-[11px] text-[#86868B] font-mono">
                                     J: {runner.jockey} · {runner.weight}kg · T:{" "}
                                     {runner.trainer || "Stable"}
                                   </div>
@@ -2691,10 +2700,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
 
                                 {/* Odds & Flucs */}
                                 <div className="text-right font-mono shrink-0">
-                                  <div className="text-sm font-bold text-[#F3F4F0] tabular-nums">
+                                  <div className="text-sm font-bold text-[#1D1D1F] tabular-nums">
                                     ${(Number(runner.nswTabWin) || 0).toFixed(2)}
                                   </div>
-                                  <div className="text-[10px] text-[#8A9990] tabular-nums">
+                                  <div className="text-[10px] text-[#86868B] tabular-nums">
                                     Plc $
                                     {(Number(runner.nswTabPlace) || 0).toFixed(2)}
                                   </div>
@@ -2705,27 +2714,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                       }
                                       currentOdds={runner.nswTabWin}
                                       marketSupport={runner.marketSupport}
-                                      heatGlow={true}
+                                      heatGlow={false}
                                     />
                                   </div>
                                 </div>
                               </div>
 
                               {/* Preference Selectors */}
-                              <div className="mt-3 pt-2 border-t border-[#1F2D26] flex items-center justify-between gap-2 flex-wrap">
+                              <div className="mt-3 pt-2.5 border-t border-[#E5E5EA] flex items-center justify-between gap-2 flex-wrap">
                                 <div className="flex items-center gap-1.5 text-[10px] font-mono">
                                   {isStevePick && (
-                                    <span className="px-1.5 py-0.5 rounded bg-[#262010] border border-[#D4AF37]/50 text-[#D4AF37] font-semibold">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] font-semibold">
                                       Steve F ({isStevePick})
                                     </span>
                                   )}
                                   {isMarkPick && (
-                                    <span className="px-1.5 py-0.5 rounded bg-[#1A2520] border border-[#10B981]/50 text-[#10B981] font-semibold">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#EAFBF0] border border-[#34C759]/40 text-[#34C759] font-semibold">
                                       Mark S ({isMarkPick})
                                     </span>
                                   )}
                                   {runner.isScratched && (
-                                    <span className="text-[#EF4444] font-bold">
+                                    <span className="text-[#FF3B30] font-bold">
                                       SCRATCHED (Late SCR → Fav Auto-Sub)
                                     </span>
                                   )}
@@ -2744,10 +2753,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
                                         is1st
-                                          ? "bg-[#D4AF37] text-[#0B110E] shadow-[0_0_8px_rgba(212,175,55,0.4)] font-black"
-                                          : "bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:border-[#D4AF37] hover:text-[#D4AF37]"
+                                          ? "bg-[#FF9500] text-white shadow-xs"
+                                          : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#FF9500] hover:text-[#FF9500]"
                                       }`}
                                       title="Nominate as 1st Preference (3 pts)"
                                     >
@@ -2764,10 +2773,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
                                         is2nd
-                                          ? "bg-slate-200 text-[#0B110E] shadow-[0_0_8px_rgba(255,255,255,0.3)] font-black"
-                                          : "bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:border-slate-300 hover:text-[#F3F4F0]"
+                                          ? "bg-[#0071E3] text-white shadow-xs"
+                                          : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#0071E3] hover:text-[#0071E3]"
                                       }`}
                                       title="Nominate as 2nd Preference (2 pts)"
                                     >
@@ -2784,10 +2793,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-2.5 py-1 rounded text-xs font-mono font-bold transition cursor-pointer ${
+                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
                                         is3rd
-                                          ? "bg-[#10B981] text-[#0B110E] shadow-[0_0_8px_rgba(16,185,129,0.4)] font-black"
-                                          : "bg-[#0B110E] border border-[#1F2D26] text-[#8A9990] hover:border-[#10B981] hover:text-[#10B981]"
+                                          ? "bg-[#34C759] text-white shadow-xs"
+                                          : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#34C759] hover:text-[#34C759]"
                                       }`}
                                       title="Nominate as 3rd Preference (1 pt)"
                                     >
@@ -2802,7 +2811,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       </div>
 
                       {/* Stepper Bottom Navigation */}
-                      <div className="pt-2 flex items-center justify-between gap-3 border-t border-[#1F2D26]">
+                      <div className="pt-3 flex items-center justify-between gap-3 border-t border-[#E5E5EA]">
                         <button
                           type="button"
                           disabled={activeRace.raceNumber <= 1}
@@ -2812,18 +2821,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               [meetingCard.id]: activeRace.raceNumber - 1,
                             }))
                           }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1F2D26] bg-[#0B110E] text-xs font-mono font-semibold text-[#8A9990] hover:text-[#F3F4F0] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E5E5EA] bg-white text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-xs transition-all"
                         >
                           <ChevronLeft className="w-4 h-4" />
                           <span>Previous Race</span>
                         </button>
 
-                        <span className="text-xs font-mono text-[#8A9990]">
+                        <span className="text-xs font-medium text-[#86868B]">
                           Race {activeRace.raceNumber} of {meetingCard.races.length} ·{" "}
                           {activeEvaluated.isComplete ? (
-                            <strong className="text-[#10B981]">3/3 Picked</strong>
+                            <strong className="text-[#34C759]">3/3 Picked</strong>
                           ) : (
-                            <span className="text-[#D4AF37]">Incomplete</span>
+                            <span className="text-[#FF9500]">Incomplete</span>
                           )}
                         </span>
 
@@ -2838,10 +2847,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               [meetingCard.id]: activeRace.raceNumber + 1,
                             }))
                           }
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
                             activeEvaluated.isComplete
-                              ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37] font-bold shadow-sm"
-                              : "border-[#1F2D26] bg-[#0B110E] text-[#8A9990] hover:text-[#F3F4F0]"
+                              ? "bg-[#0071E3] text-white border-[#0071E3] shadow-xs"
+                              : "border-[#E5E5EA] bg-white text-[#86868B] hover:text-[#1D1D1F] shadow-xs"
                           }`}
                         >
                           <span>Next Race</span>
@@ -2858,30 +2867,30 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                 <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#1F2D26] bg-[#0B110E] text-[12px] text-[#8A9990] font-medium">
-                    <th className="py-2.5 px-3 whitespace-nowrap">
+                  <tr className="border-b border-[#E5E5EA] bg-[#FAF9FA] text-[12px] text-[#86868B] font-semibold">
+                    <th className="py-3 px-3 whitespace-nowrap">
                       Race · Time
                     </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
+                    <th className="py-3 px-3 whitespace-nowrap">
                       Race Status / Official 1st–2nd–3rd
                     </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
+                    <th className="py-3 px-3 whitespace-nowrap">
                       1st Preference (1u Win + 1u Place)
                     </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
+                    <th className="py-3 px-3 whitespace-nowrap">
                       2nd Preference (1u Win + 1u Place)
                     </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
+                    <th className="py-3 px-3 whitespace-nowrap">
                       3rd Preference (1u Win + 1u Place)
                     </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
+                    <th className="py-3 px-3 text-right whitespace-nowrap">
                       {scoringMode === "dollars"
                         ? "Completed Race $ Return"
                         : "Completed Race Points"}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1F2D26] text-xs">
+                <tbody className="divide-y divide-[#E5E5EA] text-xs">
                   {meetingCard.races.map((race) => {
                     const rawTrio = cardSelections[race.raceNumber];
                     const { effectiveTrio: trio, autoSubReplacements } =
@@ -2914,40 +2923,40 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         id={`selection-${meetingCard.id}-race-${race.raceNumber}`}
                         className={`transition-colors align-top ${
                           isJokerRace
-                            ? "bg-[#1E1A0F]/90 hover:bg-[#262113]"
-                            : "hover:bg-[#16201B]"
+                            ? "bg-[#FFF9F2] hover:bg-[#FFF4E6]"
+                            : "hover:bg-[#FAF9FA]"
                         }`}
                       >
                         {/* Race Info + Joker Toggle */}
                         <td className="py-3 px-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-semibold text-[#F3F4F0] text-sm">
+                            <span className="font-semibold text-[#1D1D1F] text-sm">
                               R{race.raceNumber}
                             </span>
-                            <span className="font-mono text-xs text-[#8A9990]">
+                            <span className="font-mono text-xs text-[#86868B]">
                               {race.startTime} · {race.distance}m
                             </span>
                             <span
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
                                 evaluated.isRaceResulted
-                                  ? "bg-[#152920] text-[#10B981]"
-                                  : "bg-[#192620] text-[#D4AF37]"
+                                  ? "bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/30"
+                                  : "bg-[#F2F2F7] text-[#86868B] border border-[#E5E5EA]"
                               }`}
                             >
                               {evaluated.isRaceResulted ? "FINAL" : "UPCOMING"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <div className="text-[#F3F4F0] font-medium mt-0.5 max-w-[190px] truncate">
+                            <div className="text-[#1D1D1F] font-semibold mt-0.5 max-w-[190px] truncate">
                               {race.raceName}
                             </div>
                             {featureRaceNo === race.raceNumber && (
-                              <span className="px-1.5 py-0.5 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] text-[9px] font-mono font-bold uppercase shrink-0">
+                              <span className="px-2 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] text-[9px] font-mono font-bold uppercase shrink-0">
                                 ★ FEATURE
                               </span>
                             )}
                           </div>
-                          <div className="mt-1.5 flex items-center gap-2">
+                          <div className="mt-2 flex items-center gap-2 flex-wrap">
                             <button
                               type="button"
                               onClick={() =>
@@ -2957,10 +2966,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   isJokerRace ? null : race.raceNumber
                                 )
                               }
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all cursor-pointer ${
                                 isJokerRace
-                                  ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37]"
-                                  : "bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/15"
+                                  ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                                  : "bg-white text-[#1D1D1F] border-[#E5E5EA] hover:border-[#FF9500] hover:text-[#FF9500]"
                               }`}
                               title="Nominate this race as your Joker Round (Double points for all successful selections: 1st, 2nd, or 3rd)"
                             >
@@ -2976,18 +2985,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   meetingCard.id
                                 )
                               }
-                              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#152920] border border-[#10B981]/50 text-[#10B981] hover:bg-[#1C3327] transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white border border-[#E5E5EA] text-[#0071E3] hover:border-[#0071E3] transition-all cursor-pointer shadow-xs"
                               title="Auto-pick this race: randomly select at least 1 of top 3 favourites + 2 other runners"
                             >
                               🎲 Auto Pick
                             </button>
                             <span className="text-[11px] font-mono">
                               {evaluated.isComplete ? (
-                                <span className="text-[#10B981]">3/3</span>
+                                <span className="text-[#34C759] font-semibold">3/3</span>
                               ) : evaluated.hasAnySelection ? (
-                                <span className="text-[#D4AF37]">Partial</span>
+                                <span className="text-[#FF9500] font-semibold">Partial</span>
                               ) : (
-                                <span className="text-[#8A9990]">Pick 3</span>
+                                <span className="text-[#86868B]">Pick 3</span>
                               )}
                             </span>
                             <button
@@ -2998,10 +3007,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   race.raceNumber
                                 )
                               }
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-medium border transition-all cursor-pointer ${
                                 isMapExpanded
-                                  ? "bg-[#152920] text-[#10B981] border-[#10B981]/60 font-semibold"
-                                  : "bg-[#0B110E] text-[#8A9990] border-[#1F2D26] hover:text-[#F3F4F0]"
+                                  ? "bg-[#EBF5FF] text-[#0071E3] border-[#0071E3] font-semibold"
+                                  : "bg-white text-[#86868B] border-[#E5E5EA] hover:text-[#1D1D1F]"
                               }`}
                               title="Toggle Speed Map (Leader/On-Pace/Midfield/Back) and Market Flucs for this race"
                             >
@@ -3011,7 +3020,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             </button>
                           </div>
                           {autoSubReplacements.length > 0 && (
-                            <div className="mt-1 text-[10px] font-mono text-[#10B981]">
+                            <div className="mt-1 text-[10px] font-mono text-[#34C759]">
                               {autoSubReplacements.map((sub) => (
                                 <div key={sub.preferenceRank}>
                                   Auto-Sub #{sub.scratchedTab} SCR → #
@@ -3026,11 +3035,11 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         <td className="py-3 px-3 font-mono text-[11px] tabular-nums whitespace-nowrap">
                           {!evaluated.isRaceResulted ? (
                             <div className="space-y-1 py-0.5">
-                              <div className="inline-flex items-center gap-1.5 text-[#D4AF37] font-semibold">
+                              <div className="inline-flex items-center gap-1.5 text-[#FF9500] font-semibold">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span>Race Not Complete ({race.startTime})</span>
                               </div>
-                              <div className="text-[#8A9990] text-[10px]">
+                              <div className="text-[#86868B] text-[10px]">
                                 {race.bettingForecast
                                   ? `Favs: ${race.bettingForecast}`
                                   : "Results appear upon official All-Clear"}
@@ -3038,7 +3047,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             </div>
                           ) : (
                             <>
-                              <div className="text-[#D4AF37] font-semibold">
+                              <div className="text-[#FF9500] font-semibold">
                                 1st:{" "}
                                 {firstPlace
                                   ? `#${firstPlace.tabNumber} ${firstPlace.horseName} (W $${(
@@ -3048,7 +3057,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     ).toFixed(2)})`
                                   : "Official Pending"}
                               </div>
-                              <div className="text-[#F3F4F0] mt-0.5">
+                              <div className="text-[#86868B] mt-0.5">
                                 2nd:{" "}
                                 {secondPlace
                                   ? `#${secondPlace.tabNumber} ${secondPlace.horseName} (P $${(
@@ -3056,7 +3065,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     ).toFixed(2)})`
                                   : "Official Pending"}
                               </div>
-                              <div className="text-[#10B981] mt-0.5">
+                              <div className="text-[#34C759] mt-0.5">
                                 3rd:{" "}
                                 {thirdPlace
                                   ? `#${thirdPlace.tabNumber} ${thirdPlace.horseName} (P $${(
@@ -3097,7 +3106,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     val
                                   );
                                 }}
-                                className="w-full bg-[#0B110E] border border-[#1F2D26] rounded px-2.5 py-2 text-xs text-[#F3F4F0] font-mono focus:outline-none focus:border-[#D4AF37]"
+                                className="w-full bg-white border border-[#E5E5EA] rounded-xl px-3 py-2 text-xs text-[#1D1D1F] font-medium focus:outline-none focus:border-[#0071E3] shadow-xs"
                               >
                                 <option value="">
                                   -- Select {rankLabel} --
@@ -3140,12 +3149,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               {pick.runner && (
                                 <div className="mt-1.5 space-y-0.5 text-[11px] font-mono tabular-nums px-1">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-[#8A9990]">
+                                    <span className="text-[#86868B]">
                                       J: {pick.runner.jockey} (B
                                       {pick.runner.barrier})
                                     </span>
                                     {!evaluated.isRaceResulted ? (
-                                      <span className="text-[#D4AF37]">
+                                      <span className="text-[#FF9500]">
                                         Locked · W $
                                         {(
                                           Number(pick.runner.nswTabWin) || 0
@@ -3153,7 +3162,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                       </span>
                                     ) : scoringMode === "dollars" ? (
                                       pick.dollarReturn > 0 ? (
-                                        <span className="font-semibold text-[#10B981]">
+                                        <span className="font-semibold text-[#34C759]">
                                           {pick.finishPosition === 1
                                             ? `1st (W+P) · ${formatDollarReturn(
                                                 pick.dollarReturn
@@ -3167,12 +3176,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                               )}`}
                                         </span>
                                       ) : (
-                                        <span className="text-[#8A9990]">
+                                        <span className="text-[#86868B]">
                                           Unp · $0
                                         </span>
                                       )
                                     ) : pick.finishPosition === 1 ? (
-                                      <span className="font-semibold text-[#D4AF37]">
+                                      <span className="font-semibold text-[#FF9500]">
                                         Finished 1st · +{pick.points} pts
                                         {evaluated.jokerTriggered &&
                                         pick.preferenceRank === 1
@@ -3180,16 +3189,16 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           : ""}
                                       </span>
                                     ) : pick.finishPosition === 2 ? (
-                                      <span className="font-semibold text-[#F3F4F0]">
+                                      <span className="font-semibold text-[#86868B]">
                                         Finished 2nd · +{pick.points} pts
                                       </span>
                                     ) : pick.finishPosition === 3 ? (
-                                      <span className="font-semibold text-[#10B981]">
+                                      <span className="font-semibold text-[#34C759]">
                                         Finished 3rd · +{pick.points} pt
                                         {pick.points > 1 ? "s" : ""}
                                       </span>
                                     ) : (
-                                      <span className="text-[#8A9990]">
+                                      <span className="text-[#86868B]">
                                         Unplaced · 0 pts
                                       </span>
                                     )}
@@ -3198,7 +3207,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     pick.runner.tabNumber
                                   ] && (
                                     <div className="flex items-center justify-between text-[10px]">
-                                      <span className="text-[#9BA8A1]">
+                                      <span className="text-[#86868B]">
                                         Map:{" "}
                                         {
                                           speedAndFlucs.byTabNumber[
@@ -3211,12 +3220,12 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           speedAndFlucs.byTabNumber[
                                             pick.runner.tabNumber
                                           ].marketSupport === "Firming"
-                                            ? "text-[#10B981] font-semibold"
+                                            ? "text-[#34C759] font-semibold"
                                             : speedAndFlucs.byTabNumber[
                                                 pick.runner.tabNumber
                                               ].marketSupport === "Drifting"
-                                            ? "text-[#D4AF37]"
-                                            : "text-[#8A9990]"
+                                            ? "text-[#FF9500]"
+                                            : "text-[#86868B]"
                                         }
                                       >
                                         {
@@ -3236,22 +3245,22 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         {/* Race Points or $ Return Tally (Only scored when race is complete!) */}
                         <td className="py-3 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                           {!evaluated.hasAnySelection ? (
-                            <div className="text-xs text-[#8A9990]">
+                            <div className="text-xs text-[#86868B]">
                               — No selection
                               {isJokerRace && (
-                                <div className="text-[10px] text-[#D4AF37] font-bold mt-0.5">
+                                <div className="text-[10px] text-[#FF9500] font-bold mt-0.5">
                                   🃏 Joker Active (2×)
                                 </div>
                               )}
                             </div>
                           ) : !evaluated.isRaceResulted ? (
                             <div>
-                              <div className="text-xs font-semibold text-[#D4AF37]">
+                              <div className="text-xs font-semibold text-[#FF9500]">
                                 {isJokerRace
                                   ? "🃏 Joker 2× Pending"
                                   : "Awaiting Result"}
                               </div>
-                              <div className="text-[11px] text-[#8A9990]">
+                              <div className="text-[11px] text-[#86868B]">
                                 Jumps {race.startTime}
                               </div>
                             </div>
@@ -3260,13 +3269,13 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               <div
                                 className={`text-base font-bold ${
                                   evaluated.raceDollarReturn > 0
-                                    ? "text-[#10B981]"
-                                    : "text-[#8A9990]"
+                                    ? "text-[#34C759]"
+                                    : "text-[#86868B]"
                                 }`}
                               >
                                 {formatDollarReturn(evaluated.raceDollarReturn)}
                               </div>
-                              <div className="text-[11px] text-[#8A9990]">
+                              <div className="text-[11px] text-[#86868B]">
                                 {evaluated.picks
                                   .map((p) =>
                                     p.tabNumber !== null
@@ -3281,22 +3290,22 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               <div
                                 className={`text-base font-bold ${
                                   evaluated.jokerTriggered
-                                    ? "text-[#D4AF37]"
+                                    ? "text-[#FF9500]"
                                     : evaluated.racePointsTally >= 4
-                                    ? "text-[#D4AF37]"
+                                    ? "text-[#FF9500]"
                                     : evaluated.racePointsTally > 0
-                                    ? "text-[#10B981]"
-                                    : "text-[#8A9990]"
+                                    ? "text-[#34C759]"
+                                    : "text-[#86868B]"
                                 }`}
                               >
                                 {evaluated.racePointsTally} pts
                                 {evaluated.jokerTriggered && (
-                                  <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-[#D4AF37] text-[#0B110E] font-bold">
+                                  <span className="ml-1 text-[10px] px-2 py-0.5 rounded-full bg-[#FFF5E6] text-[#FF9500] font-bold border border-[#FF9500]/40">
                                     🃏 2× HIT
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-[#8A9990]">
+                              <div className="text-[11px] text-[#86868B]">
                                 {evaluated.picks
                                   .map((p) =>
                                     p.tabNumber !== null ? `${p.points}` : "—"
@@ -3304,7 +3313,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   .join(" + ")}{" "}
                                 pts
                                 {isJokerRace && !evaluated.jokerTriggered && (
-                                  <span className="block text-[10px] text-[#8A9990]">
+                                  <span className="block text-[10px] text-[#86868B]">
                                     (Joker: No selections placed in top 3)
                                   </span>
                                 )}
@@ -3314,26 +3323,26 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         </td>
                       </tr>
                       {isMapExpanded && (
-                        <tr className="bg-[#0B110E] border-b border-[#1F2D26]">
+                        <tr className="bg-[#FAF9FA] border-b border-[#E5E5EA]">
                           <td colSpan={6} className="px-4 py-3">
                             <div className="space-y-2.5">
                               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[#D4AF37] font-bold">
+                                  <span className="text-[#1D1D1F] font-bold">
                                     R{race.raceNumber} Speed Map &amp; Market
                                     Flucs ({race.distance}m)
                                   </span>
-                                  <span className="text-[#8A9990]">·</span>
-                                  <span className="text-[#10B981] font-semibold">
+                                  <span className="text-[#86868B]">·</span>
+                                  <span className="text-[#34C759] font-semibold">
                                     {speedAndFlucs.tempoLabel}
                                   </span>
-                                  <span className="text-[#8A9990] font-sans">
+                                  <span className="text-[#86868B] font-sans">
                                     — {speedAndFlucs.tempoAdvisory}
                                   </span>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3 text-[11px]">
                                   {speedAndFlucs.topFirmer && (
-                                    <span className="text-[#10B981]">
+                                    <span className="text-[#34C759]">
                                       ★ Top Firmer: #
                                       {speedAndFlucs.topFirmer.tabNumber}{" "}
                                       {speedAndFlucs.topFirmer.horseName} (
@@ -3341,7 +3350,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                     </span>
                                   )}
                                   {speedAndFlucs.biggestDrifter && (
-                                    <span className="text-[#D4AF37]">
+                                    <span className="text-[#FF9500]">
                                       ▾ Market Drifter: #
                                       {speedAndFlucs.biggestDrifter.tabNumber}{" "}
                                       {speedAndFlucs.biggestDrifter.horseName} (
@@ -3351,7 +3360,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 </div>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 {(
                                   [
                                     "Leader",
@@ -3364,23 +3373,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   return (
                                     <div
                                       key={lane}
-                                      className="p-2.5 rounded bg-[#121A16] border border-[#1F2D26] space-y-1.5"
+                                      className="p-3 rounded-2xl bg-white border border-[#E5E5EA] space-y-2 shadow-xs"
                                     >
                                       <div className="flex items-center justify-between text-[11px] font-mono">
-                                        <span className="font-bold text-[#F3F4F0]">
+                                        <span className="font-bold text-[#1D1D1F]">
                                           {lane}
                                         </span>
-                                        <span className="text-[#8A9990]">
+                                        <span className="text-[#86868B]">
                                           {laneRunners.length} runner
                                           {laneRunners.length === 1 ? "" : "s"}
                                         </span>
                                       </div>
                                       {laneRunners.length === 0 ? (
-                                        <div className="text-[11px] font-mono text-[#8A9990]">
+                                        <div className="text-[11px] font-mono text-[#86868B]">
                                           — No dedicated {lane.toLowerCase()}
                                         </div>
                                       ) : (
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                           {laneRunners.map((lr) => {
                                             const isPicked =
                                               trio?.firstPref ===
@@ -3391,14 +3400,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                             return (
                                               <div
                                                 key={lr.tabNumber}
-                                                className={`px-2 py-1 rounded text-[11px] font-mono flex items-center justify-between gap-1.5 border ${
+                                                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono flex items-center justify-between gap-1.5 border transition-all ${
                                                   isPicked
-                                                    ? "bg-[#152920] border-[#10B981]/50 text-[#F3F4F0]"
-                                                    : "bg-[#0B110E] border-[#1F2D26] text-[#D5DDD8]"
+                                                    ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#1D1D1F]"
+                                                    : "bg-[#FAF9FA] border-[#E5E5EA] text-[#1D1D1F]"
                                                 }`}
                                               >
                                                 <span className="truncate">
-                                                  <strong className="text-[#D4AF37]">
+                                                  <strong className="text-[#FF9500]">
                                                     #{lr.tabNumber}
                                                   </strong>{" "}
                                                   {lr.horseName} (B{lr.barrier})
@@ -3407,11 +3416,11 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                                   className={`shrink-0 tabular-nums ${
                                                     lr.marketSupport ===
                                                     "Firming"
-                                                      ? "text-[#10B981] font-semibold"
+                                                      ? "text-[#34C759] font-semibold"
                                                       : lr.marketSupport ===
                                                         "Drifting"
-                                                      ? "text-[#D4AF37]"
-                                                      : "text-[#8A9990]"
+                                                      ? "text-[#FF9500]"
+                                                      : "text-[#86868B]"
                                                   }`}
                                                 >
                                                   ${lr.openingOdds.toFixed(2)}→$
@@ -3438,7 +3447,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
             </div>
 
             {/* Mobile Touch View (< 768px) */}
-            <div className="md:hidden divide-y divide-[#1F2D26]">
+            <div className="md:hidden divide-y divide-[#E5E5EA]">
               {meetingCard.races.map((race) => {
                 const trio = cardSelections[race.raceNumber];
                 const isJokerRace = activeJokerRaceNo === race.raceNumber;
@@ -3453,23 +3462,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   <div
                     key={race.raceNumber}
                     className={`p-4 space-y-3 ${
-                      isJokerRace ? "bg-[#1E1A0F]/80" : ""
+                      isJokerRace ? "bg-[#FFF9F2]" : "bg-white"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <span className="font-mono text-sm font-semibold text-[#F3F4F0]">
+                        <span className="text-sm font-semibold text-[#1D1D1F]">
                           Race {race.raceNumber}: {race.raceName}
                         </span>
-                        <div className="text-xs text-[#8A9990] font-mono">
+                        <div className="text-xs text-[#86868B] mt-0.5">
                           {race.startTime} · {race.distance}m ·{" "}
                           {evaluated.isRaceResulted ? (
-                            <span className="text-[#10B981]">FINAL</span>
+                            <span className="text-[#34C759] font-semibold">FINAL</span>
                           ) : (
-                            <span className="text-[#D4AF37]">UPCOMING</span>
+                            <span className="text-[#FF9500] font-semibold">UPCOMING</span>
                           )}
                         </div>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <button
                             type="button"
                             onClick={() =>
@@ -3479,10 +3488,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 isJokerRace ? null : race.raceNumber
                               )
                             }
-                            className={`px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border cursor-pointer ${
+                            className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
                               isJokerRace
-                                ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37]"
-                                : "bg-[#0B110E] text-[#D4AF37] border-[#D4AF37]/40"
+                                ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                                : "bg-white text-[#1D1D1F] border-[#E5E5EA]"
                             }`}
                           >
                             {isJokerRace
@@ -3497,7 +3506,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 meetingCard.id
                               )
                             }
-                            className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#152920] border border-[#10B981]/50 text-[#10B981] hover:bg-[#1C3327] cursor-pointer"
+                            className="px-3 py-1 rounded-full text-[11px] font-semibold bg-white border border-[#E5E5EA] text-[#0071E3] hover:border-[#0071E3] cursor-pointer shadow-xs"
                             title="Auto Pick 1 Favourite + 2 Random Runners"
                           >
                             🎲 Auto Pick
@@ -3506,34 +3515,34 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       </div>
                       <div className="text-right font-mono tabular-nums">
                         {!evaluated.hasAnySelection ? (
-                          <div className="text-xs text-[#8A9990]">
+                          <div className="text-xs text-[#86868B]">
                             — No selection
                           </div>
                         ) : !evaluated.isRaceResulted ? (
                           <>
-                            <div className="text-xs font-semibold text-[#D4AF37]">
+                            <div className="text-xs font-semibold text-[#FF9500]">
                               {isJokerRace ? "🃏 2× Pending" : "Pending Result"}
                             </div>
-                            <div className="text-[11px] text-[#8A9990]">
+                            <div className="text-[11px] text-[#86868B]">
                               Jumps {race.startTime}
                             </div>
                           </>
                         ) : scoringMode === "dollars" ? (
                           <>
-                            <div className="text-sm font-bold text-[#10B981]">
+                            <div className="text-sm font-bold text-[#34C759]">
                               {formatDollarReturn(evaluated.raceDollarReturn)}
                             </div>
-                            <div className="text-[11px] text-[#8A9990]">
+                            <div className="text-[11px] text-[#86868B]">
                               Race $ Return
                             </div>
                           </>
                         ) : (
                           <>
-                            <div className="text-sm font-bold text-[#D4AF37]">
+                            <div className="text-sm font-bold text-[#FF9500]">
                               {evaluated.racePointsTally} pts
                               {evaluated.jokerTriggered ? " (2×!)" : ""}
                             </div>
-                            <div className="text-[11px] text-[#8A9990]">
+                            <div className="text-[11px] text-[#86868B]">
                               Race Tally
                             </div>
                           </>
@@ -3553,21 +3562,21 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         return (
                           <div key={pick.preferenceRank} className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#8A9990] font-medium">
+                              <span className="text-[#86868B] font-medium">
                                 {rankTitle}
                               </span>
                               {pick.runner && (
                                 <span
                                   className={`font-mono font-semibold ${
                                     !evaluated.isRaceResulted
-                                      ? "text-[#D4AF37]"
+                                      ? "text-[#FF9500]"
                                       : scoringMode === "dollars"
                                       ? pick.dollarReturn > 0
-                                        ? "text-[#10B981]"
-                                        : "text-[#8A9990]"
+                                        ? "text-[#34C759]"
+                                        : "text-[#86868B]"
                                       : pick.points > 0
-                                      ? "text-[#D4AF37]"
-                                      : "text-[#8A9990]"
+                                      ? "text-[#FF9500]"
+                                      : "text-[#86868B]"
                                   }`}
                                 >
                                   {!evaluated.isRaceResulted
@@ -3592,7 +3601,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   val
                                 );
                               }}
-                              className="min-h-[44px] w-full bg-[#0B110E] border border-[#1F2D26] rounded-md px-3 py-2 text-xs text-[#F3F4F0] font-mono"
+                              className="min-h-[44px] w-full bg-white border border-[#E5E5EA] rounded-xl px-3 py-2 text-xs text-[#1D1D1F] focus:outline-none focus:border-[#0071E3] shadow-xs"
                             >
                               <option value="">-- Choose Horse --</option>
                               {race.runners.map((rn) => (

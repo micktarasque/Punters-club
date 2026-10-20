@@ -26,7 +26,7 @@ export const RaceCardMultiSelectDropdown: React.FC<
   selectedMeetingIds,
   onChangeSelectedMeetingIds,
   punters = [],
-  labelPrefix = "Race Cards / Locations",
+  labelPrefix = "Race Cards",
   compact = false,
   align = "left",
 }) => {
@@ -144,29 +144,31 @@ export const RaceCardMultiSelectDropdown: React.FC<
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`inline-flex items-center justify-between gap-2.5 rounded-lg border transition-colors cursor-pointer ${
-          compact ? "min-h-[36px] px-3 py-1.5 text-xs" : "min-h-[40px] px-3.5 py-2 text-xs"
+        className={`inline-flex items-center justify-between gap-2.5 rounded-full border transition-all cursor-pointer ${
+          compact
+            ? "min-h-[36px] px-3.5 py-1.5 text-xs"
+            : "min-h-[40px] px-4 py-2 text-xs"
         } ${
           isOpen
-            ? "bg-[#17281F] border-[#D4AF37] text-[#F3F4F0] shadow-md"
-            : "bg-[#0B110E] border-[#2A3F34] text-[#F3F4F0] hover:border-[#D4AF37]"
+            ? "bg-white border-[#0071E3] text-[#1D1D1F] ring-2 ring-[#0071E3]/20 shadow-sm"
+            : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-          <span className="text-[11px] font-mono uppercase tracking-wider text-[#8A9990] hidden sm:inline shrink-0">
+          <MapPin className="w-3.5 h-3.5 text-[#0071E3] shrink-0" />
+          <span className="text-[11px] uppercase tracking-wider text-[#86868B] hidden sm:inline shrink-0 font-medium">
             {labelPrefix}:
           </span>
-          <span className="font-semibold text-[#F3F4F0] truncate max-w-[220px] sm:max-w-[320px]">
+          <span className="font-semibold text-[#1D1D1F] truncate max-w-[200px] sm:max-w-[300px]">
             {summaryLabel}
           </span>
-          <span className="px-1.5 py-0.5 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[10px] font-bold shrink-0">
-            {selectedMeetings.length}/{sortedMeetings.length} Checked
+          <span className="px-2 py-0.5 rounded-full bg-[#EBF5FF] text-[#0071E3] text-[10px] font-semibold shrink-0">
+            {selectedMeetings.length}/{sortedMeetings.length}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-[#D4AF37] shrink-0 transition-transform ${
-            isOpen ? "rotate-180" : ""
+          className={`w-3.5 h-3.5 text-[#86868B] shrink-0 transition-transform ${
+            isOpen ? "rotate-180 text-[#0071E3]" : ""
           }`}
         />
       </button>
@@ -176,25 +178,25 @@ export const RaceCardMultiSelectDropdown: React.FC<
           role="listbox"
           aria-multiselectable="true"
           aria-label={labelPrefix}
-          className={`absolute z-50 mt-2 w-80 sm:w-96 rounded-xl border border-[#D4AF37]/60 bg-[#0E1813] p-3.5 shadow-2xl space-y-3 ${
+          className={`absolute z-50 mt-2 w-80 sm:w-96 rounded-2xl border border-[#E5E5EA] bg-white p-4 shadow-xl space-y-3 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
           {/* Dropdown Header */}
-          <div className="flex items-start justify-between gap-2 border-b border-[#1F2D26] pb-2.5">
+          <div className="flex items-start justify-between gap-2 border-b border-[#F2F2F7] pb-3">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#F3F4F0]">
-                <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Select Race Cards / Locations</span>
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#1D1D1F]">
+                <Layers className="w-3.5 h-3.5 text-[#0071E3]" />
+                <span>Select Race Cards / Venues</span>
               </div>
-              <p className="text-[11px] text-[#8A9990] mt-0.5">
-                Tick checkboxes to view &amp; score 1 or multiple race cards at once
+              <p className="text-[11px] text-[#86868B] mt-0.5">
+                Check 1 or multiple race cards to view across today's fixture
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-md text-[#8A9990] hover:text-[#F3F4F0] cursor-pointer"
+              className="p-1 rounded-full text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F2F2F7] cursor-pointer"
               aria-label="Close Race Cards Dropdown"
             >
               <X className="w-4 h-4" />
@@ -202,22 +204,22 @@ export const RaceCardMultiSelectDropdown: React.FC<
           </div>
 
           {/* Quick Selection Presets */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             {combinedRequiredMeetings.length > 0 && (
               <button
                 type="button"
                 onClick={handleSelectSydneyAndMelbourne}
-                className="px-2.5 py-1 rounded-md bg-[#16241D] border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-mono font-semibold hover:bg-[#1E3127] transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-full bg-[#EBF5FF] text-[#0071E3] text-[11px] font-semibold hover:bg-[#D6EBFF] transition-colors cursor-pointer"
               >
-                Sydney &amp; Melbourne Default ({combinedRequiredMeetings.length})
+                Syd &amp; Melb ({combinedRequiredMeetings.length})
               </button>
             )}
             <button
               type="button"
               onClick={handleSelectAll}
-              className="px-2.5 py-1 rounded-md bg-[#152920] border border-[#10B981]/50 text-[#10B981] text-[11px] font-mono font-semibold hover:bg-[#1C372B] transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full bg-[#F2F2F7] text-[#1D1D1F] text-[11px] font-medium hover:bg-[#E5E5EA] transition-colors cursor-pointer"
             >
-              Check All ({sortedMeetings.length} Cards)
+              Check All ({sortedMeetings.length})
             </button>
           </div>
 
@@ -252,10 +254,10 @@ export const RaceCardMultiSelectDropdown: React.FC<
                   role="option"
                   aria-selected={isChecked}
                   onClick={() => handleToggleMeetingId(m.id)}
-                  className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs transition-colors cursor-pointer ${
+                  className={`flex items-center justify-between gap-2.5 rounded-xl border px-3 py-2 text-xs transition-colors cursor-pointer ${
                     isChecked
-                      ? "bg-[#152920] border-[#10B981] text-[#F3F4F0]"
-                      : "bg-[#0B110E] border-[#1F2D26] text-[#9BA8A1] hover:border-[#D4AF37]/50 hover:text-[#F3F4F0]"
+                      ? "bg-[#F2F7FF] border-[#0071E3]/30 text-[#1D1D1F]"
+                      : "bg-white border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#F9F9FB]"
                   }`}
                 >
                   <label
@@ -270,39 +272,39 @@ export const RaceCardMultiSelectDropdown: React.FC<
                       className="sr-only"
                     />
                     <span
-                      className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                      className={`w-4 h-4 rounded-full flex items-center justify-center border shrink-0 transition-colors ${
                         isChecked
-                          ? "bg-[#10B981] border-[#10B981] text-[#0B110E]"
-                          : "bg-[#0B110E] border-[#52665B]"
+                          ? "bg-[#0071E3] border-[#0071E3] text-white"
+                          : "bg-white border-[#D2D2D7]"
                       }`}
                     >
-                      {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                     </span>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
-                          className={`font-mono text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          className={`font-mono text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                             isChecked
-                              ? "bg-[#0B110E]/40 text-[#D4AF37]"
+                              ? "bg-[#0071E3]/15 text-[#0071E3]"
                               : isMetro
-                              ? "bg-[#192620] text-[#D4AF37]"
-                              : "bg-[#141E19] text-[#8A9990]"
+                              ? "bg-[#F2F2F7] text-[#1D1D1F]"
+                              : "bg-[#F2F2F7] text-[#86868B]"
                           }`}
                         >
                           {m.state || "TAB"}
                         </span>
-                        <span className="font-bold text-[#F3F4F0] truncate">
+                        <span className="font-semibold text-[#1D1D1F] truncate">
                           {m.venue}
                         </span>
-                        <span className="font-mono text-[11px] text-[#8A9990]">
+                        <span className="text-[11px] text-[#86868B]">
                           ({m.races.length}R)
                         </span>
                       </div>
-                      <div className="text-[10px] font-mono text-[#8A9990] mt-0.5">
+                      <div className="text-[10px] text-[#86868B] mt-0.5">
                         {m.trackCondition || m.trackRating} · {finalizedCount}/
                         {m.races.length} Final
-                        {pickedCount > 0 ? ` · ${pickedCount} Picks` : ""}
+                        {pickedCount > 0 ? ` · ${pickedCount} Tips` : ""}
                       </div>
                     </div>
                   </label>
@@ -313,7 +315,7 @@ export const RaceCardMultiSelectDropdown: React.FC<
                         type="button"
                         onClick={(e) => handleSelectOnlyOne(m.id, e)}
                         title={`Select only ${m.venue}`}
-                        className="px-2 py-0.5 rounded bg-[#0B110E] border border-[#23352C] text-[10px] font-mono text-[#8A9990] hover:border-[#D4AF37] hover:text-[#D4AF37] cursor-pointer"
+                        className="px-2 py-0.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[10px] text-[#86868B] hover:text-[#0071E3] hover:border-[#0071E3] transition-colors cursor-pointer"
                       >
                         Only
                       </button>
@@ -325,15 +327,14 @@ export const RaceCardMultiSelectDropdown: React.FC<
           </div>
 
           {/* Footer Status */}
-          <div className="flex items-center justify-between border-t border-[#1F2D26] pt-2 text-[11px] font-mono text-[#8A9990]">
+          <div className="flex items-center justify-between border-t border-[#F2F2F7] pt-2 text-xs text-[#86868B]">
             <span>
-              {selectedMeetings.length} of {sortedMeetings.length} race card(s)
-              active
+              {selectedMeetings.length} of {sortedMeetings.length} cards selected
             </span>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-[#D4AF37] font-semibold hover:underline cursor-pointer"
+              className="text-[#0071E3] font-semibold hover:underline cursor-pointer"
             >
               Done
             </button>

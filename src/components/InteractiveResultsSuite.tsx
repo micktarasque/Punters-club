@@ -333,10 +333,10 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                     onSelectMeeting(m.id);
                     setSelectedRaceNumber(1);
                   }}
-                  className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                  className={`px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold transition cursor-pointer whitespace-nowrap border ${
                     isSelected
-                      ? "bg-[#D4AF37] text-[#070B09] font-black shadow-sm"
-                      : "bg-[#14231B] text-[#8A9990] hover:text-[#F3F4F0] border border-[#23352B]"
+                      ? "bg-[#0071E3] border-[#0071E3] text-white shadow-xs"
+                      : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
                   }`}
                 >
                   <span>{m.venue}</span>{" "}
@@ -352,10 +352,10 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
         {/* Race Selector Strip Header with Filter Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 pb-1">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#D4AF37] font-semibold">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#0071E3] font-semibold">
               Race Selector:
             </span>
-            <span className="text-xs text-[#8A9990] font-mono">
+            <span className="text-xs text-[#86868B] font-mono">
               {showAllRaces
                 ? `Showing All ${activeMeeting.races.length} Races on Card`
                 : `${participatedRaceNumbers.size} of ${activeMeeting.races.length} Races Tipped by Syndicate`}
@@ -366,10 +366,10 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
             <button
               type="button"
               onClick={() => setShowAllRaces((prev) => !prev)}
-              className={`px-3 py-1 rounded-xl text-xs font-mono transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-full text-xs font-mono transition cursor-pointer flex items-center gap-1.5 border ${
                 !showAllRaces
-                  ? "bg-[#152920] border border-[#10B981]/60 text-[#10B981] font-bold shadow-sm"
-                  : "bg-[#09100D] border border-[#1E2E25] text-[#D4AF37] hover:border-[#D4AF37]"
+                  ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#34C759] font-semibold shadow-xs"
+                  : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
               }`}
             >
               <Filter className="w-3 h-3" />
@@ -383,7 +383,7 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
               <button
                 type="button"
                 onClick={() => setShowAllRaces(true)}
-                className="px-2.5 py-1 rounded-xl bg-[#09100D] border border-[#1E2E25] text-xs font-mono text-[#8A9990] hover:text-[#F3F4F0] cursor-pointer"
+                className="px-3 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-xs font-mono text-[#86868B] hover:text-[#1D1D1F] cursor-pointer"
               >
                 All Races ({activeMeeting.races.length})
               </button>
@@ -393,8 +393,8 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
 
         {/* Horizontal Race Strip with Winner / Status Preview */}
         {displayedRaces.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-[#09100D] border border-[#1E2E25] text-center text-xs font-mono text-[#8A9990] space-y-2">
-            <p className="text-[#F3F4F0] font-semibold">
+          <div className="p-5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] text-center text-xs font-mono text-[#86868B] space-y-2">
+            <p className="text-[#1D1D1F] font-semibold">
               No syndicate tips entered for {activeMeeting.venue} yet.
             </p>
             <p className="text-[11px]">
@@ -403,7 +403,7 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
             <button
               type="button"
               onClick={() => setShowAllRaces(true)}
-              className="px-3 py-1 rounded-xl bg-[#D4AF37] text-[#070B09] font-bold hover:bg-[#e3be42] cursor-pointer"
+              className="apple-btn-primary"
             >
               Show All {activeMeeting.races.length} Scheduled Races
             </button>
@@ -423,29 +423,29 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                   key={race.raceNumber}
                   type="button"
                   onClick={() => setSelectedRaceNumber(race.raceNumber)}
-                  className={`p-2 rounded-2xl font-mono text-xs transition cursor-pointer shrink-0 border text-left min-w-[110px] ${
+                  className={`p-2.5 rounded-xl font-mono text-xs transition cursor-pointer shrink-0 border text-left min-w-[110px] ${
                     isSelected
-                      ? "bg-[#1C2C23] border-[#10B981] shadow-md ring-1 ring-[#10B981]"
+                      ? "bg-white border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-xs"
                       : isFin
-                      ? "bg-[#101914] border-[#1E2E25] text-[#D5DDD8] hover:border-[#10B981]/50"
-                      : "bg-[#09100D] border-[#1A2620] text-[#6B7D73] hover:text-[#D5DDD8]"
+                      ? "bg-white border-[#E5E5EA] text-[#1D1D1F] hover:border-[#D2D2D7]"
+                      : "bg-[#FAF9FA] border-[#E5E5EA] text-[#86868B] hover:text-[#1D1D1F]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="font-black text-xs text-[#F3F4F0] flex items-center gap-1">
+                    <span className="font-bold text-xs text-[#1D1D1F] flex items-center gap-1">
                       <span>R{race.raceNumber}</span>
                       {isTipped && (
                         <span
-                          className="w-1.5 h-1.5 rounded-full bg-[#10B981]"
+                          className="w-1.5 h-1.5 rounded-full bg-[#34C759]"
                           title="Syndicate Tips Active"
                         />
                       )}
                     </span>
                     <span
-                      className={`text-[9px] px-1 rounded uppercase font-bold ${
+                      className={`text-[9px] px-1.5 py-0.2 rounded-full uppercase font-bold ${
                         isFin
-                          ? "bg-[#10B981]/20 text-[#10B981]"
-                          : "bg-[#D4AF37]/20 text-[#D4AF37]"
+                          ? "bg-[#EAFBF0] text-[#34C759]"
+                          : "bg-[#EBF5FF] text-[#0071E3]"
                       }`}
                     >
                       {isFin ? "Final" : race.startTime}
@@ -477,26 +477,26 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
          ------------------------------------------------------------------- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN (7 COLS): OFFICIAL ORDER & MARGIN BREAKDOWN */}
-        <div className="lg:col-span-7 rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1E2E25]">
+        <div className="lg:col-span-7 apple-card p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
             <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-[#D4AF37]" />
-              <h3 className="font-display font-bold text-base text-[#F3F4F0]">
-                Official Finishing Order &amp; Margin Telemetry
+              <Trophy className="w-4 h-4 text-[#FF9500]" />
+              <h3 className="font-bold text-base text-[#1D1D1F] tracking-tight">
+                Official Finishing Order &amp; Margins
               </h3>
             </div>
-            <span className="text-[11px] font-mono text-[#8A9990]">
+            <span className="text-[11px] font-mono text-[#86868B]">
               {finishedRunners.length} Runners Finished
             </span>
           </div>
 
           {!isCurrentRaceFinished ? (
-            <div className="p-6 rounded-2xl bg-[#09100D] border border-[#1E2E25] text-center space-y-2">
-              <Clock className="w-6 h-6 text-[#D4AF37] mx-auto animate-pulse" />
-              <div className="text-sm font-bold text-[#F3F4F0]">
+            <div className="p-8 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] text-center space-y-2">
+              <Clock className="w-6 h-6 text-[#FF9500] mx-auto animate-pulse" />
+              <div className="text-sm font-semibold text-[#1D1D1F]">
                 Official Results Awaiting Post-Race Declaration
               </div>
-              <p className="text-xs text-[#8A9990] font-mono max-w-sm mx-auto">
+              <p className="text-xs text-[#86868B] max-w-sm mx-auto leading-relaxed">
                 Official margins, finishing orders, and dividends will populate automatically as soon as stewards confirm correct weight for Race {activeRace.raceNumber}.
               </p>
             </div>
@@ -505,7 +505,6 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
               {finishedRunners.slice(0, 8).map((runner, idx) => {
                 const pos = runner.finishPosition;
                 const isWinner = pos === 1;
-                const isPodium = pos >= 1 && pos <= 3;
                 const winOdds = Number(runner.fixedWin || runner.nswTabWin) || 0;
                 const placeOdds = Number(runner.fixedPlace || runner.nswTabPlace) || 0;
                 const marginText = runner.margin || (isWinner ? "Winner" : `${(idx * 0.75).toFixed(2)}L`);
@@ -513,27 +512,27 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                 return (
                   <div
                     key={runner.tabNumber}
-                    className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 font-mono text-xs ${
+                    className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 text-xs ${
                       isWinner
-                        ? "bg-[#D4AF37]/15 border-[#D4AF37] shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
+                        ? "bg-[#FFF9F2] border-[#FF9500]/60 shadow-xs"
                         : pos === 2
-                        ? "bg-[#18261E] border-slate-400/50"
+                        ? "bg-[#F2F7FF] border-[#0071E3]/40"
                         : pos === 3
-                        ? "bg-[#16231C] border-amber-600/40"
-                        : "bg-[#09100D] border-[#1C2C23] hover:border-[#2A3F33]"
+                        ? "bg-[#F2FBF5] border-[#34C759]/40"
+                        : "bg-white border-[#E5E5EA] hover:border-[#0071E3]/30"
                     }`}
                   >
                     {/* Place Badge & Silk & Horse Info */}
                     <div className="flex items-center gap-3 truncate">
                       <span
-                        className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                           isWinner
-                            ? "bg-[#D4AF37] text-[#070B09]"
+                            ? "bg-[#FF9500] text-white shadow-xs"
                             : pos === 2
-                            ? "bg-slate-300 text-[#070B09]"
+                            ? "bg-[#0071E3] text-white shadow-xs"
                             : pos === 3
-                            ? "bg-amber-600 text-[#070B09]"
-                            : "bg-[#18241E] text-[#8A9990]"
+                            ? "bg-[#34C759] text-white shadow-xs"
+                            : "bg-[#F2F2F7] text-[#86868B] border border-[#E5E5EA]"
                         }`}
                       >
                         {pos > 0 ? `${pos}` : "—"}
@@ -547,29 +546,29 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
 
                       <div className="truncate">
                         <div className="flex items-center gap-1.5 truncate">
-                          <span className="font-bold text-[#F3F4F0] text-sm truncate">
+                          <span className="font-semibold text-[#1D1D1F] text-sm truncate">
                             #{runner.tabNumber} {runner.horseName}
                           </span>
-                          <span className="text-[10px] text-[#8A9990] shrink-0">
+                          <span className="text-[10px] text-[#86868B] font-mono shrink-0">
                             (B{runner.barrier})
                           </span>
                         </div>
-                        <div className="text-[10px] text-[#8A9990] truncate">
+                        <div className="text-[11px] text-[#86868B] truncate font-mono">
                           J: {runner.jockey} · T: {runner.trainer} ({runner.weight}kg)
                         </div>
                       </div>
                     </div>
 
                     {/* Margins & Dividends */}
-                    <div className="flex items-center gap-3 shrink-0 text-right">
+                    <div className="flex items-center gap-3 shrink-0 text-right font-mono">
                       {/* Margin Lengths */}
                       <div className="text-right">
-                        <span className="text-[10px] text-[#8A9990] block uppercase">
+                        <span className="text-[10px] text-[#86868B] block uppercase font-medium">
                           Margin
                         </span>
                         <span
-                          className={`font-bold text-xs ${
-                            isWinner ? "text-[#D4AF37]" : "text-[#D5DDD8]"
+                          className={`font-semibold text-xs ${
+                            isWinner ? "text-[#FF9500]" : "text-[#1D1D1F]"
                           }`}
                         >
                           {marginText}
@@ -577,14 +576,14 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                       </div>
 
                       {/* Official Payout Odds */}
-                      <div className="text-right pl-3 border-l border-[#1C2C23]">
-                        <span className="text-[10px] text-[#8A9990] block uppercase">
+                      <div className="text-right pl-3 border-l border-[#E5E5EA]">
+                        <span className="text-[10px] text-[#86868B] block uppercase font-medium">
                           TAB Div
                         </span>
-                        <span className="font-bold text-xs text-[#10B981]">
+                        <span className="font-bold text-xs text-[#34C759]">
                           ${winOdds > 0 ? winOdds.toFixed(2) : "—"}{" "}
                           {placeOdds > 0 && (
-                            <span className="text-[10px] text-[#8A9990]">
+                            <span className="text-[10px] text-[#86868B]">
                               / ${placeOdds.toFixed(2)}
                             </span>
                           )}
@@ -601,60 +600,60 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
         {/* RIGHT COLUMN (5 COLS): OFFICIAL EXOTIC DIVIDENDS & FLEXI SIMULATOR */}
         <div className="lg:col-span-5 space-y-6">
           {/* Official Exotic Dividends Card */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1E2E25]">
+          <div className="apple-card p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                <h3 className="font-display font-bold text-base text-[#F3F4F0]">
+                <Sparkles className="w-4 h-4 text-[#0071E3]" />
+                <h3 className="font-bold text-base text-[#1D1D1F] tracking-tight">
                   Official TAB Exotic Dividends
                 </h3>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#10B981]/20 text-[#10B981] font-bold">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#EAFBF0] text-[#34C759] font-bold border border-[#34C759]/30">
                 NSW TAB Pool
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 font-mono text-xs">
+            <div className="grid grid-cols-2 gap-3 font-mono text-xs">
               {/* Trifecta */}
-              <div className="p-3 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 space-y-0.5 col-span-2">
-                <div className="flex items-center justify-between text-[10px] text-[#D4AF37] font-bold uppercase">
+              <div className="p-3.5 rounded-2xl bg-[#FFF9F2] border border-[#FF9500]/40 space-y-0.5 col-span-2 shadow-xs">
+                <div className="flex items-center justify-between text-[10px] text-[#FF9500] font-bold uppercase">
                   <span>Trifecta ({exoticDividends.trifecta.combination})</span>
                   <span>100% Full Unit</span>
                 </div>
-                <div className="text-xl font-black text-[#D4AF37]">
+                <div className="text-2xl font-black text-[#FF9500]">
                   ${exoticDividends.trifecta.dividend.toFixed(2)}
                 </div>
               </div>
 
               {/* Quinella */}
-              <div className="p-3 rounded-2xl bg-[#09100D] border border-[#1E2E25] space-y-0.5">
-                <div className="flex items-center justify-between text-[10px] text-[#8A9990] font-bold uppercase">
+              <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] space-y-0.5 shadow-xs">
+                <div className="flex items-center justify-between text-[10px] text-[#86868B] font-bold uppercase">
                   <span>Quinella</span>
                   <span>{exoticDividends.quinella?.combination || "1st & 2nd"}</span>
                 </div>
-                <div className="text-base font-bold text-[#F3F4F0]">
+                <div className="text-base font-bold text-[#1D1D1F]">
                   ${exoticDividends.quinella?.dividend?.toFixed(2) || "—"}
                 </div>
               </div>
 
               {/* Exacta */}
-              <div className="p-3 rounded-2xl bg-[#09100D] border border-[#1E2E25] space-y-0.5">
-                <div className="flex items-center justify-between text-[10px] text-[#8A9990] font-bold uppercase">
+              <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] space-y-0.5 shadow-xs">
+                <div className="flex items-center justify-between text-[10px] text-[#86868B] font-bold uppercase">
                   <span>Exacta</span>
                   <span>{exoticDividends.exacta?.combination || "1st then 2nd"}</span>
                 </div>
-                <div className="text-base font-bold text-[#F3F4F0]">
+                <div className="text-base font-bold text-[#1D1D1F]">
                   ${exoticDividends.exacta?.dividend?.toFixed(2) || "—"}
                 </div>
               </div>
 
               {/* First 4 */}
-              <div className="p-3 rounded-2xl bg-[#09100D] border border-[#1E2E25] space-y-0.5 col-span-2">
-                <div className="flex items-center justify-between text-[10px] text-[#8A9990] font-bold uppercase">
+              <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] space-y-0.5 col-span-2 shadow-xs">
+                <div className="flex items-center justify-between text-[10px] text-[#86868B] font-bold uppercase">
                   <span>First 4</span>
                   <span>{exoticDividends.first4?.combination || "Top 4 Finishers"}</span>
                 </div>
-                <div className="text-base font-bold text-[#10B981]">
+                <div className="text-base font-bold text-[#34C759]">
                   ${exoticDividends.first4?.dividend?.toFixed(2) || "—"}
                 </div>
               </div>
@@ -662,15 +661,15 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
           </div>
 
           {/* Interactive Flexi Dividend & Return Simulator */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1E2E25]">
+          <div className="apple-card p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#10B981]" />
-                <h3 className="font-display font-bold text-base text-[#F3F4F0]">
-                  Interactive Flexi Payout Simulator
+                <Sliders className="w-4 h-4 text-[#0071E3]" />
+                <h3 className="font-bold text-base text-[#1D1D1F] tracking-tight">
+                  Flexi Payout Simulator
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-[#8A9990]">
+              <span className="text-[10px] font-mono text-[#86868B]">
                 Live Return Calculator
               </span>
             </div>
@@ -678,19 +677,19 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
             <div className="space-y-3 font-mono text-xs">
               {/* Stake Presets */}
               <div>
-                <label className="text-[10px] text-[#8A9990] block uppercase mb-1">
+                <label className="text-[10px] text-[#86868B] block uppercase mb-1.5 font-medium">
                   Syndicate Outlay / Stake:
                 </label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-2">
                   {[10, 20, 50, 100].map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setSimulatedStake(amt)}
-                      className={`py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                      className={`py-2 rounded-full font-bold transition-all cursor-pointer ${
                         simulatedStake === amt
-                          ? "bg-[#10B981] text-[#070B09] font-black"
-                          : "bg-[#14231B] text-[#8A9990] hover:text-[#F3F4F0] border border-[#23352B]"
+                          ? "bg-[#0071E3] text-white shadow-xs"
+                          : "bg-white text-[#86868B] hover:text-[#1D1D1F] border border-[#E5E5EA]"
                       }`}
                     >
                       ${amt}
@@ -700,42 +699,42 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
               </div>
 
               {/* Flexi Formula Telemetry */}
-              <div className="p-3 rounded-2xl bg-[#09100D] border border-[#1E2E25] space-y-1.5">
-                <div className="flex items-center justify-between text-[#8A9990] text-[11px]">
+              <div className="p-3.5 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] space-y-2">
+                <div className="flex items-center justify-between text-[#86868B] text-[11px]">
                   <span>Ticket Combinations:</span>
-                  <span className="text-[#F3F4F0] font-bold">{combinationsCount} Combos</span>
+                  <span className="text-[#1D1D1F] font-bold">{combinationsCount} Combos</span>
                 </div>
-                <div className="flex items-center justify-between text-[#8A9990] text-[11px]">
+                <div className="flex items-center justify-between text-[#86868B] text-[11px]">
                   <span>Applied Flexi %:</span>
-                  <span className="text-[#10B981] font-bold">
+                  <span className="text-[#0071E3] font-bold">
                     {actualFlexiPct.toFixed(2)}% Flexi
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-[#8A9990] text-[11px] pt-1 border-t border-[#1C2C23]">
+                <div className="flex items-center justify-between text-[#86868B] text-[11px] pt-1.5 border-t border-[#E5E5EA]">
                   <span>Per-Member Share ({punters.length} Punters):</span>
-                  <span className="text-[#D4AF37] font-bold">
+                  <span className="text-[#1D1D1F] font-bold">
                     {(actualFlexiPct / Math.max(1, punters.length)).toFixed(2)}% each
                   </span>
                 </div>
               </div>
 
               {/* Projected Collect & Net Payout */}
-              <div className="p-4 rounded-2xl bg-[#14231B] border border-[#10B981]/50 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-[#EAFBF0] border border-[#34C759]/40 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-[#8A9990] uppercase block">
+                  <span className="text-[10px] text-[#86868B] uppercase block font-medium">
                     Calculated Flexi Collect
                   </span>
-                  <div className="text-2xl font-black text-[#10B981]">
+                  <div className="text-2xl font-black text-[#34C759]">
                     ${simulatedCollect.toFixed(2)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-[#8A9990] uppercase block">
+                  <span className="text-[10px] text-[#86868B] uppercase block font-medium">
                     Net Profit / ROI
                   </span>
                   <div
                     className={`text-sm font-black ${
-                      simulatedNetProfit >= 0 ? "text-[#10B981]" : "text-rose-400"
+                      simulatedNetProfit >= 0 ? "text-[#34C759]" : "text-[#FF3B30]"
                     }`}
                   >
                     {simulatedNetProfit >= 0 ? "+" : ""}
@@ -755,23 +754,23 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
       {/* -------------------------------------------------------------------
           3. HEAD-TO-HEAD SYNDICATE ACCURACY & TIPPER PERFORMANCE
          ------------------------------------------------------------------- */}
-      <div className="rounded-3xl border border-white/[0.08] bg-[#0E1512]/95 backdrop-blur-xl p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#1E2E25]">
+      <div className="apple-card p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E5EA]">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#D4AF37]" />
-            <h3 className="font-display font-bold text-base text-[#F3F4F0]">
+            <Users className="w-4 h-4 text-[#0071E3]" />
+            <h3 className="font-bold text-base text-[#1D1D1F] tracking-tight">
               Syndicate Member Head-to-Head Accuracy (Race {activeRace.raceNumber})
             </h3>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-[#8A9990]">Display Mode:</span>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-[#86868B] font-medium mr-1">Display:</span>
             <button
               type="button"
               onClick={() => onToggleScoringMode("points")}
-              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
+              className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
                 scoringMode === "points"
-                  ? "bg-[#D4AF37] text-[#070B09]"
-                  : "bg-[#14231B] text-[#8A9990] hover:text-[#F3F4F0]"
+                  ? "bg-[#0071E3] text-white shadow-xs"
+                  : "bg-white text-[#86868B] hover:text-[#1D1D1F] border border-[#E5E5EA]"
               }`}
             >
               Points (3/2/1)
@@ -779,10 +778,10 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
             <button
               type="button"
               onClick={() => onToggleScoringMode("dollars")}
-              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
+              className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
                 scoringMode === "dollars"
-                  ? "bg-[#10B981] text-[#070B09]"
-                  : "bg-[#14231B] text-[#8A9990] hover:text-[#F3F4F0]"
+                  ? "bg-[#34C759] text-white shadow-xs"
+                  : "bg-white text-[#86868B] hover:text-[#1D1D1F] border border-[#E5E5EA]"
               }`}
             >
               $ EW Return
@@ -799,34 +798,34 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
             return (
               <div
                 key={punter.id}
-                className="p-4 rounded-2xl bg-[#09100D] border border-[#1E2E25] space-y-3 font-mono text-xs"
+                className="p-4 rounded-2xl bg-[#FAF9FA] border border-[#E5E5EA] space-y-3 text-xs shadow-xs"
               >
                 {/* Header: Name + Score */}
-                <div className="flex items-center justify-between pb-2 border-b border-[#1C2C23]">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E5E5EA]">
                   <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-xl bg-[#14231B] border border-[#23352B] flex items-center justify-center font-bold text-xs text-[#D4AF37]">
+                    <span className="w-7 h-7 rounded-full bg-[#EBF5FF] border border-[#0071E3]/30 flex items-center justify-center font-bold text-xs text-[#0071E3]">
                       {punter.name.charAt(0)}
                     </span>
                     <div>
-                      <div className="font-bold text-[#F3F4F0] flex items-center gap-1.5">
+                      <div className="font-semibold text-[#1D1D1F] flex items-center gap-1.5">
                         <span>{punter.name}</span>
                         {isJoker && (
-                          <span className="text-[9px] px-1 rounded bg-[#D4AF37] text-[#070B09] font-black">
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#FFF5E6] text-[#FF9500] font-bold border border-[#FF9500]/40">
                             🃏 2x JOKER
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-[#8A9990]">
+                      <span className="text-[10px] text-[#86868B]">
                         {hasPicks ? "3 Selections Registered" : "No Tips Logged"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-[10px] text-[#8A9990] block uppercase">
+                  <div className="text-right font-mono">
+                    <span className="text-[10px] text-[#86868B] block uppercase font-medium">
                       Race Score
                     </span>
-                    <span className="font-black text-sm text-[#10B981]">
+                    <span className="font-bold text-sm text-[#34C759]">
                       {scoringMode === "dollars"
                         ? formatDollarReturn(raceDollarReturn)
                         : `${racePoints} pts`}
@@ -836,7 +835,7 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
 
                 {/* 3 Picks Breakdown */}
                 {hasPicks ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 font-mono">
                     {evalResult.picks.map((pick) => {
                       const pos = pick.runner?.finishPosition || 0;
                       const isWin = pos === 1;
@@ -846,19 +845,19 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                       return (
                         <div
                           key={pick.preferenceRank}
-                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 ${
+                          className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
                             isWin
-                              ? "bg-[#D4AF37]/15 border-[#D4AF37]/60"
+                              ? "bg-[#FFF9F2] border-[#FF9500]/40"
                               : isPod
-                              ? "bg-[#14231B] border-[#10B981]/40"
-                              : "bg-[#0B1410] border-[#18241D]"
+                              ? "bg-[#EAFBF0] border-[#34C759]/30"
+                              : "bg-white border-[#E5E5EA]"
                           }`}
                         >
                           <div className="flex items-center gap-1.5 truncate">
-                            <span className="text-[9px] px-1 rounded bg-[#16231C] text-[#8A9990] font-bold">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#F2F2F7] text-[#86868B] font-bold">
                               {pick.preferenceRank === 1 ? "1st" : pick.preferenceRank === 2 ? "2nd" : "3rd"}
                             </span>
-                            <span className="font-bold text-[#F3F4F0] truncate">
+                            <span className="font-medium text-[#1D1D1F] truncate">
                               #{pick.tabNumber} {horse?.horseName || "Runner"}
                             </span>
                           </div>
@@ -866,20 +865,20 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                           <div className="flex items-center gap-1.5 shrink-0 text-right">
                             {pos > 0 ? (
                               <span
-                                className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                   isWin
-                                    ? "bg-[#D4AF37] text-[#070B09]"
+                                    ? "bg-[#FF9500] text-white"
                                     : isPod
-                                    ? "bg-[#10B981] text-[#070B09]"
-                                    : "bg-[#18261E] text-[#8A9990]"
+                                    ? "bg-[#34C759] text-white"
+                                    : "bg-[#F2F2F7] text-[#86868B]"
                                 }`}
                               >
                                 {pos === 1 ? "1st ✓" : pos === 2 ? "2nd ✓" : pos === 3 ? "3rd ✓" : `${pos}th`}
                               </span>
                             ) : (
-                              <span className="text-[10px] text-[#6B7D73]">Unplaced</span>
+                              <span className="text-[10px] text-[#86868B]">Unplaced</span>
                             )}
-                            <span className="font-bold text-xs text-[#D5DDD8]">
+                            <span className="font-semibold text-xs text-[#1D1D1F]">
                               {scoringMode === "dollars"
                                 ? `+$${pick.dollarReturn.toFixed(2)}`
                                 : `+${pick.points}p`}
@@ -890,14 +889,14 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
                     })}
                   </div>
                 ) : (
-                  <div className="p-3 rounded-xl bg-[#0B1410] border border-[#18241D] text-center">
+                  <div className="p-3 rounded-xl bg-white border border-[#E5E5EA] text-center">
                     <button
                       type="button"
                       onClick={() =>
                         onEditUserSelections &&
                         onEditUserSelections(punter.id, activeMeeting.id)
                       }
-                      className="text-[11px] font-sans text-[#D4AF37] hover:underline cursor-pointer"
+                      className="text-[11px] font-medium text-[#0071E3] hover:underline cursor-pointer"
                     >
                       + Make Selections for {punter.name}
                     </button>

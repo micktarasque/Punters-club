@@ -191,26 +191,26 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
   };
 
   return (
-    <div className="relative bg-[#121A16] border border-[#1F2D26] rounded-lg p-4">
+    <div className="relative apple-card p-5 sm:p-6 mb-6">
       {/* Top Calibrated Sydney Time Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-[#1F2D26]/80 text-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0B110E] border border-[#10B981]/40 text-[#10B981] font-mono font-medium">
-            <Clock className="w-3.5 h-3.5 text-[#10B981]" />
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-[#E5E5EA] text-xs">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] text-[#1D1D1F] font-mono text-xs font-medium">
+            <Clock className="w-3.5 h-3.5 text-[#0071E3]" />
             <span>
-              SYDNEY ({sydneyClock.tzAbbr}): {sydneyClock.shortDateStr} • {sydneyClock.timeStr}
+              Sydney ({sydneyClock.tzAbbr}): {sydneyClock.shortDateStr} • {sydneyClock.timeStr}
             </span>
           </span>
-          <span className="text-[#8A9990]">
+          <span className="text-[#86868B]">
             Viewing:{" "}
-            <strong className="text-[#F3F4F0] font-mono">
+            <strong className="text-[#1D1D1F] font-semibold">
               {dateMode === "single"
                 ? `${formatReadableDate(normalizedSelectedDate)} (${normalizedSelectedDate})`
                 : `${formatReadableDate(normalizedSelectedDate)} → ${formatReadableDate(normalizedEndDate)}`}
             </strong>
             {normalizedSelectedDate === todaySydneyIso && dateMode === "single" && (
-              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase rounded bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
-                Calibrated to Live Sydney Today
+              <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-[#EAFBF0] text-[#34C759] border border-[#34C759]/30">
+                Live Today
               </span>
             )}
           </span>
@@ -221,7 +221,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
             <button
               type="button"
               onClick={() => applyPresetRange(todaySydneyIso, todaySydneyIso, "single")}
-              className="px-2.5 py-1 text-xs font-semibold rounded bg-[#10B981]/20 border border-[#10B981] text-[#10B981] hover:bg-[#10B981]/30 transition-colors cursor-pointer"
+              className="px-3 py-1 text-xs font-medium rounded-full bg-[#EBF5FF] text-[#0071E3] hover:bg-[#D6EBFF] transition-colors cursor-pointer"
             >
               Jump to Today ({formatReadableDate(todaySydneyIso)})
             </button>
@@ -232,18 +232,18 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Left: Mode Toggle + Interactive Date / Date Range Picker */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Single Date vs Date Range Segmented Control */}
-          <div className="flex items-center p-1 bg-[#0B110E] border border-[#1F2D26] rounded-md">
+          {/* Single Date vs Date Range Apple Segmented Control */}
+          <div className="flex items-center p-0.5 bg-[#E5E5EA]/70 rounded-full border border-black/[0.04]">
             <button
               type="button"
               onClick={() => {
                 onDateModeChange("single");
                 onDateSelect(normalizedSelectedDate, normalizedSelectedDate);
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap cursor-pointer ${
                 dateMode === "single"
-                  ? "bg-[#1C2A23] text-[#F3F4F0]"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+                  ? "bg-white text-[#1D1D1F] font-semibold shadow-sm"
+                  : "text-[#86868B] hover:text-[#1D1D1F]"
               }`}
             >
               Single Date
@@ -257,10 +257,10 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
                   onDateSelect(defaultStart, normalizedSelectedDate);
                 }
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap cursor-pointer ${
                 dateMode === "range"
-                  ? "bg-[#1C2A23] text-[#F3F4F0]"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+                  ? "bg-white text-[#1D1D1F] font-semibold shadow-sm"
+                  : "text-[#86868B] hover:text-[#1D1D1F]"
               }`}
             >
               Date Range
@@ -268,11 +268,11 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
           </div>
 
           {/* Stepper + Calendar Trigger */}
-          <div className="flex items-center bg-[#0B110E] border border-[#1F2D26] rounded-md">
+          <div className="flex items-center bg-[#F2F2F7] border border-[#E5E5EA] rounded-full overflow-hidden">
             <button
               type="button"
               onClick={() => handleStepDate(-1)}
-              className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center p-2 text-[#8A9990] hover:text-[#F3F4F0] transition-colors cursor-pointer"
+              className="flex items-center justify-center p-2 text-[#86868B] hover:text-[#1D1D1F] transition-colors cursor-pointer"
               title="Previous Day"
               aria-label="Previous Day"
             >
@@ -282,12 +282,12 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
             <button
               type="button"
               onClick={() => setCalendarOpen((prev) => !prev)}
-              className="min-h-[44px] sm:min-h-[36px] flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium text-[#F3F4F0] hover:bg-[#16201B] transition-colors whitespace-nowrap border-x border-[#1F2D26] cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-[#1D1D1F] hover:bg-[#E5E5EA] transition-colors whitespace-nowrap border-x border-[#E5E5EA] cursor-pointer"
             >
-              <CalendarIcon className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <CalendarIcon className="w-3.5 h-3.5 text-[#0071E3]" />
               <span className="font-mono tabular-nums">
                 {dateMode === "single"
-                  ? `${formatReadableDate(normalizedSelectedDate)} (${normalizedSelectedDate})`
+                  ? `${formatReadableDate(normalizedSelectedDate)}`
                   : `${formatReadableDate(normalizedSelectedDate)} → ${formatReadableDate(normalizedEndDate)}`}
               </span>
             </button>
@@ -295,7 +295,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
             <button
               type="button"
               onClick={() => handleStepDate(1)}
-              className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center p-2 text-[#8A9990] hover:text-[#F3F4F0] transition-colors cursor-pointer"
+              className="flex items-center justify-center p-2 text-[#86868B] hover:text-[#1D1D1F] transition-colors cursor-pointer"
               title="Next Day"
               aria-label="Next Day"
             >
@@ -303,8 +303,8 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
             </button>
           </div>
 
-          {/* Direct Native Date Input(s) with 5-Day Ahead Limit */}
-          <div className="flex items-center gap-2 text-xs text-[#8A9990]">
+          {/* Direct Native Date Input(s) */}
+          <div className="flex items-center gap-2 text-xs text-[#86868B]">
             <input
               type="date"
               value={normalizedSelectedDate}
@@ -324,7 +324,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
                 }
               }}
               aria-label="Start or Single Race Date"
-              className="bg-[#0B110E] border border-[#1F2D26] rounded px-2.5 py-1.5 font-mono text-xs text-[#F3F4F0] focus:outline-none focus:border-[#D4AF37]"
+              className="bg-white border border-[#D2D2D7] rounded-xl px-2.5 py-1 font-mono text-xs text-[#1D1D1F] focus:outline-none focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20"
             />
             {dateMode === "range" && (
               <>
@@ -346,7 +346,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
                     }
                   }}
                   aria-label="End Race Date"
-                  className="bg-[#0B110E] border border-[#1F2D26] rounded px-2.5 py-1.5 font-mono text-xs text-[#F3F4F0] focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-white border border-[#D2D2D7] rounded-xl px-2.5 py-1 font-mono text-xs text-[#1D1D1F] focus:outline-none focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20"
                 />
               </>
             )}
@@ -356,49 +356,49 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
           <button
             type="button"
             onClick={() => applyPresetRange(todaySydneyIso, todaySydneyIso, "single")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap cursor-pointer ${
               normalizedSelectedDate === todaySydneyIso && dateMode === "single"
-                ? "bg-[#10B981]/20 border-[#10B981] text-[#10B981] font-semibold"
-                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                ? "bg-[#0071E3] border-[#0071E3] text-white shadow-sm font-semibold"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
             }`}
           >
-            Today • {formatReadableDate(todaySydneyIso).replace(/,?\s*\d{4}$/, "")} (Tamworth &amp; Bairnsdale)
+            Today • {formatReadableDate(todaySydneyIso).replace(/,?\s*\d{4}$/, "")}
           </button>
 
           <button
             type="button"
             onClick={() => applyPresetRange("2026-10-13", "2026-10-13", "single")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap cursor-pointer ${
               normalizedSelectedDate === "2026-10-13" && dateMode === "single"
-                ? "bg-[#10B981]/20 border-[#10B981] text-[#10B981] font-semibold"
-                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                ? "bg-[#0071E3] border-[#0071E3] text-white shadow-sm font-semibold"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
             }`}
           >
-            Tue 13 Oct (Kilmore &amp; Grafton)
+            Tue 13 Oct
           </button>
 
           <button
             type="button"
             onClick={() => applyPresetRange("2026-10-11", "2026-10-11", "single")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap cursor-pointer ${
               normalizedSelectedDate === "2026-10-11" && dateMode === "single"
-                ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] font-semibold"
-                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                ? "bg-[#0071E3] border-[#0071E3] text-white shadow-sm font-semibold"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
             }`}
           >
-            Sun 11 Oct (Seymour, Coonamble &amp; Queanbeyan)
+            Sun 11 Oct
           </button>
 
           <button
             type="button"
             onClick={() => applyPresetRange("2026-10-10", "2026-10-10", "single")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap cursor-pointer ${
               normalizedSelectedDate === "2026-10-10" && dateMode === "single"
-                ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] font-semibold"
-                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                ? "bg-[#0071E3] border-[#0071E3] text-white shadow-sm font-semibold"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
             }`}
           >
-            Sat 10 Oct (Caulfield &amp; Rosehill)
+            Sat 10 Oct
           </button>
         </div>
 
@@ -412,7 +412,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
               onChangeSelectedMeetingIds?.(ids);
             }}
             punters={punters}
-            labelPrefix="Race Cards / Locations"
+            labelPrefix="Race Cards"
             compact
             align="right"
           />
@@ -420,10 +420,10 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
           <button
             type="button"
             onClick={onToggleAutoScrape}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors whitespace-nowrap cursor-pointer ${
               autoScrapeOnDateChange
-                ? "bg-[#152920] border-[#10B981]/50 text-[#10B981]"
-                : "bg-[#0B110E] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0]"
+                ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#34C759] font-semibold"
+                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B] hover:text-[#1D1D1F]"
             }`}
           >
             Auto-Fetch: {autoScrapeOnDateChange ? "On" : "Off"}
@@ -433,7 +433,7 @@ export const DateRangeCalendarBar: React.FC<DateRangeCalendarBarProps> = ({
             type="button"
             disabled={isScraping}
             onClick={() => onTriggerScrape(normalizedSelectedDate, normalizedEndDate, trackFilter)}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md bg-[#D4AF37] text-[#0B110E] hover:bg-[#E2C152] disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer"
+            className="apple-btn-primary"
           >
             {isScraping ? (
               <>

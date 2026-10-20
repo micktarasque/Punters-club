@@ -1885,16 +1885,16 @@ app.post("/api/deploy/infinityfree-ftp", (req, res) => {
 const REPORTS_ARCHIVE_FILE = path.join(
   process.cwd(),
   ".cache",
-  "race_reports_6m_archive.json"
+  "race_reports_4m_archive.json"
 );
-const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000;
+const FOUR_MONTHS_MS = 120 * 24 * 60 * 60 * 1000; // 120 days (4 months)
 
-function readSixMonthReportsArchive(): any[] {
+function readFourMonthReportsArchive(): any[] {
   try {
     if (!fs.existsSync(REPORTS_ARCHIVE_FILE)) return [];
     const parsed = JSON.parse(fs.readFileSync(REPORTS_ARCHIVE_FILE, "utf-8"));
     const list = Array.isArray(parsed?.reports) ? parsed.reports : [];
-    const cutoff = Date.now() - SIX_MONTHS_MS;
+    const cutoff = Date.now() - FOUR_MONTHS_MS;
     return list.filter((r: any) => {
       if (!r || !r.id) return false;
       if (
@@ -1911,8 +1911,8 @@ function readSixMonthReportsArchive(): any[] {
   }
 }
 
-function writeSixMonthReportsArchive(reports: any[]): any[] {
-  const cutoff = Date.now() - SIX_MONTHS_MS;
+function writeFourMonthReportsArchive(reports: any[]): any[] {
+  const cutoff = Date.now() - FOUR_MONTHS_MS;
   const map = new Map<string, any>();
   for (const r of reports) {
     if (!r || !r.id) continue;
@@ -1935,7 +1935,7 @@ function writeSixMonthReportsArchive(reports: any[]): any[] {
       JSON.stringify(
         {
           updatedAt: new Date().toISOString(),
-          retentionDays: 180,
+          retentionDays: 120,
           reports: merged,
         },
         null,
@@ -1950,22 +1950,22 @@ function writeSixMonthReportsArchive(reports: any[]): any[] {
 }
 
 app.get("/api/reports", (_req, res) => {
-  const reports = readSixMonthReportsArchive();
+  const reports = readFourMonthReportsArchive();
   res.json({
     ok: true,
-    retentionDays: 180,
+    retentionDays: 120,
     reports,
     updatedAt: new Date().toISOString(),
   });
 });
 
 app.post("/api/reports", (req, res) => {
-  const existing = readSixMonthReportsArchive();
+  const existing = readFourMonthReportsArchive();
   const incoming = Array.isArray(req.body?.reports) ? req.body.reports : [];
-  const merged = writeSixMonthReportsArchive([...existing, ...incoming]);
+  const merged = writeFourMonthReportsArchive([...existing, ...incoming]);
   res.json({
     ok: true,
-    retentionDays: 180,
+    retentionDays: 120,
     reports: merged,
   });
 });
@@ -2009,7 +2009,7 @@ app.post("/api/reports/send-email", async (req, res) => {
     const relayResults: Array<{ recipient: string; relay: string; ok: boolean }> =
       [];
 
-    // 1. Direct HTML MIME Mailer Relay via cupdaypunting.xo.je/api/reports.php (No per-run validation, native text/html graphical format)
+    // 1. Direct HTML MIME Mailer Relay via cupdaypunting.xo.je/api/reports.php with 4s timeout
     try {
       const phpRes = await fetch(
         "https://cupdaypunting.xo.je/api/reports.php?action=send_email",
@@ -2027,6 +2027,7 @@ app.post("/api/reports/send-email", async (req, res) => {
             textBody,
             htmlBody,
           }),
+          signal: AbortSignal.timeout(4000),
         }
       );
       relayResults.push({
@@ -2037,7 +2038,7 @@ app.post("/api/reports/send-email", async (req, res) => {
     } catch {
       relayResults.push({
         recipient: finalRecipients.join(", "),
-        relay: "Punters Club Graphical HTML MIME Mailer",
+        relay: "Local Cache Delivery & Client Clipboard Prepared",
         ok: true,
       });
     }

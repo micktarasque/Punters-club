@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   Bell,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Cloud,
   DollarSign,
   FileText,
@@ -74,7 +76,7 @@ import {
   getPunterJokerForMeeting,
   getPunterSelectionsForMeeting,
 } from "./utils/scoring";
-import { SIX_MONTHS_RETENTION_MS } from "./utils/raceReportArchive";
+import { FOUR_MONTHS_RETENTION_MS } from "./utils/raceReportArchive";
 import {
   attachSafariAudioUnlock,
   createUnthrottledBackgroundTicker,
@@ -118,16 +120,16 @@ const STORAGE_KEY_QUADDIE_BUY_IN_PER_USER =
 const STORAGE_KEY_QUADDIE_EXTRAS = "turfsheet_quaddie_extra_selections_v1";
 const STORAGE_KEY_THEME_SCHEME = "turfsheet_theme_scheme_v1";
 
-export type AppThemeScheme = "default" | "dark" | "light" | "race";
+export type AppThemeScheme = "default" | "apple" | "dark" | "light" | "race";
 
 /**
- * Retains completed user selection data (where users actively participated) for 6 months (180 days),
- * pruning empty or >6-month-old entries automatically.
+ * Retains completed user selection data (where users actively participated) for 4 months (120 days),
+ * pruning unpicked races and older entries automatically.
  */
-function enforceSixMonthActiveParticipationRetention(
+function enforceFourMonthActiveParticipationRetention(
   profiles: PunterProfile[]
 ): PunterProfile[] {
-  const cutoffMs = Date.now() - SIX_MONTHS_RETENTION_MS;
+  const cutoffMs = Date.now() - FOUR_MONTHS_RETENTION_MS;
   return profiles.map((p) => {
     const nextSel: Record<string, Record<number, RaceSelectionTrio>> = {};
     for (const [mId, raceMap] of Object.entries(p.selectionsByMeeting || {})) {
@@ -198,6 +200,7 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY_THEME_SCHEME);
       if (
         saved === "default" ||
+        saved === "apple" ||
         saved === "dark" ||
         saved === "light" ||
         saved === "race"
@@ -209,6 +212,46 @@ export default function App() {
     }
     return "default";
   });
+  const [showThemeMenu, setShowThemeMenu] = useState<boolean>(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(72);
+
+  // Dynamically measure header height to support iPad Pro, tablets, and responsive multi-row headers
+  useEffect(() => {
+    const updateHeight = () => {
+      if (headerRef.current) {
+        const measured = Math.round(
+          headerRef.current.getBoundingClientRect().height
+        );
+        if (measured > 0) {
+          setHeaderHeight(measured);
+          document.documentElement.style.setProperty(
+            "--app-header-height",
+            `${measured}px`
+          );
+        }
+      }
+    };
+
+    updateHeight();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && headerRef.current) {
+      ro = new ResizeObserver(() => {
+        updateHeight();
+      });
+      ro.observe(headerRef.current);
+    }
+
+    window.addEventListener("resize", updateHeight, { passive: true });
+    window.addEventListener("orientationchange", updateHeight, { passive: true });
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -219,8 +262,37 @@ export default function App() {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", themeScheme);
       document.body.setAttribute("data-theme", themeScheme);
+      const meta = document.getElementById("meta-theme-color");
+      if (themeScheme === "apple") {
+        document.documentElement.classList.add("theme-apple");
+        document.documentElement.classList.remove("theme-turf");
+        if (meta) meta.setAttribute("content", "#F5F5F7");
+      } else {
+        document.documentElement.classList.add("theme-turf");
+        document.documentElement.classList.remove("theme-apple");
+        if (meta) meta.setAttribute("content", "#070B09");
+      }
     }
   }, [themeScheme]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        themeMenuRef.current &&
+        !themeMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowThemeMenu(false);
+      }
+    }
+    if (showThemeMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showThemeMenu]);
+
+  const isApple = themeScheme === "apple";
   const [dateMode, setDateMode] = useState<"single" | "range">("single");
   const [selectedDate, setSelectedDate] = useState<string>(INITIAL_RACE_DATE);
   const [endDate, setEndDate] = useState<string>(INITIAL_RACE_DATE);
@@ -428,7 +500,7 @@ export default function App() {
       const effectiveDeletedIds =
         explicitDeletedIds ?? deletedPunterIdsRef.current;
       const prunedPunters =
-        enforceSixMonthActiveParticipationRetention(nextPunters);
+        enforceFourMonthActiveParticipationRetention(nextPunters);
       try {
         localStorage.setItem(
           STORAGE_KEY_PUNTERS,
@@ -685,31 +757,46 @@ export default function App() {
     }, 3400);
   };
 
+  const smoothScrollToElementWithOffset = useCallback(
+    (elementOrId: HTMLElement | string, extraOffset = 32) => {
+      const el =
+        typeof elementOrId === "string"
+          ? document.getElementById(elementOrId)
+          : elementOrId;
+      if (!el) return;
+      const currentHeaderH = headerRef.current
+        ? Math.round(headerRef.current.getBoundingClientRect().height)
+        : headerHeight || 72;
+      const elRect = el.getBoundingClientRect();
+      const targetY =
+        window.pageYOffset + elRect.top - currentHeaderH - extraOffset;
+      window.scrollTo({
+        top: Math.max(0, Math.round(targetY)),
+        behavior: "smooth",
+      });
+    },
+    [headerHeight]
+  );
+
   const scrollToSection = (sectionId: string) => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    smoothScrollToElementWithOffset(sectionId, 32);
   };
 
   const switchTab = useCallback((tab: ActiveTab, targetSectionId?: string) => {
     setActiveTab(tab);
     setTimeout(() => {
       if (targetSectionId) {
-        const el = document.getElementById(targetSectionId);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          return;
-        }
+        smoothScrollToElementWithOffset(targetSectionId, 32);
+        return;
       }
       const tabTop = document.getElementById("tab-workspace-anchor");
       if (tabTop) {
-        tabTop.scrollIntoView({ behavior: "smooth", block: "start" });
+        smoothScrollToElementWithOffset(tabTop, 32);
       } else {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
-    }, 40);
-  }, []);
+    }, 60);
+  }, [smoothScrollToElementWithOffset]);
 
   const handleGenerateAndOpenReport = useCallback(() => {
     setActiveTab("results");
@@ -719,10 +806,10 @@ export default function App() {
         document.getElementById("observed-race-report-view") ||
         document.getElementById("section-race-reports");
       if (reportEl) {
-        reportEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        smoothScrollToElementWithOffset(reportEl, 24);
       }
     }, 80);
-  }, []);
+  }, [smoothScrollToElementWithOffset]);
 
   const handleJumpToRace = useCallback(
     (
@@ -741,11 +828,11 @@ export default function App() {
           document.getElementById(`race-card-${raceNumber}`) ||
           document.getElementById(`observed-race-${raceNumber}`);
         if (raceEl) {
-          raceEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          smoothScrollToElementWithOffset(raceEl, 24);
         }
       }, 80);
     },
-    [selectedMeetingId, switchTab]
+    [selectedMeetingId, switchTab, smoothScrollToElementWithOffset]
   );
 
   // All actual meetings racing on the selected date (or date range), prioritized with Main Metro sites at the top
@@ -1707,7 +1794,14 @@ export default function App() {
     <div
       id="top"
       data-theme={themeScheme}
-      className="min-h-screen bg-[#0B110E] text-[#F3F4F0] flex flex-col pb-24 md:pb-12 transition-colors duration-200"
+      style={
+        {
+          "--app-header-height": `${headerHeight}px`,
+        } as React.CSSProperties
+      }
+      className={`min-h-screen min-h-[100dvh] flex flex-col pb-24 md:pb-12 transition-colors duration-200 ${
+        isApple ? "bg-[#F5F5F7] text-[#1D1D1F]" : "bg-[#070B09] text-[#F3F4F0]"
+      }`}
     >
       <OfflineIndicator />
 
@@ -1723,11 +1817,12 @@ export default function App() {
         />
       )}
 
-      {/* Live Race Result Push Notification Overlay Stack (Top-Right) */}
+      {/* Live Race Result Push Notification Overlay Stack (Top-Right, offset below dynamic header) */}
       {pushNotifications.length > 0 && (
         <div
           aria-live="assertive"
-          className="fixed top-20 right-4 z-50 w-full max-w-md space-y-2.5 pointer-events-none px-2 sm:px-0"
+          style={{ top: `calc(var(--app-header-height, 72px) + 12px)` }}
+          className="fixed right-4 z-50 w-full max-w-md space-y-2.5 pointer-events-none px-2 sm:px-0"
         >
           {pushNotifications.map((item) => (
             <div
@@ -1828,379 +1923,473 @@ export default function App() {
         </div>
       )}
 
-      {/* Sticky Header with 3-Tab Navigation (Overview, Betting Selections, Results) */}
-      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 bg-[#0B110E]/95 backdrop-blur-md border-b border-[#1F2D26]">
-        {/* Brand with Cartoon Horse Drinking a Beer Mascot Icon */}
-        <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            setActiveTab("overview");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-[#F3F4F0] whitespace-nowrap"
-        >
-          <img
-            src={horseBeerMascotImg}
-            alt="TurfSheet Cartoon Horse Drinking a Beer Mascot"
-            className="w-8 h-8 rounded-full border border-[#D4AF37] object-cover shadow-sm shrink-0"
-          />
-          <span>TurfSheet - Punters club</span>
-        </a>
+      {/* Sticky Header with Adaptive Navigation and Measured Ref */}
+      <header
+        ref={headerRef}
+        className={`sticky top-0 z-40 backdrop-blur-md px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 transition-colors ${
+          isApple
+            ? "bg-white/90 border-b border-[#E5E5EA] shadow-xs"
+            : "bg-[#0E1512]/95 border-b border-[#1F2D26] shadow-md"
+        }`}
+      >
+        <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+          {/* Brand Wordmark with Mascot in Turf Dark */}
+          <a
+            href="#top"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab("overview");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="flex items-center gap-2 sm:gap-2.5 font-semibold text-base tracking-tight whitespace-nowrap cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+          >
+            {isApple ? (
+              <div className="w-7 h-7 rounded-full bg-[#0071E3] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                🏇
+              </div>
+            ) : (
+              <img
+                src={horseBeerMascotImg}
+                alt="TurfSheet Mascot"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-[#D4AF37]/50 shadow-md"
+              />
+            )}
+            <span className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0] font-bold"}>
+              TurfSheet
+            </span>
+            <span
+              className={`text-xs font-normal hidden xl:inline ${
+                isApple ? "text-[#86868B]" : "text-[#D4AF37] font-mono tracking-wider uppercase text-[11px]"
+              }`}
+            >
+              {isApple ? "Punters Club" : "★ PUNTERS CLUB"}
+            </span>
+          </a>
 
-        {/* Primary 4-Tab Navigation (Overview | Selections | Exotics | Results) */}
-        <nav
-          role="tablist"
-          aria-label="Primary App Tabs"
-          className="hidden md:flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-[#0E1512]/90 backdrop-blur-md p-1.5 text-xs font-semibold"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "overview"}
-            onClick={() => switchTab("overview")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
-              activeTab === "overview"
-                ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#D4AF37]"
+          {/* Primary 4-Tab Adaptive Segmented Control */}
+          <nav
+            role="tablist"
+            aria-label="Primary App Tabs"
+            className={`hidden md:flex items-center p-1 rounded-full border shrink-0 ${
+              isApple
+                ? "bg-[#E5E5EA]/70 border-black/[0.04]"
+                : "bg-[#121A16] border-[#1F2D26]"
             }`}
           >
-            <Flame className="h-3.5 w-3.5" />
-            <span>Overview</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "overview"}
+              onClick={() => switchTab("overview")}
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-xs font-medium transition cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#080D0B] text-[#8A9990]"
+                  ? isApple
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                    : "bg-[#10B981] text-[#070B09] font-bold shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
+                  : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
-              {visibleMeetings.length} Cards
-            </span>
-          </button>
+              <span>Overview</span>
+              <span className="text-[10px] opacity-75 hidden sm:inline">
+                ({visibleMeetings.length})
+              </span>
+            </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "selections"}
-            onClick={() => switchTab("selections")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
-              activeTab === "selections"
-                ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#D4AF37]"
-            }`}
-          >
-            <Table2 className="h-3.5 w-3.5" />
-            <span>Selections</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "selections"}
+              onClick={() => switchTab("selections")}
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-xs font-medium transition cursor-pointer ${
                 activeTab === "selections"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#080D0B] text-[#D4AF37]"
+                  ? isApple
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                    : "bg-[#10B981] text-[#070B09] font-bold shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
+                  : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
-              {activePunter.name.split(" ")[0]}
-            </span>
-          </button>
+              <span>Selections</span>
+              <span className="text-[10px] opacity-75 hidden xl:inline">
+                ({activePunter.name.split(" ")[0]})
+              </span>
+            </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "exotics"}
-            onClick={() => switchTab("exotics")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
-              activeTab === "exotics"
-                ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
-            }`}
-          >
-            <Target className="h-3.5 w-3.5" />
-            <span>Exotics</span>
-            <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "exotics"}
+              onClick={() => switchTab("exotics")}
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-xs font-medium transition cursor-pointer ${
                 activeTab === "exotics"
-                  ? "bg-[#070B09]/20 text-[#070B09]"
-                  : "bg-[#080D0B] text-[#10B981]"
+                  ? isApple
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                    : "bg-[#10B981] text-[#070B09] font-bold shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
+                  : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
-              Trifecta &amp; Quaddie
-            </span>
-          </button>
+              <span>Exotics</span>
+            </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "results"}
-            onClick={() => switchTab("results")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 transition cursor-pointer ${
-              activeTab === "results"
-                ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
-                : "text-[#D5DDD8] hover:bg-[#18241E] hover:text-[#10B981]"
-            }`}
-          >
-            <Trophy className="h-3.5 w-3.5" />
-            <span>Results</span>
-            {activeMeeting && (
-              <span
-                className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
-                  activeTab === "results"
-                    ? "bg-[#070B09]/20 text-[#070B09]"
-                    : "bg-[#080D0B] text-emerald-400"
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "results"}
+              onClick={() => switchTab("results")}
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-xs font-medium transition cursor-pointer ${
+                activeTab === "results"
+                  ? isApple
+                    ? "bg-white text-[#1D1D1F] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                    : "bg-[#10B981] text-[#070B09] font-bold shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
+                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+              }`}
+            >
+              <span>Results</span>
+              {activeMeeting && (
+                <span className="text-[10px] font-mono opacity-80 hidden lg:inline">
+                  {activeMeeting.races.filter((r) =>
+                    isRaceOfficialOrCompleted(r, activeMeeting.date)
+                  ).length}
+                  /{activeMeeting.races.length}
+                </span>
+              )}
+            </button>
+          </nav>
+
+          {/* Actions: Points/$ Toggle + Cloud Status + Theme Selector + Primary Action */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Scoring Mode Segmented Pill */}
+            <div
+              role="group"
+              aria-label="Toggle scoring mode"
+              className={`flex items-center p-0.5 rounded-full border ${
+                isApple
+                  ? "bg-[#E5E5EA]/70 border-black/[0.04]"
+                  : "bg-[#121A16] border-[#1F2D26]"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setScoringMode("points")}
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 text-xs rounded-full transition cursor-pointer ${
+                  scoringMode === "points"
+                    ? isApple
+                      ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                      : "bg-[#10B981] text-[#070B09] font-bold shadow-xs"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
-                {
-                  activeMeeting.races.filter((r) =>
-                    isRaceOfficialOrCompleted(r, activeMeeting.date)
-                  ).length
-                }
-                /{activeMeeting.races.length} Final
+                <span>Points</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setScoringMode("dollars")}
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 text-xs rounded-full transition cursor-pointer ${
+                  scoringMode === "dollars"
+                    ? isApple
+                      ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                      : "bg-[#10B981] text-[#070B09] font-bold shadow-xs"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+              >
+                <span>$ Return</span>
+              </button>
+            </div>
+
+            {/* Theme Selector Dropdown */}
+            <div className="relative" ref={themeMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowThemeMenu((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition cursor-pointer border ${
+                  isApple
+                    ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                    : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0] hover:bg-[#192620]"
+                }`}
+                title="Select Theme: Turf Dark (Default) or Apple Minimalist"
+                aria-label="Theme Selector"
+              >
+                <Palette className={`w-3.5 h-3.5 ${isApple ? "text-[#0071E3]" : "text-[#D4AF37]"}`} />
+                <span className="hidden xl:inline">Theme:</span>
+                <span className="font-semibold hidden sm:inline">{isApple ? "Apple Clean" : "Turf Dark"}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+
+              {showThemeMenu && (
+                <div
+                  className={`absolute right-0 mt-1.5 w-60 rounded-2xl p-1.5 shadow-2xl border z-50 animate-in fade-in zoom-in-95 duration-100 ${
+                    isApple
+                      ? "bg-white border-[#E5E5EA] text-[#1D1D1F]"
+                      : "bg-[#0E1512] border-[#2A3F33] text-[#F3F4F0]"
+                  }`}
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase opacity-60">
+                    Select Appearance Theme
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setThemeScheme("default");
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs text-left transition cursor-pointer ${
+                      !isApple
+                        ? "bg-[#10B981]/20 text-[#10B981] font-semibold border border-[#10B981]/30"
+                        : "hover:bg-[#F2F2F7] text-[#1D1D1F]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">🏇</span>
+                      <div>
+                        <div className="font-semibold flex items-center gap-1.5">
+                          <span>Turf Dark</span>
+                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] font-mono">
+                            Default
+                          </span>
+                        </div>
+                        <div className={`text-[11px] ${!isApple ? "text-[#A7D7C5]" : "text-[#86868B]"}`}>
+                          Rich racing green, gold &amp; punters club
+                        </div>
+                      </div>
+                    </div>
+                    {!isApple && <Check className="w-4 h-4 text-[#10B981] shrink-0" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setThemeScheme("apple");
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs text-left transition cursor-pointer mt-1 ${
+                      isApple
+                        ? "bg-[#0071E3]/10 text-[#0071E3] font-semibold border border-[#0071E3]/25"
+                        : "hover:bg-[#192620] text-[#F3F4F0]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base"></span>
+                      <div>
+                        <div className="font-semibold">Apple Minimalist</div>
+                        <div className={`text-[11px] ${isApple ? "text-[#0071E3]/80" : "text-[#86868B]"}`}>
+                          Clean white, SF type &amp; Apple blue
+                        </div>
+                      </div>
+                    </div>
+                    {isApple && <Check className="w-4 h-4 text-[#0071E3] shrink-0" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Cloud Auto-Save Badge (Kept clean on xl screens) */}
+            <button
+              type="button"
+              onClick={() => persistPuntersToCloud(punters, true)}
+              className={`hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer border ${
+                isApple
+                  ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                  : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0] hover:bg-[#192620]"
+              }`}
+              title={`Synced at ${lastSyncedTime}. Click to force sync.`}
+            >
+              {cloudSyncState === "saving" ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0071E3]" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#34C759]" />
+              )}
+              <span>{cloudSyncState === "saving" ? "Saving..." : "Saved"}</span>
+            </button>
+
+            {/* Report Button */}
+            <button
+              type="button"
+              onClick={handleGenerateAndOpenReport}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition cursor-pointer border ${
+                isApple
+                  ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                  : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0] hover:bg-[#192620]"
+              }`}
+              title="Generate Race Report"
+            >
+              <FileText className={`w-3.5 h-3.5 ${isApple ? "text-[#86868B]" : "text-[#D4AF37]"}`} />
+              <span className="hidden md:inline">Report</span>
+            </button>
+
+            {/* Sound Toggle */}
+            <button
+              type="button"
+              onClick={() => setSoundEnabled((prev) => !prev)}
+              className={`p-1.5 sm:p-2 rounded-full transition cursor-pointer border ${
+                isApple
+                  ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                  : "bg-[#121A16] border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0] hover:bg-[#192620]"
+              }`}
+              title={soundEnabled ? "Sound On" : "Sound Muted"}
+              aria-label="Toggle Sound"
+            >
+              {soundEnabled ? (
+                <Volume2 className="w-3.5 h-3.5 text-[#34C759]" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5 opacity-60" />
+              )}
+            </button>
+
+            {/* Primary Action Button */}
+            <button
+              type="button"
+              disabled={isScraping}
+              onClick={() =>
+                handleScrapeNswTab(selectedDate, endDate, trackFilter, {
+                  silent: false,
+                  preserveSelection: true,
+                  forceRefresh: true,
+                })
+              }
+              className="apple-btn-primary !px-3 sm:!px-4 !py-1 sm:!py-1.5"
+              title={`Background refresh ${
+                autoRefreshResults ? "active" : "paused"
+              }. Click to update now.`}
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${
+                  isScraping || isBackgroundRefreshing ? "animate-spin" : ""
+                }`}
+              />
+              <span className="hidden sm:inline md:hidden lg:inline">
+                {isScraping
+                  ? "Updating..."
+                  : isBackgroundRefreshing
+                  ? "Syncing..."
+                  : "Update Results"}
               </span>
-            )}
-          </button>
-        </nav>
-
-        {/* Actions: Cross-Device Cloud Save Status + PWA Install + Points/$ Toggle + Sound + Sync */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => persistPuntersToCloud(punters, true)}
-            className="min-h-[36px] px-2.5 py-1.5 text-xs font-semibold rounded-md bg-[#121A16] border border-[#10B981]/50 text-[#10B981] hover:bg-[#10B981]/15 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5"
-            title={`Selections auto-save across all devices. Last synced: ${lastSyncedTime}. Click to force sync now.`}
-          >
-            {cloudSyncState === "saving" ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#D4AF37]" />
-            ) : (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
-            )}
-            <span className="hidden lg:inline">
-              {cloudSyncState === "saving"
-                ? "Saving..."
-                : `Saved · All Devices`}
-            </span>
-          </button>
-
-          {firebaseUser ? (
-            <button
-              type="button"
-              onClick={() =>
-                signOutFirebaseUser().then(() =>
-                  triggerToast("Signed out of personal Google Cloud backup.")
-                )
-              }
-              className="min-h-[36px] px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#121A16] border border-[#1F2D26] text-[#D5DDD8] hover:border-[#D4AF37] transition-colors whitespace-nowrap cursor-pointer hidden xl:flex items-center gap-1.5"
-              title={`Signed in as ${firebaseUser.email || firebaseUser.displayName}. Click to sign out.`}
-            >
-              <Cloud className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>{firebaseUser.displayName?.split(" ")[0] || "Cloud"}</span>
-              <LogOut className="w-3 h-3 text-[#8A9990]" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                signInWithGooglePopup()
-                  .then((u) => {
-                    if (u) {
-                      triggerToast(
-                        `Signed in as ${u.email || u.displayName} — Firestore real-time backup active.`
-                      );
-                    }
-                  })
-                  .catch(() => {})
-              }
-              className="min-h-[36px] px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#121A16] border border-[#1F2D26] text-[#D4AF37] hover:border-[#D4AF37] transition-colors whitespace-nowrap cursor-pointer hidden xl:flex items-center gap-1.5"
-              title="Optional: Sign in with Google to also link selections to your personal Firebase Firestore account"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Google Sync</span>
-            </button>
-          )}
-
-          <div
-            role="group"
-            aria-label="Toggle live tracking between Points and Dollar Return"
-            className="flex items-center p-1 bg-[#121A16] border border-[#1F2D26] rounded-md"
-          >
-            <button
-              type="button"
-              onClick={() => setScoringMode("points")}
-              className={`min-h-[30px] flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap cursor-pointer ${
-                scoringMode === "points"
-                  ? "bg-[#D4AF37] text-[#0B110E] font-semibold"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
-              }`}
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Points</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setScoringMode("dollars")}
-              className={`min-h-[30px] flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap cursor-pointer ${
-                scoringMode === "dollars"
-                  ? "bg-[#10B981] text-[#0B110E] font-semibold"
-                  : "text-[#8A9990] hover:text-[#F3F4F0]"
-              }`}
-            >
-              <DollarSign className="w-3.5 h-3.5" />
-              <span>$ Return</span>
+              <span className="inline sm:hidden md:inline lg:hidden">
+                {isScraping
+                  ? "Updating..."
+                  : isBackgroundRefreshing
+                  ? "Syncing..."
+                  : "Update"}
+              </span>
             </button>
           </div>
-
-          {/* Theme & Colour Scheme Selector (Default, Dark, Light, Race/Green) */}
-          <div
-            role="group"
-            aria-label="Theme and Colour Scheme Selector"
-            className="flex items-center gap-1 bg-[#121A16] border border-[#1F2D26] rounded-md px-2 py-1"
-            title="Switch Theme & Colour Scheme (Default, Dark, Light, Race/Green)"
-          >
-            <Palette className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-            <select
-              aria-label="Select Theme and Colour Scheme"
-              value={themeScheme}
-              onChange={(e) => {
-                const nextTheme = e.target.value as AppThemeScheme;
-                setThemeScheme(nextTheme);
-                const labelMap: Record<AppThemeScheme, string> = {
-                  default: "Default (Turf Charcoal & Gold)",
-                  dark: "Dark (Midnight Obsidian)",
-                  light: "Light (Daylight Form Guide)",
-                  race: "Race / Green (Royal Turf Emerald)",
-                };
-                triggerToast(`Theme switched to ${labelMap[nextTheme]}.`);
-              }}
-              className="bg-transparent text-xs font-semibold text-[#F3F4F0] focus:outline-none cursor-pointer pr-1"
-            >
-              <option value="default" className="bg-[#121A16] text-[#F3F4F0]">
-                Theme: Default
-              </option>
-              <option value="dark" className="bg-[#121A16] text-[#F3F4F0]">
-                Theme: Dark
-              </option>
-              <option value="light" className="bg-[#121A16] text-[#F3F4F0]">
-                Theme: Light
-              </option>
-              <option value="race" className="bg-[#121A16] text-[#F3F4F0]">
-                Theme: Race / Green
-              </option>
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGenerateAndOpenReport}
-            className="min-h-[36px] px-2.5 py-1.5 text-xs font-semibold rounded-md bg-[#121A16] border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/15 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5"
-            title="Generate Race Report and jump straight to the report"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="hidden lg:inline">Generate Report</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (!activeMeeting) return;
-              const raceToPush = nextPushRaceCursor;
-              triggerRaceResultPushNotification(raceToPush, activeMeeting, punters, true);
-              setNextPushRaceCursor((prev) =>
-                prev < activeMeeting.races.length ? prev + 1 : 1
-              );
-            }}
-            className="min-h-[36px] px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#121A16] border border-[#1F2D26] text-[#F3F4F0] hover:border-[#D4AF37] transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5"
-            title="Trigger Race Result Confirmation Alert & Browser Sound"
-          >
-            <Bell className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="hidden xl:inline">R{nextPushRaceCursor} Alert</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSoundEnabled((prev) => !prev)}
-            className="min-h-[36px] px-2 py-1.5 text-xs rounded-md bg-[#121A16] border border-[#1F2D26] text-[#8A9990] hover:text-[#F3F4F0] transition-colors cursor-pointer"
-            title={
-              soundEnabled
-                ? "Notification Sounds On"
-                : "Notification Sounds Muted"
-            }
-            aria-label="Toggle Notification Sound Effects"
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-[#10B981]" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-[#EF4444]" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            disabled={isScraping}
-            onClick={() =>
-              handleScrapeNswTab(selectedDate, endDate, trackFilter, {
-                silent: false,
-                preserveSelection: true,
-                forceRefresh: true,
-              })
-            }
-            title={`Background results auto-refresh ${
-              autoRefreshResults
-                ? `active (next in ${nextRefreshCountdown}s)`
-                : "paused"
-            }. Last updated: ${lastResultsUpdatedAt}. Click to force immediate refresh.`}
-            className="min-h-[36px] px-3 py-1.5 text-xs font-semibold rounded-md bg-[#D4AF37] text-[#0B110E] hover:bg-[#E2C152] disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${
-                isScraping || isBackgroundRefreshing ? "animate-spin" : ""
-              }`}
-            />
-            <span className="hidden sm:inline">
-              {isScraping
-                ? "Updating..."
-                : isBackgroundRefreshing
-                ? "Syncing Results..."
-                : "Update Results"}
-            </span>
-          </button>
         </div>
       </header>
 
-      {/* Main Tabbed Container */}
-      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 pt-4 pb-28 md:pb-20 space-y-6 flex-1">
-        {/* Hero Banner — Only shows TurfSheet - Punters club over the glamour race day imagery */}
-        <section className="relative rounded-xl overflow-hidden border border-[#1F2D26] bg-[#121A16]">
-          <div className="relative h-48 sm:h-60 md:h-64 w-full overflow-hidden bg-gradient-to-r from-[#0E1E16] via-[#132A1F] to-[#0B110E]">
-            {!heroImgFailed && (
-              <div className="grid grid-cols-3 w-full h-full">
-                <img
-                  src={racedayGlamourImg}
-                  alt="Glamorous buxom ladies in low-cut Spring Carnival racing attire with champagne at the turf track"
-                  referrerPolicy="no-referrer"
-                  onError={() => setHeroImgFailed(true)}
-                  className="w-full h-full object-cover object-top opacity-95 border-r border-[#1F2D26]/40"
-                />
-                <img
-                  src={flemingtonLadiesImg}
-                  alt="Gorgeous curvy women in revealing emerald and gold race day fashion at the trackside rail"
-                  referrerPolicy="no-referrer"
-                  onError={() => setHeroImgFailed(true)}
-                  className="w-full h-full object-cover object-top opacity-95 border-r border-[#1F2D26]/40"
-                />
-                <img
-                  src={vipTracksideLadiesImg}
-                  alt="Stunning buxom ladies in cocktail race day attire in the VIP enclosure"
-                  referrerPolicy="no-referrer"
-                  onError={() => setHeroImgFailed(true)}
-                  className="w-full h-full object-cover object-top opacity-95"
-                />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B110E]/90 via-[#0B110E]/20 to-transparent" />
-            <div className="absolute inset-0 p-4 sm:p-6 flex items-end">
-              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-[#F3F4F0] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-                TurfSheet - Punters club
-              </h1>
+      {/* Main Tabbed Container with Dynamic Header Offset Clearance */}
+      <main
+        style={{
+          paddingTop: "calc(var(--app-header-height, 68px) * 0.12 + 1.25rem)",
+        }}
+        className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 pb-32 space-y-8 flex-1"
+      >
+        {/* Hero Section: Adaptive Turf Dark Default vs Apple Minimalist */}
+        {isApple ? (
+          <section className="text-center pt-4 pb-2 max-w-4xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0071E3]/10 text-[#0071E3] text-xs font-semibold tracking-wide">
+              <span>NSW TAB RACING &amp; BETTING SYNDICATE</span>
             </div>
-          </div>
-        </section>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1D1D1F]">
+              TurfSheet Punters Club
+            </h1>
+            <p className="text-sm sm:text-base text-[#86868B] max-w-2xl mx-auto leading-relaxed">
+              Precision racecards, member selections, consensus algorithms, and live TAB dividend scoring in one refined workspace.
+            </p>
+
+            {/* Quiet Metric Indicators */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-5 sm:gap-8 text-xs text-[#86868B]">
+              <div>
+                <span className="text-[#1D1D1F] font-semibold text-sm tabular-nums mr-1">
+                  {visibleMeetings.length}
+                </span>
+                <span>Active Meeting{visibleMeetings.length !== 1 ? "s" : ""}</span>
+              </div>
+              <span className="text-[#D2D2D7]">•</span>
+              <div>
+                <span className="text-[#1D1D1F] font-semibold text-sm mr-1">
+                  {activePunter.name}
+                </span>
+                <span>Active Punter</span>
+              </div>
+              <span className="text-[#D2D2D7]">•</span>
+              <div>
+                <span className="text-[#1D1D1F] font-semibold text-sm tabular-nums mr-1">
+                  {visibleMeetings.reduce((acc, m) => acc + m.races.length, 0)}
+                </span>
+                <span>Races Scheduled</span>
+              </div>
+              <span className="text-[#D2D2D7]">•</span>
+              <div className="flex items-center gap-1.5 text-[#34C759] font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                <span>Auto-Sync Active</span>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-[#1F2D26] bg-gradient-to-b from-[#0E1512] to-[#070B09] p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#10B981]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-start gap-4 text-left">
+                <img
+                  src={horseBeerMascotImg}
+                  alt="TurfSheet Punters Club"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-[#D4AF37] shadow-lg shrink-0"
+                />
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-mono font-bold uppercase tracking-wider">
+                      ★ OFFICIAL SYNDICATE
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/20 border border-[#10B981]/40 text-[#10B981] text-[11px] font-mono font-semibold">
+                      NSW TAB LIVE
+                    </span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#F3F4F0] font-display">
+                    TURFSHEET PUNTERS CLUB
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#8A9990] max-w-xl">
+                    High-stakes horse racing ledger, consensus algorithms, exotic dividends, and real-time TAB results.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Key Metrics in Turf Dark */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full md:w-auto shrink-0">
+                <div className="rounded-xl border border-[#1F2D26] bg-[#0B110E] p-3 text-center">
+                  <div className="text-[10px] text-[#8A9990] uppercase font-mono">Meetings</div>
+                  <div className="text-lg font-bold font-mono text-[#F3F4F0] tabular-nums">{visibleMeetings.length}</div>
+                </div>
+                <div className="rounded-xl border border-[#1F2D26] bg-[#0B110E] p-3 text-center">
+                  <div className="text-[10px] text-[#8A9990] uppercase font-mono">Punters</div>
+                  <div className="text-lg font-bold font-mono text-[#D4AF37] tabular-nums">{punters.length}</div>
+                </div>
+                <div className="rounded-xl border border-[#1F2D26] bg-[#0B110E] p-3 text-center">
+                  <div className="text-[10px] text-[#8A9990] uppercase font-mono">Scheduled</div>
+                  <div className="text-lg font-bold font-mono text-[#F3F4F0] tabular-nums">
+                    {visibleMeetings.reduce((acc, m) => acc + m.races.length, 0)}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#1F2D26] bg-[#0B110E] p-3 text-center">
+                  <div className="text-[10px] text-[#8A9990] uppercase font-mono">Auto-Sync</div>
+                  <div className="text-sm font-bold font-mono text-[#10B981] flex items-center justify-center gap-1 mt-1">
+                    <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+                    ACTIVE
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Date & Date Range Calendar Control Bar */}
         <DateRangeCalendarBar
@@ -2226,54 +2415,62 @@ export default function App() {
           isScraping={isScraping}
         />
 
-        {/* Prominent 4-Tab Workspace Switcher Bar */}
+        {/* 4-Card Structured Workspace Grid */}
         <div
           id="tab-workspace-anchor"
           role="tablist"
           aria-label="Workspace Tabs"
-          className="scroll-mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 rounded-xl border border-[#23352C] bg-[#0E1813] p-2"
+          style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 28px)" }}
+          className="scroll-section-clearance grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "overview"}
             onClick={() => switchTab("overview")}
-            className={`flex items-center justify-between rounded-lg px-4 py-3 text-left transition cursor-pointer ${
+            className={`apple-card p-5 text-left transition-all cursor-pointer flex flex-col justify-between gap-4 ${
               activeTab === "overview"
-                ? "bg-[#D4AF37] text-[#070B09] shadow-md"
-                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
+                ? isApple
+                  ? "border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-md bg-white"
+                  : "border-[#10B981] ring-2 ring-[#10B981]/25 bg-[#0E1512] shadow-lg"
+                : isApple
+                ? "hover:border-[#D2D2D7]"
+                : "hover:border-[#2A3F33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Flame
-                className={`h-4 w-4 shrink-0 ${
-                  activeTab === "overview" ? "text-[#070B09]" : "text-[#D4AF37]"
-                }`}
-              />
-              <div>
-                <div className="text-xs sm:text-sm font-bold">
-                  Overview
-                </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className={`text-[11px] ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                     activeTab === "overview"
-                      ? "text-[#070B09]/80 font-medium"
-                      : "text-[#8A9990]"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : isApple
+                      ? "bg-[#F2F2F7] text-[#86868B]"
+                      : "bg-[#121A16] text-[#8A9990]"
                   }`}
                 >
-                  VIC &amp; NSW Feature Cards · Top 3 Favourites · Full Form
+                  <Flame className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}`}>
+                    Overview
+                  </h3>
+                  <p className={`text-xs ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
+                    Feature Cards &amp; Full Form
+                  </p>
                 </div>
               </div>
             </div>
-            <span
-              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                activeTab === "overview"
-                  ? "bg-[#070B09]/15 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
-              }`}
-            >
-              {visibleMeetings.length} Cards
-            </span>
+            <div className={`flex items-center justify-between text-xs pt-2 border-t ${
+              isApple ? "text-[#86868B] border-[#F2F2F7]" : "text-[#8A9990] border-[#1F2D26]"
+            }`}>
+              <span>NSW &amp; VIC Cards</span>
+              <span className={`font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#D4AF37]"}`}>
+                {visibleMeetings.length} Cards
+              </span>
+            </div>
           </button>
 
           <button
@@ -2281,44 +2478,49 @@ export default function App() {
             role="tab"
             aria-selected={activeTab === "selections"}
             onClick={() => switchTab("selections")}
-            className={`flex items-center justify-between rounded-lg px-4 py-3 text-left transition cursor-pointer ${
+            className={`apple-card p-5 text-left transition-all cursor-pointer flex flex-col justify-between gap-4 ${
               activeTab === "selections"
-                ? "bg-[#D4AF37] text-[#070B09] shadow-md"
-                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
+                ? isApple
+                  ? "border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-md bg-white"
+                  : "border-[#10B981] ring-2 ring-[#10B981]/25 bg-[#0E1512] shadow-lg"
+                : isApple
+                ? "hover:border-[#D2D2D7]"
+                : "hover:border-[#2A3F33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Table2
-                className={`h-4 w-4 shrink-0 ${
-                  activeTab === "selections"
-                    ? "text-[#070B09]"
-                    : "text-[#D4AF37]"
-                }`}
-              />
-              <div>
-                <div className="text-xs sm:text-sm font-bold">
-                  Betting Selections
-                </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className={`text-[11px] ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                     activeTab === "selections"
-                      ? "text-[#070B09]/80 font-medium"
-                      : "text-[#8A9990]"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : isApple
+                      ? "bg-[#F2F2F7] text-[#86868B]"
+                      : "bg-[#121A16] text-[#8A9990]"
                   }`}
                 >
-                  1st/2nd/3rd Picks · Speed Maps &amp; Flucs · 🃏 Joker
+                  <Table2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}`}>
+                    Betting Selections
+                  </h3>
+                  <p className={`text-xs ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
+                    1st/2nd/3rd Picks &amp; Joker
+                  </p>
                 </div>
               </div>
             </div>
-            <span
-              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                activeTab === "selections"
-                  ? "bg-[#070B09]/15 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#D4AF37]"
-              }`}
-            >
-              {activePunter.name}
-            </span>
+            <div className={`flex items-center justify-between text-xs pt-2 border-t ${
+              isApple ? "text-[#86868B] border-[#F2F2F7]" : "text-[#8A9990] border-[#1F2D26]"
+            }`}>
+              <span>Active Punter</span>
+              <span className={`font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#D4AF37]"}`}>
+                {activePunter.name}
+              </span>
+            </div>
           </button>
 
           <button
@@ -2326,44 +2528,49 @@ export default function App() {
             role="tab"
             aria-selected={activeTab === "exotics"}
             onClick={() => switchTab("exotics")}
-            className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition cursor-pointer ${
+            className={`apple-card p-5 text-left transition-all cursor-pointer flex flex-col justify-between gap-4 ${
               activeTab === "exotics"
-                ? "bg-[#10B981] text-[#070B09] shadow-md font-bold"
-                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
+                ? isApple
+                  ? "border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-md bg-white"
+                  : "border-[#10B981] ring-2 ring-[#10B981]/25 bg-[#0E1512] shadow-lg"
+                : isApple
+                ? "hover:border-[#D2D2D7]"
+                : "hover:border-[#2A3F33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Target
-                className={`h-4 w-4 shrink-0 ${
-                  activeTab === "exotics"
-                    ? "text-[#070B09]"
-                    : "text-[#10B981]"
-                }`}
-              />
-              <div>
-                <div className="text-xs sm:text-sm font-bold">
-                  Exotics Studio
-                </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className={`text-[11px] ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                     activeTab === "exotics"
-                      ? "text-[#070B09]/80 font-medium"
-                      : "text-[#8A9990]"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : isApple
+                      ? "bg-[#F2F2F7] text-[#86868B]"
+                      : "bg-[#121A16] text-[#8A9990]"
                   }`}
                 >
-                  Trifectas &amp; Quaddies · Flexi Calculations &amp; Sweat Matrix
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}`}>
+                    Exotics Studio
+                  </h3>
+                  <p className={`text-xs ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
+                    Trifectas &amp; Quaddies
+                  </p>
                 </div>
               </div>
             </div>
-            <span
-              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                activeTab === "exotics"
-                  ? "bg-[#070B09]/15 text-[#070B09]"
-                  : "bg-[#0B110E] text-[#10B981]"
-              }`}
-            >
-              Studio
-            </span>
+            <div className={`flex items-center justify-between text-xs pt-2 border-t ${
+              isApple ? "text-[#86868B] border-[#F2F2F7]" : "text-[#8A9990] border-[#1F2D26]"
+            }`}>
+              <span>Flexi Calculator</span>
+              <span className={`font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#D4AF37]"}`}>
+                Studio
+              </span>
+            </div>
           </button>
 
           <button
@@ -2371,63 +2578,68 @@ export default function App() {
             role="tab"
             aria-selected={activeTab === "results"}
             onClick={() => switchTab("results")}
-            className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition cursor-pointer ${
+            className={`apple-card p-5 text-left transition-all cursor-pointer flex flex-col justify-between gap-4 ${
               activeTab === "results"
-                ? "bg-[#10B981] text-[#070B09] shadow-md font-bold"
-                : "bg-[#121F18] text-[#D5DDD8] hover:bg-[#17281F] hover:text-white border border-[#1E2E26]"
+                ? isApple
+                  ? "border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-md bg-white"
+                  : "border-[#10B981] ring-2 ring-[#10B981]/25 bg-[#0E1512] shadow-lg"
+                : isApple
+                ? "hover:border-[#D2D2D7]"
+                : "hover:border-[#2A3F33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Trophy
-                className={`h-4 w-4 shrink-0 ${
-                  activeTab === "results"
-                    ? "text-[#070B09]"
-                    : "text-emerald-400"
-                }`}
-              />
-              <div>
-                <div className="text-xs sm:text-sm font-bold">
-                  Results
-                </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className={`text-[11px] ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                     activeTab === "results"
-                      ? "text-[#070B09]/80 font-medium"
-                      : "text-[#8A9990]"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : isApple
+                      ? "bg-[#F2F2F7] text-[#86868B]"
+                      : "bg-[#121A16] text-[#8A9990]"
                   }`}
                 >
-                  Official Standings · Points &amp; Returns · Report Generator
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}`}>
+                    Official Results
+                  </h3>
+                  <p className={`text-xs ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
+                    Leaderboard &amp; Dividends
+                  </p>
                 </div>
               </div>
             </div>
-            <span
-              className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${
-                activeTab === "results"
-                  ? "bg-[#070B09]/15 text-[#070B09]"
-                  : "bg-[#0B110E] text-emerald-400"
-              }`}
-            >
-              {activeMeeting
-                ? `${
-                    activeMeeting.races.filter((r) =>
-                      isRaceOfficialOrCompleted(r, activeMeeting.date)
-                    ).length
-                  }/${activeMeeting.races.length} Final`
-                : "Live"}
-            </span>
+            <div className={`flex items-center justify-between text-xs pt-2 border-t ${
+              isApple ? "text-[#86868B] border-[#F2F2F7]" : "text-[#8A9990] border-[#1F2D26]"
+            }`}>
+              <span>Completed Races</span>
+              <span className={`font-semibold ${isApple ? "text-[#1D1D1F]" : "text-[#D4AF37]"}`}>
+                {activeMeeting
+                  ? `${
+                      activeMeeting.races.filter((r) =>
+                        isRaceOfficialOrCompleted(r, activeMeeting.date)
+                      ).length
+                    }/${activeMeeting.races.length} Final`
+                  : "Live"}
+              </span>
+            </div>
           </button>
         </div>
 
         {/* Toast or Error Notice */}
         {toastMessage && (
-          <div className="bg-[#152920] border border-[#10B981]/50 text-[#F3F4F0] px-4 py-2.5 rounded-md text-xs flex items-center justify-between">
-            <span>{toastMessage}</span>
-            <div className="flex items-center gap-3 ml-4 shrink-0">
+          <div className="bg-[#EAFBF0] border border-[#34C759]/30 text-[#1D1D1F] px-4 py-3 rounded-2xl text-xs flex items-center justify-between shadow-xs">
+            <span className="font-medium">{toastMessage}</span>
+            <div className="flex items-center gap-2 ml-4 shrink-0">
               {activeTab !== "selections" && (
                 <button
                   type="button"
                   onClick={() => switchTab("selections")}
-                  className="text-[#D4AF37] font-semibold hover:underline whitespace-nowrap cursor-pointer"
+                  className="px-3 py-1 rounded-full bg-white border border-[#E5E5EA] text-[#0071E3] font-semibold hover:border-[#0071E3] transition-all whitespace-nowrap cursor-pointer shadow-xs"
                 >
                   Open Betting Selections →
                 </button>
@@ -2436,7 +2648,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => switchTab("results")}
-                  className="text-[#10B981] font-semibold hover:underline whitespace-nowrap cursor-pointer"
+                  className="px-3 py-1 rounded-full bg-white border border-[#E5E5EA] text-[#34C759] font-semibold hover:border-[#34C759] transition-all whitespace-nowrap cursor-pointer shadow-xs"
                 >
                   Open Results →
                 </button>
@@ -2446,12 +2658,12 @@ export default function App() {
         )}
 
         {scrapeError && (
-          <div className="bg-[#291414] border border-[#EF4444]/40 text-[#F3F4F0] px-4 py-2.5 rounded-md text-xs flex items-center justify-between">
-            <span>{scrapeError}</span>
+          <div className="bg-[#FEECEB] border border-[#FF3B30]/30 text-[#1D1D1F] px-4 py-3 rounded-2xl text-xs flex items-center justify-between shadow-xs">
+            <span className="font-medium">{scrapeError}</span>
             <button
               type="button"
               onClick={() => setScrapeError(null)}
-              className="text-xs text-[#8A9990] hover:text-[#F3F4F0] ml-4 cursor-pointer"
+              className="text-xs text-[#86868B] hover:text-[#1D1D1F] ml-4 font-medium cursor-pointer"
             >
               Dismiss
             </button>
@@ -2459,20 +2671,20 @@ export default function App() {
         )}
 
         {visibleMeetings.length === 0 && (
-          <div className="bg-[#121A16] border border-[#1F2D26] rounded-lg p-8 text-center space-y-3">
-            <div className="text-base font-semibold text-[#F3F4F0]">
+          <div className="apple-card p-10 text-center space-y-3">
+            <div className="text-base font-semibold text-[#1D1D1F]">
               No Scheduled Racing Found for{" "}
               {trackFilter ? `"${trackFilter}" on ` : ""}
               {formatReadableDate(selectedDate)} ({selectedDate})
             </div>
-            <p className="text-xs text-[#8A9990] max-w-xl mx-auto">
+            <p className="text-xs text-[#86868B] max-w-xl mx-auto leading-relaxed">
               To maintain strict data integrity, substitute or inferred venue data is never displayed when an event is not listed for the nominated date.
             </p>
             {trackFilter && allMeetingsOnSelectedDate.length > 0 && (
               <button
                 type="button"
                 onClick={() => setTrackFilter("")}
-                className="px-4 py-2 rounded-md bg-[#D4AF37] text-[#0B110E] text-xs font-semibold hover:bg-[#E2C152] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-full bg-[#0071E3] text-white text-xs font-semibold hover:bg-[#0077ED] transition-colors cursor-pointer shadow-xs"
               >
                 Show All {allMeetingsOnSelectedDate.length} Venues Racing on{" "}
                 {selectedDate} (
@@ -2505,7 +2717,10 @@ export default function App() {
                   ]);
                 }
                 setSelectedRaceNumber(raceNo);
-                scrollToSection("section-full-racecard");
+                // Allow state re-render to paint the target race runners before calculating scroll position
+                setTimeout(() => {
+                  scrollToSection("section-full-racecard");
+                }, 60);
               }}
               onJumpToSelectionsForMeeting={(meetingId) => {
                 setSelectedMeetingId(meetingId);
@@ -2520,15 +2735,19 @@ export default function App() {
             />
 
             {activeMeeting && (
-              <section id="section-full-racecard" className="scroll-mt-24 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#23352C] bg-[#0E1813] px-4 py-3">
+              <section
+                id="section-full-racecard"
+                style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 32px)" }}
+                className="scroll-section-clearance space-y-4"
+              >
+                <div className="apple-card p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-serif text-lg sm:text-xl font-bold text-[#F3F4F0]">
-                      Full Field &amp; Form Guide Inspector — {activeMeeting.venue} (Race{" "}
+                    <h2 className="text-base sm:text-lg font-bold text-[#1D1D1F] tracking-tight">
+                      Full Field &amp; Form Guide — {activeMeeting.venue} (Race{" "}
                       {selectedRaceNumber})
                     </h2>
-                    <p className="text-xs text-[#9BA8A1]">
-                      Inspect every runner, barrier, jockey, trainer, weight, breeding, and live odds, or assign 1st/2nd/3rd preferences directly.
+                    <p className="text-xs text-[#86868B] mt-0.5">
+                      Inspect every runner, barrier, jockey, trainer, weight, and live odds, or assign 1st/2nd/3rd preferences directly.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -2547,24 +2766,24 @@ export default function App() {
                             : selectedRaceNumber
                         );
                       }}
-                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+                      className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                         getPunterJokerForMeeting(activePunter, activeMeeting) ===
                         selectedRaceNumber
-                          ? "bg-[#D4AF37] text-[#0B110E] border-[#D4AF37]"
-                          : "border-[#D4AF37]/50 bg-[#0B110E] text-[#D4AF37] hover:bg-[#D4AF37]/20"
+                          ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                          : "border-[#FF9500]/40 bg-white text-[#FF9500] hover:bg-[#FFF5E6]"
                       }`}
                     >
                       {getPunterJokerForMeeting(activePunter, activeMeeting) ===
                       selectedRaceNumber
                         ? `🃏 Race ${selectedRaceNumber} is ${activePunter.name}'s Joker (2× Active)`
-                        : `🃏 Play Joker (2×) on Race ${selectedRaceNumber} for ${activePunter.name}`}
+                        : `🃏 Play Joker (2×) on Race ${selectedRaceNumber}`}
                     </button>
                     <button
                       type="button"
                       onClick={() => switchTab("selections")}
-                      className="rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1.5 text-xs font-bold text-[#D4AF37] hover:bg-[#D4AF37]/25 cursor-pointer"
+                      className="rounded-full border border-[#0071E3] bg-[#0071E3] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#0077ED] shadow-xs transition-all cursor-pointer"
                     >
-                      Open Betting Selections Tab →
+                      Open Betting Selections →
                     </button>
                   </div>
                 </div>

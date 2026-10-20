@@ -418,27 +418,27 @@ export const TanStackVirtualRunnersTable: React.FC<
   return (
     <div className="space-y-3">
       {/* TanStack Table Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-[#0E1813] border-b border-[#1F2D26]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-[#FAF9FA] border-b border-[#E5E5EA]">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#8A9990] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#86868B] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              placeholder="Filter TanStack runner rows..."
-              className="bg-[#0B110E] border border-[#1F2D26] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#F3F4F0] placeholder-[#8A9990] focus:outline-none focus:border-[#D4AF37] w-64"
+              placeholder="Search runners, jockeys, trainers..."
+              className="bg-white border border-[#D2D2D7] rounded-full pl-8 pr-3 py-1.5 text-xs text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20 w-64"
             />
           </div>
-          <span className="text-xs text-[#8A9990] font-mono tabular-nums">
+          <span className="text-xs text-[#86868B] font-mono tabular-nums">
             {rows.length} of {data.length} Runners
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EBF5FF] text-[#0071E3] flex items-center gap-1.5">
             <Zap className="w-3 h-3" />
-            <span>TanStack Virtual Windowing Active</span>
+            <span>Virtual Table Active</span>
           </span>
         </div>
       </div>
@@ -446,16 +446,16 @@ export const TanStackVirtualRunnersTable: React.FC<
       {/* TanStack Virtual Scroll Container */}
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto max-h-[640px] border-b border-[#1F2D26]"
+        className="overflow-x-auto overflow-y-auto max-h-[640px] border-b border-[#E5E5EA]"
       >
         <table className="w-full text-left border-collapse min-w-[880px]">
-          <thead className="sticky top-0 z-10 bg-[#0B110E] border-b border-[#1F2D26] text-[12px] text-[#8A9990] font-medium shadow-sm">
+          <thead className="sticky top-0 z-10 bg-[#FAF9FA] border-b border-[#E5E5EA] text-[12px] text-[#86868B] font-medium shadow-xs">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="py-2.5 px-3 whitespace-nowrap bg-[#0B110E]"
+                    className="py-2.5 px-3 whitespace-nowrap bg-[#FAF9FA] text-[#86868B]"
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -471,7 +471,7 @@ export const TanStackVirtualRunnersTable: React.FC<
           </thead>
 
           <tbody
-            className="text-xs divide-y divide-[#1F2D26]"
+            className="text-xs divide-y divide-[#E5E5EA]"
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               position: "relative",
@@ -492,8 +492,8 @@ export const TanStackVirtualRunnersTable: React.FC<
                   ref={rowVirtualizer.measureElement}
                   className={`transition-colors ${
                     isPicked
-                      ? "bg-[#16271E]/70 hover:bg-[#1A3327]"
-                      : "hover:bg-[#15201B]"
+                      ? "bg-[#F2F7FF] hover:bg-[#E8F2FF]"
+                      : "hover:bg-[#FAF9FA]"
                   }`}
                   style={{
                     position: "absolute",
@@ -506,7 +506,7 @@ export const TanStackVirtualRunnersTable: React.FC<
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="py-2.5 px-3 align-middle"
+                      className="py-2.5 px-3 align-middle text-[#1D1D1F]"
                       style={{ width: cell.column.getSize() }}
                     >
                       {flexRender(

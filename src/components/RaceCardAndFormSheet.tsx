@@ -22,6 +22,7 @@ import { TanStackVirtualRunnersTable } from "./TanStackVirtualRunnersTable";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
 import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
+import { RaceCardCountdownClock } from "./RaceCardCountdownClock";
 
 interface RaceCardAndFormSheetProps {
   meetings: RaceMeeting[];
@@ -543,13 +544,22 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                               {r.distance}m
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono tabular-nums text-[#8A9990] mt-0.5">
-                            {winner
-                              ? `1st #${winner.tabNumber} ($${winner.nswTabWin.toFixed(
-                                  2
-                                )})`
-                              : r.startTime}
-                          </span>
+                          <div className="flex items-center justify-between gap-1 w-full mt-0.5">
+                            <span className="text-[10px] font-mono tabular-nums text-[#8A9990]">
+                              {winner
+                                ? `1st #${winner.tabNumber} ($${winner.nswTabWin.toFixed(
+                                    2
+                                  )})`
+                                : r.startTime}
+                            </span>
+                            {!winner && (
+                              <RaceCardCountdownClock
+                                meeting={cardMtg}
+                                race={r}
+                                compact
+                              />
+                            )}
+                          </div>
                         </button>
                       );
                     })}
@@ -602,6 +612,15 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real-Time Countdown Clock to Jump Time for the Next Active Race */}
+      <RaceCardCountdownClock
+        meeting={activeMeeting}
+        race={activeRace}
+        allMeetings={meetings}
+        onSelectRaceNumber={onSelectRaceNumber}
+        onSelectMeeting={onSelectMeeting}
+      />
 
       {/* NSW TAB Exotic Dividends & Speed Map Summary Strip */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">

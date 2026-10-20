@@ -12,9 +12,10 @@ import {
 } from "./scoring.ts";
 import { safeJsonParse } from "./safeFetchJson.ts";
 
-export const SIX_MONTHS_RETENTION_MS = 180 * 24 * 60 * 60 * 1000; // 180 days (6 months)
+export const FOUR_MONTHS_RETENTION_MS = 120 * 24 * 60 * 60 * 1000; // 120 days (4 months active participation retention)
+export const SIX_MONTHS_RETENTION_MS = FOUR_MONTHS_RETENTION_MS; // Backward-compatible alias
 export const STORAGE_KEY_RACE_REPORTS_ARCHIVE =
-  "turfsheet_completed_participated_reports_6m_v6";
+  "turfsheet_completed_participated_reports_4m_v1";
 export const REPORT_SENDER_NAME = "Punters Club results";
 export const DEFAULT_REPORT_EMAIL_RECIPIENTS = [
   "bobbydazzler83@gmail.com",
@@ -2035,6 +2036,39 @@ export function saveLocalSixMonthReports(reports: SavedRaceReport[]): void {
   } catch {
     // ignore
   }
+}
+
+/**
+ * Compact, URL-safe executive briefing specifically for mailto: links.
+ * Stays strictly under 1,200 characters to guarantee it opens reliably in
+ * all mail clients (macOS Mail, iOS, Outlook, Android) without truncation.
+ */
+export function formatSafeExecutiveBriefingForEmail(report: SavedRaceReport): string {
+  const lines: string[] = [];
+  const q = report.quaddieSummary;
+  const leader = report.standings[0];
+
+  lines.push(`SYNDICATE BRIEFING: ${report.venue} (${report.state}) — ${report.raceDate}`);
+  lines.push(`Headline: ${report.assessment.headline}`);
+  lines.push(`Leader: ${leader ? `${leader.punterName} (${formatDollarReturn(leader.totalDollarReturn)} · ${leader.totalPoints} pts · ${leader.strikeRatePct}% SR)` : "—"}`);
+  lines.push(``);
+  lines.push(`TOP PUNTERS & $1 EACH-WAY RETURNS:`);
+  for (const s of report.standings.slice(0, 5)) {
+    const netPrefix = (s.eachWayNetVsPar || 0) >= 0 ? "+" : "";
+    lines.push(`• #${s.rank} ${s.punterName}: ${formatDollarReturn(s.eachWayDollarReturn || 0)} (${netPrefix}${(s.eachWayNetVsPar || 0).toFixed(1)}u vs ${s.parScoreUnits || 60}u par) | ${s.winnersPicked}W/${s.podiumsPicked}P`);
+  }
+  lines.push(``);
+  lines.push(`EXOTICS SUMMARY:`);
+  lines.push(`• Boxed Trifecta: ${report.trifectaSummary.trifectaHits}/${report.trifectaSummary.racesEvaluated} Hits | Net: ${report.trifectaSummary.netProfit >= 0 ? "+" : "-"}${formatDollarReturn(Math.abs(report.trifectaSummary.netProfit))}`);
+  if (q && q.legs.length > 0) {
+    lines.push(`• Quaddie: ${q.isWon ? "WON 4/4!" : `${q.hitLegsCount}/4 Legs`} | Payout: ${formatDollarReturn(q.flexiPayout)}`);
+  }
+  lines.push(``);
+  lines.push(`Track Verdict: ${report.assessment.stewardsFunnyConclusion}`);
+  lines.push(``);
+  lines.push(`[Full rich graphical HTML report & runner telemetry ready to paste from clipboard or view online in NSW TAB Punters Club]`);
+
+  return lines.join("\n");
 }
 
 /**
