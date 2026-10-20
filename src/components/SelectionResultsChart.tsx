@@ -48,6 +48,7 @@ interface SelectionResultsChartProps {
   defaultMetricMode: "points" | "dollars";
   onSyncGlobalMode?: (mode: "points" | "dollars") => void;
   onPushRaceResultNotification?: (raceNumber: number) => void;
+  isApple?: boolean;
 }
 
 const USER_PALETTE = [
@@ -100,6 +101,7 @@ export const SelectionResultsChart: React.FC<SelectionResultsChartProps> = ({
   userSummaries,
   onSyncGlobalMode,
   onPushRaceResultNotification,
+  isApple = false,
 }) => {
   const [chartMode, setChartMode] = useState<ChartMetricMode>("both");
   const allAvailableMeetings = useMemo(

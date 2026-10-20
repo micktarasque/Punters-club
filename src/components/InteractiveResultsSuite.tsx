@@ -38,6 +38,7 @@ interface InteractiveResultsSuiteProps {
   onToggleScoringMode: (mode: "points" | "dollars") => void;
   onEditUserSelections?: (punterId: string, meetingId: string) => void;
   trifectaBetAmount?: number;
+  isApple?: boolean;
 }
 
 export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = ({
@@ -49,6 +50,7 @@ export const InteractiveResultsSuite: React.FC<InteractiveResultsSuiteProps> = (
   onToggleScoringMode,
   onEditUserSelections,
   trifectaBetAmount = 20,
+  isApple = false,
 }) => {
   // Active Meeting
   const activeMeeting = useMemo(() => {

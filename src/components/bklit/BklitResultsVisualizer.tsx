@@ -30,6 +30,7 @@ interface BklitResultsVisualizerProps {
   scoringMode: "points" | "dollars";
   onToggleScoringMode?: (mode: "points" | "dollars") => void;
   className?: string;
+  isApple?: boolean;
 }
 
 const PUNTER_COLORS = [
@@ -47,6 +48,7 @@ export const BklitResultsVisualizer: React.FC<BklitResultsVisualizerProps> = ({
   scoringMode,
   onToggleScoringMode,
   className = "",
+  isApple = false,
 }) => {
   const [activeVisualTab, setActiveVisualTab] = useState<
     "area_timeline" | "roi_bars" | "strike_ring" | "bklit_table"
@@ -270,10 +272,24 @@ export const BklitResultsVisualizer: React.FC<BklitResultsVisualizerProps> = ({
   const barSeries =
     scoringMode === "dollars"
       ? [
-          { key: "parUnits", label: "Par Outlay ($)", color: "#475569" },
-          { key: "dollars", label: "Actual Return ($)", color: "#10B981" },
+          {
+            key: "parUnits",
+            label: "Par Outlay ($)",
+            color: isApple ? "#8E8E93" : "#475569",
+          },
+          {
+            key: "dollars",
+            label: "Actual Return ($)",
+            color: isApple ? "#0071E3" : "#10B981",
+          },
         ]
-      : [{ key: "points", label: "Total Points", color: "#D4AF37" }];
+      : [
+          {
+            key: "points",
+            label: "Total Points",
+            color: isApple ? "#0071E3" : "#D4AF37",
+          },
+        ];
 
   // Table Columns for BklitTable
   const tableColumns: BklitColumn<any>[] = [
@@ -374,34 +390,66 @@ export const BklitResultsVisualizer: React.FC<BklitResultsVisualizerProps> = ({
 
   return (
     <div
-      className={`bklit-results-visualizer rounded-xl border border-[#1F2D26] bg-[#0E1612] p-4 space-y-4 ${className}`}
+      className={`bklit-results-visualizer rounded-xl border p-4 space-y-4 transition-colors ${
+        isApple
+          ? "bg-white border-[#E5E5EA] shadow-xs text-[#1D1D1F]"
+          : "border-[#1F2D26] bg-[#0E1612] text-[#F3F4F0]"
+      } ${className}`}
     >
       {/* Header with Bklit UI Badge & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1F2D26] pb-3">
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}
+      >
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <span
+              className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                isApple
+                  ? "bg-[#0071E3]/10 border border-[#0071E3]/30 text-[#0071E3]"
+                  : "bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37]"
+              }`}
+            >
               <Sparkles className="w-3 h-3" />
               bklit.ui Data Visualizer
             </span>
-            <h3 className="text-base font-bold text-[#F3F4F0] font-sans">
+            <h3
+              className={`text-base font-bold font-sans ${
+                isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+              }`}
+            >
               Results Analytics &amp; Performance Graphics
             </h3>
           </div>
-          <p className="text-xs text-[#8A9990]">
+          <p
+            className={`text-xs ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             Composable Bklit UI charts with live multi-runner accumulation, ROI benchmarks &amp; strike distributions.
           </p>
         </div>
 
         {/* Scoring Mode Toggle */}
         {onToggleScoringMode && (
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-[#0B110E] border border-[#1F2D26]">
+          <div
+            className={`flex items-center gap-1 p-1 rounded-lg border ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                : "bg-[#0B110E] border-[#1F2D26]"
+            }`}
+          >
             <button
               type="button"
               onClick={() => onToggleScoringMode("points")}
-              className={`px-3 py-1 text-xs font-mono font-medium rounded transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 text-xs font-mono font-medium rounded transition-all cursor-pointer flex items-center gap-1.5 ${
                 scoringMode === "points"
-                  ? "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white shadow-xs font-bold"
+                    : "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -411,9 +459,13 @@ export const BklitResultsVisualizer: React.FC<BklitResultsVisualizerProps> = ({
             <button
               type="button"
               onClick={() => onToggleScoringMode("dollars")}
-              className={`px-3 py-1 text-xs font-mono font-medium rounded transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 text-xs font-mono font-medium rounded transition-all cursor-pointer flex items-center gap-1.5 ${
                 scoringMode === "dollars"
-                  ? "bg-[#10B981] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white shadow-xs font-bold"
+                    : "bg-[#10B981] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -480,63 +532,115 @@ export const BklitResultsVisualizer: React.FC<BklitResultsVisualizerProps> = ({
       </div>
 
       {/* Bklit Visualizer Tabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0B110E] border border-[#1F2D26] overflow-x-auto text-xs font-mono">
+      <div
+        className={`flex items-center gap-1.5 p-1 rounded-lg border overflow-x-auto text-xs font-mono ${
+          isApple
+            ? "bg-[#F5F5F7] border-[#E5E5EA]"
+            : "bg-[#0B110E] border-[#1F2D26]"
+        }`}
+      >
         <button
           type="button"
           onClick={() => setActiveVisualTab("area_timeline")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "area_timeline"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <TrendingUp className="w-3.5 h-3.5 text-[#38BDF8]" />
+          <TrendingUp
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+            }`}
+          />
           Area Timeline (Progression)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("roi_bars")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "roi_bars"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5 text-[#10B981]" />
+          <BarChart3
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#10B981]"
+            }`}
+          />
           Grouped Bar (ROI vs Par)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("strike_ring")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "strike_ring"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <PieChart className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <PieChart
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          />
           Donut Ring (Podium Strike)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("bklit_table")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "bklit_table"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <TableIcon className="w-3.5 h-3.5 text-[#A855F7]" />
+          <TableIcon
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#A855F7]"
+            }`}
+          />
           Bklit Table (Sortable Matrix)
         </button>
       </div>
 
       {/* Chart Canvas Area */}
-      <div className="p-3 rounded-lg border border-[#1F2D26] bg-[#0B110E]">
+      <div
+        className={`p-3 rounded-lg border ${
+          isApple
+            ? "bg-white border-[#E5E5EA]"
+            : "bg-[#0B110E] border-[#1F2D26]"
+        }`}
+      >
         {activeVisualTab === "area_timeline" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-[#8A9990]">
-              <span className="text-[#D4AF37] font-semibold">
+            <div
+              className={`flex items-center justify-between text-xs font-mono ${
+                isApple ? "text-[#86868B]" : "text-[#8A9990]"
+              }`}
+            >
+              <span
+                className={`font-semibold ${
+                  isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                }`}
+              >
                 Race-by-Race Cumulative {scoringMode === "dollars" ? "$ Return" : "Points"}
               </span>
               <span>Spline with Gradient Area Under Curve</span>

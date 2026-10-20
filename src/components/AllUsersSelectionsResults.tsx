@@ -62,6 +62,7 @@ interface AllUsersSelectionsResultsProps {
   onToggleAutoRefreshResults?: () => void;
   lastResultsUpdatedAt?: string;
   nextRefreshCountdown?: number;
+  isApple?: boolean;
 }
 
 export interface UserCardSummary {
@@ -219,6 +220,7 @@ export const AllUsersSelectionsResults: React.FC<
   onToggleAutoRefreshResults,
   lastResultsUpdatedAt,
   nextRefreshCountdown,
+  isApple = false,
 }) => {
   const [showUnselectedRaces, setShowUnselectedRaces] =
     useState<boolean>(false);
@@ -416,6 +418,7 @@ export const AllUsersSelectionsResults: React.FC<
           onToggleScoringMode={onToggleScoringMode}
           onEditUserSelections={onEditUserSelections}
           trifectaBetAmount={trifectaBetAmount}
+          isApple={isApple}
         />
       )}
 
@@ -430,6 +433,7 @@ export const AllUsersSelectionsResults: React.FC<
         defaultMetricMode={scoringMode}
         onSyncGlobalMode={onToggleScoringMode}
         onPushRaceResultNotification={onPushRaceResultNotification}
+        isApple={isApple}
       />
 
       {/* 1B. bklit.ui Interactive Graphics Suite: Area Timeline, ROI Bars, Strike Ring & Sortable Table */}
@@ -438,6 +442,7 @@ export const AllUsersSelectionsResults: React.FC<
         punters={punters}
         scoringMode={scoringMode}
         onToggleScoringMode={onToggleScoringMode}
+        isApple={isApple}
       />
 
       {/* 1C. D3 Syndicate Performance Trend & Individual Punter ROI Bar Charts */}
@@ -449,11 +454,13 @@ export const AllUsersSelectionsResults: React.FC<
           trifectaBetAmount={trifectaBetAmount}
           quaddieBuyInPerUser={quaddieBuyInPerUser}
           quaddieExtraByMeeting={quaddieExtraByMeeting}
+          isApple={isApple}
         />
         <PunterRoiD3BarChart
           meetings={meetings}
           selectedMeetingIds={effectiveSelectedIds}
           punters={punters}
+          isApple={isApple}
         />
       </div>
 

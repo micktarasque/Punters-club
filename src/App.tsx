@@ -59,6 +59,7 @@ import { CombinedTrifectaTracker } from "./components/CombinedTrifectaTracker";
 import { CombinedQuaddieTracker } from "./components/CombinedQuaddieTracker";
 import { ExoticsBentoStudio } from "./components/ExoticsBentoStudio";
 import { PersistentRaceRibbon } from "./components/PersistentRaceRibbon";
+import { FloatingBottomActionDock } from "./components/FloatingBottomActionDock";
 import { RaceReportSheet } from "./components/RaceReportSheet";
 import { PunterLeaderboard } from "./components/PunterLeaderboard";
 import { OfflineIndicator } from "./components/PWAInstallControl";
@@ -88,6 +89,7 @@ import {
   playTrifectaSirenSound,
   playWrongAnswerSound,
 } from "./utils/soundEffects";
+import { audioAlerts } from "./utils/audioAlerts";
 import { safeJsonParse } from "./utils/safeFetchJson";
 import {
   applyStoredResultsPatchesToMeetings,
@@ -134,11 +136,11 @@ function enforceFourMonthActiveParticipationRetention(
     const nextSel: Record<string, Record<number, RaceSelectionTrio>> = {};
     for (const [mId, raceMap] of Object.entries(p.selectionsByMeeting || {})) {
       if (!raceMap) continue;
-      const dateMatch = mId.match(/(\d{4}-\d{2}-\d{2})$/);
+      const dateMatch = mId.match(/(\d{4}-\d{2}-\d{2})/);
       if (dateMatch) {
         const mMs = Date.parse(`${dateMatch[1]}T00:00:00Z`);
         if (Number.isFinite(mMs) && mMs < cutoffMs) {
-          continue; // Older than 6 months
+          continue; // Older than 4 months (120 days)
         }
       }
       const activeRaces: Record<number, RaceSelectionTrio> = {};
@@ -1074,9 +1076,11 @@ export default function App() {
       if (soundEnabled) {
         if (isTrifectaHit) {
           playShowMeTheMoneySound();
+          audioAlerts.playTrifectaFanfare();
           triggerConfetti();
         } else if (placedOrWonCount > 0) {
           playCashRegisterSound(placedOrWonCount);
+          audioAlerts.playRaceWinnerChime();
         } else {
           playWrongAnswerSound();
         }
@@ -2287,12 +2291,7 @@ export default function App() {
       </header>
 
       {/* Main Tabbed Container with Dynamic Header Offset Clearance */}
-      <main
-        style={{
-          paddingTop: "calc(var(--app-header-height, 68px) * 0.12 + 1.25rem)",
-        }}
-        className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 pb-32 space-y-8 flex-1"
-      >
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 pt-3 sm:pt-4 pb-32 space-y-8 flex-1">
         {/* Hero Section: Adaptive Turf Dark Default vs Apple Minimalist */}
         {isApple ? (
           <section className="text-center pt-4 pb-2 max-w-4xl mx-auto space-y-3">
@@ -2742,11 +2741,19 @@ export default function App() {
               >
                 <div className="apple-card p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1D1D1F] tracking-tight">
+                    <h2
+                      className={`text-base sm:text-lg font-bold tracking-tight ${
+                        isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                      }`}
+                    >
                       Full Field &amp; Form Guide — {activeMeeting.venue} (Race{" "}
                       {selectedRaceNumber})
                     </h2>
-                    <p className="text-xs text-[#86868B] mt-0.5">
+                    <p
+                      className={`text-xs mt-0.5 ${
+                        isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                      }`}
+                    >
                       Inspect every runner, barrier, jockey, trainer, weight, and live odds, or assign 1st/2nd/3rd preferences directly.
                     </p>
                   </div>
@@ -2819,6 +2826,7 @@ export default function App() {
                       `Set Runner #${tabNo} as ${rankText} in Race ${raceNo} for ${activePunter.name}`
                     );
                   }}
+                  isApple={isApple}
                 />
               </section>
             )}
@@ -3060,6 +3068,7 @@ export default function App() {
                 }
                 lastResultsUpdatedAt={lastResultsUpdatedAt}
                 nextRefreshCountdown={nextRefreshCountdown}
+                isApple={isApple}
               />
             </section>
 
@@ -3206,6 +3215,7 @@ export default function App() {
                 quaddieExtraByMeeting={quaddieExtraByMeeting}
                 generateReportSignal={generateReportSignal}
                 onTriggerToast={triggerToast}
+                isApple={isApple}
               />
             </section>
           </div>
@@ -3213,86 +3223,50 @@ export default function App() {
 
       </main>
 
-      {/* Persistent Race Venue & Race Number Ribbon across all screens */}
+      {/* Desktop Persistent Race Ribbon */}
       {activeMeeting && (
-        <PersistentRaceRibbon
-          meetings={visibleMeetings}
-          activeMeeting={activeMeeting}
-          onSelectMeeting={(id) => setSelectedMeetingId(id)}
-          selectedRaceNumber={selectedRaceNumber}
-          onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
-          activeTab={activeTab}
-          onJumpTo={handleJumpToRace}
-          punters={punters}
-        />
+        <div className="hidden md:block">
+          <PersistentRaceRibbon
+            meetings={visibleMeetings}
+            activeMeeting={activeMeeting}
+            onSelectMeeting={(id) => setSelectedMeetingId(id)}
+            selectedRaceNumber={selectedRaceNumber}
+            onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+            activeTab={activeTab}
+            onJumpTo={handleJumpToRace}
+            punters={punters}
+          />
+        </div>
       )}
 
-      {/* Mobile / Tablet Fixed Bottom 4-Tab Navigation Bar */}
-      <nav
-        role="tablist"
-        aria-label="Mobile Tab Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B110E]/95 backdrop-blur-md border-t border-[#1F2D26] grid grid-cols-4 items-center h-14 px-2 gap-1"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "overview"}
-          onClick={() => switchTab("overview")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
-            activeTab === "overview"
-              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-bold"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <Flame className="w-4 h-4" />
-          <span className="mt-0.5">Overview</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "selections"}
-          onClick={() => switchTab("selections")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
-            activeTab === "selections"
-              ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-bold"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <Table2 className="w-4 h-4" />
-          <span className="mt-0.5">Selections</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "exotics"}
-          onClick={() => switchTab("exotics")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
-            activeTab === "exotics"
-              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 font-bold"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <Target className="w-4 h-4" />
-          <span className="mt-0.5">Exotics</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "results"}
-          onClick={() => switchTab("results")}
-          className={`flex flex-col items-center justify-center h-11 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
-            activeTab === "results"
-              ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 font-bold"
-              : "text-[#9BA8A1]"
-          }`}
-        >
-          <Trophy className="w-4 h-4" />
-          <span className="mt-0.5">Results</span>
-        </button>
-      </nav>
+      {/* Mobile & Tablet Floating Bottom Quick-Action Bar & Jump Ribbon Dock */}
+      {activeMeeting && (
+        <div className="md:hidden">
+          <FloatingBottomActionDock
+            meetings={visibleMeetings}
+            activeMeeting={activeMeeting}
+            onSelectMeeting={(id) => setSelectedMeetingId(id)}
+            selectedRaceNumber={selectedRaceNumber}
+            onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+            activeTab={activeTab}
+            onSwitchTab={switchTab}
+            onJumpToRace={(raceNo) =>
+              handleJumpToRace(activeTab, raceNo, activeMeeting.id)
+            }
+            isApple={isApple}
+            onToggleTheme={() =>
+              setThemeScheme((prev) => (prev === "apple" ? "default" : "apple"))
+            }
+            onOpenReport={() => {
+              setGenerateReportSignal((prev) => prev + 1);
+              const el = document.getElementById("section-race-reports");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

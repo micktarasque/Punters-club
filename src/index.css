@@ -585,6 +585,144 @@ body.theme-apple,
   border-color: #FFB3AE !important;
 }
 
+/* ============================================================================
+   APPLE MINIMALIST TABLES & DATA MATRICES
+   Clean white cards, light gridlines (#E5E5EA), and Apple blue accents (#0071E3)
+   ============================================================================ */
+[data-theme="apple"] table,
+.theme-apple table {
+  background-color: #FFFFFF !important;
+  color: #1D1D1F !important;
+  border-color: #E5E5EA !important;
+}
+
+[data-theme="apple"] thead,
+.theme-apple thead,
+[data-theme="apple"] thead tr,
+.theme-apple thead tr {
+  background-color: #F5F5F7 !important;
+  color: #1D1D1F !important;
+  border-bottom: 1px solid #E5E5EA !important;
+}
+
+[data-theme="apple"] th,
+.theme-apple th {
+  color: #1D1D1F !important;
+  border-color: #E5E5EA !important;
+  background-color: #F5F5F7 !important;
+}
+
+[data-theme="apple"] tbody,
+.theme-apple tbody {
+  background-color: #FFFFFF !important;
+  color: #1D1D1F !important;
+}
+
+[data-theme="apple"] tbody tr,
+.theme-apple tbody tr {
+  background-color: #FFFFFF !important;
+  color: #1D1D1F !important;
+  border-color: #E5E5EA !important;
+}
+
+[data-theme="apple"] tbody tr:hover,
+.theme-apple tbody tr:hover {
+  background-color: #F5F5F7 !important;
+}
+
+[data-theme="apple"] td,
+.theme-apple td {
+  color: #1D1D1F !important;
+  border-color: #E5E5EA !important;
+}
+
+[data-theme="apple"] .bklit-table-wrapper,
+.theme-apple .bklit-table-wrapper {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E5EA !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ============================================================================
+   APPLE MINIMALIST SVG & D3/RECHARTS GRAPHS
+   Clean white backgrounds, light gridlines (#E5E5EA), and Apple blue accents (#0071E3)
+   ============================================================================ */
+[data-theme="apple"] svg text,
+.theme-apple svg text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  fill: #1D1D1F;
+}
+
+[data-theme="apple"] svg text[fill="#8A9990"],
+.theme-apple svg text[fill="#8A9990"],
+[data-theme="apple"] svg text[fill="#6E7D75"],
+.theme-apple svg text[fill="#6E7D75"],
+[data-theme="apple"] svg text[fill="#9BA8A1"],
+.theme-apple svg text[fill="#9BA8A1"],
+[data-theme="apple"] svg text[fill="#64748B"],
+.theme-apple svg text[fill="#64748B"] {
+  fill: #86868B !important;
+}
+
+[data-theme="apple"] svg text[fill="#F3F4F0"],
+.theme-apple svg text[fill="#F3F4F0"],
+[data-theme="apple"] svg text[fill="#D5DDD8"],
+.theme-apple svg text[fill="#D5DDD8"],
+[data-theme="apple"] svg text[fill="#FFFFFF"],
+.theme-apple svg text[fill="#FFFFFF"] {
+  fill: #1D1D1F !important;
+}
+
+/* Light gridlines across all charts */
+[data-theme="apple"] svg line[stroke="#1F2D26"],
+.theme-apple svg line[stroke="#1F2D26"],
+[data-theme="apple"] svg line[stroke="#2E4539"],
+.theme-apple svg line[stroke="#2E4539"],
+[data-theme="apple"] svg line[stroke="#23352C"],
+.theme-apple svg line[stroke="#23352C"],
+[data-theme="apple"] svg .recharts-cartesian-grid line,
+.theme-apple svg .recharts-cartesian-grid line,
+[data-theme="apple"] svg .recharts-polar-grid line,
+.theme-apple svg .recharts-polar-grid line,
+[data-theme="apple"] svg .recharts-polar-angle-axis-line,
+.theme-apple svg .recharts-polar-angle-axis-line {
+  stroke: #E5E5EA !important;
+}
+
+[data-theme="apple"] svg .recharts-cartesian-axis-line,
+.theme-apple svg .recharts-cartesian-axis-line,
+[data-theme="apple"] svg .recharts-cartesian-axis-tick-line,
+.theme-apple svg .recharts-cartesian-axis-tick-line {
+  stroke: #D2D2D7 !important;
+}
+
+/* D3 Graph Background Cards */
+[data-theme="apple"] .bklit-area-chart,
+.theme-apple .bklit-area-chart,
+[data-theme="apple"] .bklit-bar-chart,
+.theme-apple .bklit-bar-chart,
+[data-theme="apple"] .bklit-ring-chart,
+.theme-apple .bklit-ring-chart {
+  color: #1D1D1F !important;
+}
+
+/* Gold to Apple Blue Accent in SVG */
+[data-theme="apple"] svg line[stroke="#D4AF37"],
+.theme-apple svg line[stroke="#D4AF37"] {
+  stroke: #0071E3 !important;
+}
+
+[data-theme="apple"] svg path[stroke="#D4AF37"]:not([class*="preserve"]),
+.theme-apple svg path[stroke="#D4AF37"]:not([class*="preserve"]) {
+  stroke: #0071E3 !important;
+}
+
+[data-theme="apple"] svg circle[fill="#D4AF37"],
+.theme-apple svg circle[fill="#D4AF37"] {
+  fill: #0071E3 !important;
+}
+
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -686,3 +824,33 @@ body.theme-apple,
   }
 }
 
+/* =========================================================================
+   Race Alerts & Winner Visual Pulses
+   ========================================================================= */
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes glow-winner {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px 2px rgba(212, 175, 55, 0.55);
+  }
+}
+
+.animate-pulse-badge {
+  animation: pulse-badge 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-glow-winner {
+  animation: glow-winner 2s ease-in-out infinite;
+}

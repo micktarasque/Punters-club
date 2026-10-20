@@ -22,6 +22,7 @@ interface PunterRoiD3BarChartProps {
   selectedMeetingIds: string[];
   activeReport?: SavedRaceReport | null;
   punters: PunterProfile[];
+  isApple?: boolean;
 }
 
 export interface PunterRoiBarDatum {
@@ -70,6 +71,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
   selectedMeetingIds,
   activeReport = null,
   punters,
+  isApple = false,
 }) => {
   const [scopeMode, setScopeMode] = useState<
     "selected_meetings" | "active_report"
@@ -576,20 +578,42 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
   }, [punterRoiData, scoreMetric]);
 
   return (
-    <div className="p-4 rounded-xl bg-[#0B110E] border border-[#D4AF37]/35 space-y-4">
+    <div
+      className={`p-4 rounded-xl border space-y-4 transition-colors ${
+        isApple
+          ? "bg-white border-[#E5E5EA] text-[#1D1D1F] shadow-xs"
+          : "bg-[#0B110E] border-[#D4AF37]/35 text-[#F3F4F0]"
+      }`}
+    >
       {/* Header & Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1F2D26] pb-3">
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 border-b pb-3 ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}
+      >
         <div className="space-y-0.5">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-bold">
-            <BarChart3 className="w-4 h-4 text-[#10B981]" />
+          <div
+            className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider font-bold ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          >
+            <BarChart3
+              className={`w-4 h-4 ${
+                isApple ? "text-[#0071E3]" : "text-[#10B981]"
+              }`}
+            />
             <span>
               Punter Return on Investment (ROI) Bar Chart — 1u Win + 1u Place
               Per Selection
             </span>
           </div>
-          <p className="text-[11px] text-[#8A9990]">
+          <p
+            className={`text-[11px] ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             Visualizes each individual punter&apos;s{" "}
-            <strong className="text-[#F3F4F0]">
+            <strong className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}>
               Return on Investment (ROI)
             </strong>{" "}
             across{" "}
@@ -597,7 +621,9 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
               ? targetMeetings.map((m) => m.venue).join(" + ")
               : activeReport?.venue || "Selected Meetings"}{" "}
             by comparing their{" "}
-            <strong className="text-[#D4AF37]">
+            <strong
+              className={isApple ? "text-[#0071E3]" : "text-[#D4AF37]"}
+            >
               {scoreMetric === "points_score"
                 ? "Total Points / Score (vs 1u per selection)"
                 : "Total $ Return Score (vs 1u Win + 1u Place Each-Way per selection, adjusted for NTD)"}
@@ -608,13 +634,23 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Score Metric Toggle */}
-          <div className="inline-flex items-center rounded-lg bg-[#121A16] p-0.5 border border-[#1F2D26] text-[10px] font-mono">
+          <div
+            className={`inline-flex items-center rounded-lg p-0.5 border text-[10px] font-mono ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                : "bg-[#121A16] border-[#1F2D26]"
+            }`}
+          >
             <button
               type="button"
               onClick={() => setScoreMetric("dollar_score")}
               className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                 scoreMetric === "dollar_score"
-                  ? "bg-[#10B981] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#10B981] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -625,7 +661,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
               onClick={() => setScoreMetric("points_score")}
               className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                 scoreMetric === "points_score"
-                  ? "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -634,13 +674,23 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
           </div>
 
           {/* Chart Layout Mode Toggle */}
-          <div className="inline-flex items-center rounded-lg bg-[#121A16] p-0.5 border border-[#1F2D26] text-[10px] font-mono">
+          <div
+            className={`inline-flex items-center rounded-lg p-0.5 border text-[10px] font-mono ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                : "bg-[#121A16] border-[#1F2D26]"
+            }`}
+          >
             <button
               type="button"
               onClick={() => setChartDisplayMode("roi_and_grouped")}
               className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                 chartDisplayMode === "roi_and_grouped"
-                  ? "bg-[#10B981] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#10B981] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -651,7 +701,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
               onClick={() => setChartDisplayMode("diverging_net_roi")}
               className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                 chartDisplayMode === "diverging_net_roi"
-                  ? "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -661,13 +715,23 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
 
           {/* Meeting Scope Toggle */}
           {activeReport && selectedMeetingIds.length > 1 && (
-            <div className="inline-flex items-center rounded-lg bg-[#121A16] p-0.5 border border-[#1F2D26] text-[10px] font-mono">
+            <div
+              className={`inline-flex items-center rounded-lg p-0.5 border text-[10px] font-mono ${
+                isApple
+                  ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                  : "bg-[#121A16] border-[#1F2D26]"
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => setScopeMode("selected_meetings")}
                 className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                   scopeMode === "selected_meetings"
-                    ? "bg-[#38BDF8] text-[#0B110E] font-bold"
+                    ? isApple
+                      ? "bg-[#0071E3] text-white font-bold"
+                      : "bg-[#38BDF8] text-[#0B110E] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -678,7 +742,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                 onClick={() => setScopeMode("active_report")}
                 className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
                   scopeMode === "active_report"
-                    ? "bg-[#38BDF8] text-[#0B110E] font-bold"
+                    ? isApple
+                      ? "bg-[#0071E3] text-white font-bold"
+                      : "bg-[#38BDF8] text-[#0B110E] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -691,19 +759,41 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
 
       {/* Top KPI Summary Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26]">
-          <div className="text-[10px] font-mono uppercase text-[#8A9990] flex items-center gap-1">
-            <Award className="w-3 h-3 text-[#D4AF37]" />
+        <div
+          className={`p-2.5 rounded-lg border ${
+            isApple
+              ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+              : "bg-[#121A16] border-[#1F2D26]"
+          }`}
+        >
+          <div
+            className={`text-[10px] font-mono uppercase flex items-center gap-1 ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            <Award
+              className={`w-3 h-3 ${
+                isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+              }`}
+            />
             <span>Top ROI Punter</span>
           </div>
-          <div className="text-sm font-mono font-bold text-[#D4AF37] mt-0.5 truncate">
+          <div
+            className={`text-sm font-mono font-bold mt-0.5 truncate ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          >
             {punterRoiData[0]?.punterName || "—"} (
             {scoreMetric === "points_score"
               ? `${punterRoiData[0]?.pointsReturnRatioPct ?? 0}%`
               : `${punterRoiData[0]?.dollarReturnRatioPct ?? 0}%`}
             )
           </div>
-          <div className="text-[10px] font-mono text-[#8A9990]">
+          <div
+            className={`text-[10px] font-mono ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             Net ROI:{" "}
             {(scoreMetric === "points_score"
               ? punterRoiData[0]?.pointsNetRoiPct ?? 0
@@ -717,37 +807,81 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26]">
-          <div className="text-[10px] font-mono uppercase text-[#8A9990] flex items-center gap-1">
-            <Layers className="w-3 h-3 text-[#38BDF8]" />
+        <div
+          className={`p-2.5 rounded-lg border ${
+            isApple
+              ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+              : "bg-[#121A16] border-[#1F2D26]"
+          }`}
+        >
+          <div
+            className={`text-[10px] font-mono uppercase flex items-center gap-1 ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            <Layers
+              className={`w-3 h-3 ${
+                isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+              }`}
+            />
             <span>
               {scoreMetric === "points_score"
                 ? "1-Unit Pick Baseline"
                 : "1u Win + 1u Place Par"}
             </span>
           </div>
-          <div className="text-sm font-mono font-bold text-[#F3F4F0] mt-0.5">
+          <div
+            className={`text-sm font-mono font-bold mt-0.5 ${
+              isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+            }`}
+          >
             {syndicateTotals.totalBaselineUnits} Units
           </div>
-          <div className="text-[10px] font-mono text-[#8A9990]">
+          <div
+            className={`text-[10px] font-mono ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             {syndicateTotals.totalSelections} total selections across cards
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26]">
-          <div className="text-[10px] font-mono uppercase text-[#8A9990] flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-[#10B981]" />
+        <div
+          className={`p-2.5 rounded-lg border ${
+            isApple
+              ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+              : "bg-[#121A16] border-[#1F2D26]"
+          }`}
+        >
+          <div
+            className={`text-[10px] font-mono uppercase flex items-center gap-1 ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            <TrendingUp
+              className={`w-3 h-3 ${
+                isApple ? "text-[#34C759]" : "text-[#10B981]"
+              }`}
+            />
             <span>
               Syndicate{" "}
               {scoreMetric === "points_score" ? "Points Score" : "$ Return"}
             </span>
           </div>
-          <div className="text-sm font-mono font-bold text-[#10B981] mt-0.5">
+          <div
+            className={`text-sm font-mono font-bold mt-0.5 ${
+              isApple ? "text-[#34C759]" : "text-[#10B981]"
+            }`}
+          >
             {scoreMetric === "points_score"
               ? `${syndicateTotals.totalPoints} pts`
               : formatDollarReturn(syndicateTotals.totalDollars)}
           </div>
-          <div className="text-[10px] font-mono text-[#8A9990]">
+          <div
+            className={`text-[10px] font-mono ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             {(
               syndicateTotals.activeTotalScore /
               Math.max(1, syndicateTotals.totalBaselineUnits)
@@ -756,15 +890,33 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26]">
-          <div className="text-[10px] font-mono uppercase text-[#8A9990] flex items-center gap-1">
-            <Percent className="w-3 h-3 text-[#D4AF37]" />
+        <div
+          className={`p-2.5 rounded-lg border ${
+            isApple
+              ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+              : "bg-[#121A16] border-[#1F2D26]"
+          }`}
+        >
+          <div
+            className={`text-[10px] font-mono uppercase flex items-center gap-1 ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            <Percent
+              className={`w-3 h-3 ${
+                isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+              }`}
+            />
             <span>Syndicate ROI Ratio</span>
           </div>
           <div
             className={`text-sm font-mono font-bold mt-0.5 ${
               syndicateTotals.syndicateReturnRatioPct >= 100
-                ? "text-[#10B981]"
+                ? isApple
+                  ? "text-[#34C759]"
+                  : "text-[#10B981]"
+                : isApple
+                ? "text-[#FF9500]"
                 : "text-[#D4AF37]"
             }`}
           >
@@ -772,7 +924,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
             {syndicateTotals.syndicateNetRoiPct >= 0 ? "+" : ""}
             {syndicateTotals.syndicateNetRoiPct}%)
           </div>
-          <div className="text-[10px] font-mono text-[#8A9990]">
+          <div
+            className={`text-[10px] font-mono ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             {syndicateTotals.profitablePuntersCount}/{punterRoiData.length}{" "}
             punters ≥ 100% par
           </div>
@@ -780,49 +936,113 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
       </div>
 
       {/* Main D3 Bar Chart SVG */}
-      <div className="p-3 rounded-xl bg-[#121A16] border border-[#1F2D26] space-y-2.5">
+      <div
+        className={`p-3 rounded-xl border space-y-2.5 ${
+          isApple
+            ? "bg-white border-[#E5E5EA]"
+            : "bg-[#121A16] border-[#1F2D26]"
+        }`}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
           {chartDisplayMode === "roi_and_grouped" ? (
             <div className="flex flex-wrap items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 text-[#38BDF8] font-bold">
-                <span className="w-3 h-2.5 rounded-sm bg-[#38BDF8]/70 border border-[#38BDF8]" />
+              <span
+                className={`inline-flex items-center gap-1.5 font-bold ${
+                  isApple ? "text-[#8E8E93]" : "text-[#38BDF8]"
+                }`}
+              >
+                <span
+                  className={`w-3 h-2.5 rounded-sm border ${
+                    isApple
+                      ? "bg-[#8E8E93]/40 border-[#8E8E93]"
+                      : "bg-[#38BDF8]/70 border-[#38BDF8]"
+                  }`}
+                />
                 {scoreMetric === "points_score"
                   ? "1-Unit Selection Baseline (1u × Picks)"
                   : "1u Win + 1u Place Par Outlay ($1 EW)"}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#D4AF37] font-bold">
-                <span className="w-3 h-2.5 rounded-sm bg-[#D4AF37]" />
+              <span
+                className={`inline-flex items-center gap-1.5 font-bold ${
+                  isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                }`}
+              >
+                <span
+                  className={`w-3 h-2.5 rounded-sm ${
+                    isApple ? "bg-[#0071E3]" : "bg-[#D4AF37]"
+                  }`}
+                />
                 Total{" "}
                 {scoreMetric === "points_score"
                   ? "Points / Score"
                   : "$ Return (Win + Place)"}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#10B981] font-bold">
-                <span className="w-3 h-2.5 rounded-sm bg-[#10B981]" />
+              <span
+                className={`inline-flex items-center gap-1.5 font-bold ${
+                  isApple ? "text-[#34C759]" : "text-[#10B981]"
+                }`}
+              >
+                <span
+                  className={`w-3 h-2.5 rounded-sm ${
+                    isApple ? "bg-[#34C759]" : "bg-[#10B981]"
+                  }`}
+                />
                 ROI Return Ratio (% of Baseline)
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#F59E0B]">
-                <span className="w-3.5 h-0.5 border-t border-dashed border-[#F59E0B]" />
+              <span
+                className={`inline-flex items-center gap-1.5 ${
+                  isApple ? "text-[#8E8E93]" : "text-[#F59E0B]"
+                }`}
+              >
+                <span
+                  className={`w-3.5 h-0.5 border-t border-dashed ${
+                    isApple ? "border-[#8E8E93]" : "border-[#F59E0B]"
+                  }`}
+                />
                 100% Break-Even Par Line
               </span>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 text-[#10B981] font-bold">
-                <span className="w-3 h-2.5 rounded-sm bg-[#10B981]" />
+              <span
+                className={`inline-flex items-center gap-1.5 font-bold ${
+                  isApple ? "text-[#34C759]" : "text-[#10B981]"
+                }`}
+              >
+                <span
+                  className={`w-3 h-2.5 rounded-sm ${
+                    isApple ? "bg-[#34C759]" : "bg-[#10B981]"
+                  }`}
+                />
                 Positive Net ROI (+% Above Par)
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#F59E0B] font-bold">
-                <span className="w-3 h-2.5 rounded-sm bg-[#F59E0B]" />
+              <span
+                className={`inline-flex items-center gap-1.5 font-bold ${
+                  isApple ? "text-[#FF3B30]" : "text-[#F59E0B]"
+                }`}
+              >
+                <span
+                  className={`w-3 h-2.5 rounded-sm ${
+                    isApple ? "bg-[#FF3B30]" : "bg-[#F59E0B]"
+                  }`}
+                />
                 Below Baseline (-% Net ROI)
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#D4AF37]">
-                <span className="w-3.5 h-0.5 border-t border-dashed border-[#D4AF37]" />
+              <span
+                className={`inline-flex items-center gap-1.5 ${
+                  isApple ? "text-[#8E8E93]" : "text-[#D4AF37]"
+                }`}
+              >
+                <span
+                  className={`w-3.5 h-0.5 border-t border-dashed ${
+                    isApple ? "border-[#8E8E93]" : "border-[#D4AF37]"
+                  }`}
+                />
                 0% Break-Even Par
               </span>
             </div>
           )}
-          <span className="text-[#8A9990]">
+          <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
             Hover any punter bar for selection &amp; ROI telemetry
           </span>
         </div>
@@ -833,20 +1053,52 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
         >
           <defs>
             <linearGradient id="d3RoiPositiveBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10B981" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#059669" stopOpacity="0.75" />
+              <stop
+                offset="0%"
+                stopColor={isApple ? "#34C759" : "#10B981"}
+                stopOpacity={0.95}
+              />
+              <stop
+                offset="100%"
+                stopColor={isApple ? "#28A745" : "#059669"}
+                stopOpacity={0.75}
+              />
             </linearGradient>
             <linearGradient id="d3RoiSubParBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.92" />
-              <stop offset="100%" stopColor="#D97706" stopOpacity="0.72" />
+              <stop
+                offset="0%"
+                stopColor={isApple ? "#FF3B30" : "#F59E0B"}
+                stopOpacity={0.92}
+              />
+              <stop
+                offset="100%"
+                stopColor={isApple ? "#D32F2F" : "#D97706"}
+                stopOpacity={0.72}
+              />
             </linearGradient>
             <linearGradient id="d3ScoreGoldBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#9A7B1C" stopOpacity="0.75" />
+              <stop
+                offset="0%"
+                stopColor={isApple ? "#0071E3" : "#D4AF37"}
+                stopOpacity={0.95}
+              />
+              <stop
+                offset="100%"
+                stopColor={isApple ? "#005BB5" : "#9A7B1C"}
+                stopOpacity={0.75}
+              />
             </linearGradient>
             <linearGradient id="d3BaselineBlueBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#0284C7" stopOpacity="0.5" />
+              <stop
+                offset="0%"
+                stopColor={isApple ? "#8E8E93" : "#38BDF8"}
+                stopOpacity={0.75}
+              />
+              <stop
+                offset="100%"
+                stopColor={isApple ? "#636366" : "#0284C7"}
+                stopOpacity={0.5}
+              />
             </linearGradient>
           </defs>
 
@@ -861,7 +1113,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       y1={y}
                       x2={svgW - padR}
                       y2={y}
-                      stroke="#1F2D26"
+                      stroke={isApple ? "#E5E5EA" : "#1F2D26"}
                       strokeDasharray="3 3"
                     />
                     <text
@@ -870,7 +1122,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       textAnchor="end"
                       fontSize="9.5"
                       fontFamily="monospace"
-                      fill="#10B981"
+                      fill={isApple ? "#34C759" : "#10B981"}
                     >
                       {tickVal}%
                     </text>
@@ -888,7 +1140,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                     textAnchor="start"
                     fontSize="9.5"
                     fontFamily="monospace"
-                    fill="#D4AF37"
+                    fill={isApple ? "#0071E3" : "#D4AF37"}
                   >
                     {scoreMetric === "points_score"
                       ? `${tickVal}u/pt`
@@ -907,7 +1159,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       y1={yPar}
                       x2={svgW - padR}
                       y2={yPar}
-                      stroke="#F59E0B"
+                      stroke={isApple ? "#8E8E93" : "#F59E0B"}
                       strokeWidth="1.5"
                       strokeDasharray="6 4"
                     />
@@ -917,8 +1169,8 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       width={215}
                       height={13}
                       rx="3"
-                      fill="#0B110E"
-                      stroke="#F59E0B"
+                      fill={isApple ? "#F5F5F7" : "#0B110E"}
+                      stroke={isApple ? "#8E8E93" : "#F59E0B"}
                       strokeWidth="0.8"
                     />
                     <text
@@ -926,7 +1178,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       y={yPar - 6}
                       fontSize="8.5"
                       fontFamily="monospace"
-                      fill="#F59E0B"
+                      fill={isApple ? "#8E8E93" : "#F59E0B"}
                       fontWeight="bold"
                     >
                       100% Break-Even (1u Win + 1u Place Par)
@@ -979,9 +1231,21 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       width={bandW + 12}
                       height={plotH}
                       rx="6"
-                      fill={isHovered ? "#D4AF37" : "transparent"}
-                      fillOpacity={isHovered ? 0.07 : 0}
-                      stroke={isHovered ? "#D4AF37" : "transparent"}
+                      fill={
+                        isHovered
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : "transparent"
+                      }
+                      fillOpacity={isHovered ? 0.08 : 0}
+                      stroke={
+                        isHovered
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : "transparent"
+                      }
                       strokeOpacity={isHovered ? 0.35 : 0}
                     />
 
@@ -993,7 +1257,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       height={Math.max(2, yBottom - yBaseline)}
                       rx="3"
                       fill="url(#d3BaselineBlueBar)"
-                      stroke="#38BDF8"
+                      stroke={isApple ? "#8E8E93" : "#38BDF8"}
                       strokeWidth="0.8"
                     />
                     <text
@@ -1002,7 +1266,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       textAnchor="middle"
                       fontSize="8"
                       fontFamily="monospace"
-                      fill="#38BDF8"
+                      fill={isApple ? "#8E8E93" : "#38BDF8"}
                     >
                       {activeBaseline}u
                     </text>
@@ -1015,7 +1279,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       height={Math.max(2, yBottom - yScore)}
                       rx="3"
                       fill="url(#d3ScoreGoldBar)"
-                      stroke="#D4AF37"
+                      stroke={isApple ? "#0071E3" : "#D4AF37"}
                       strokeWidth="0.9"
                     />
                     <text
@@ -1025,7 +1289,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="8.5"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      fill="#D4AF37"
+                      fill={isApple ? "#0071E3" : "#D4AF37"}
                     >
                       {scoreMetric === "points_score"
                         ? `${rawScore}p`
@@ -1044,7 +1308,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                           ? "url(#d3RoiPositiveBar)"
                           : "url(#d3RoiSubParBar)"
                       }
-                      stroke={isAbovePar ? "#10B981" : "#F59E0B"}
+                      stroke={
+                        isAbovePar
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
+                          : isApple
+                          ? "#FF3B30"
+                          : "#F59E0B"
+                      }
                       strokeWidth="1"
                     />
                     <text
@@ -1054,7 +1326,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="9"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      fill={isAbovePar ? "#10B981" : "#F59E0B"}
+                      fill={
+                        isAbovePar
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
+                          : isApple
+                          ? "#FF3B30"
+                          : "#F59E0B"
+                      }
                     >
                       {roiRatio}%
                     </text>
@@ -1067,7 +1347,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="10.5"
                       fontFamily="sans-serif"
                       fontWeight="bold"
-                      fill={isHovered ? "#D4AF37" : "#F3F4F0"}
+                      fill={
+                        isHovered
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : isApple
+                          ? "#1D1D1F"
+                          : "#F3F4F0"
+                      }
                     >
                       #{idx + 1} {d.punterName}
                     </text>
@@ -1078,7 +1366,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="9"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      fill={netRoi >= 0 ? "#10B981" : "#F59E0B"}
+                      fill={
+                        netRoi >= 0
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
+                          : isApple
+                          ? "#FF3B30"
+                          : "#F59E0B"
+                      }
                     >
                       Net ROI: {netRoi >= 0 ? "+" : ""}
                       {netRoi}%
@@ -1098,7 +1394,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       y1={y}
                       x2={svgW - padR}
                       y2={y}
-                      stroke={tickVal === 0 ? "#D4AF37" : "#1F2D26"}
+                      stroke={
+                        tickVal === 0
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : isApple
+                          ? "#E5E5EA"
+                          : "#1F2D26"
+                      }
                       strokeWidth={tickVal === 0 ? "1.6" : "1"}
                       strokeDasharray={tickVal === 0 ? "none" : "3 3"}
                     />
@@ -1110,9 +1414,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontFamily="monospace"
                       fill={
                         tickVal > 0
-                          ? "#10B981"
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
                           : tickVal < 0
-                          ? "#F59E0B"
+                          ? isApple
+                            ? "#FF3B30"
+                            : "#F59E0B"
+                          : isApple
+                          ? "#0071E3"
                           : "#D4AF37"
                       }
                       fontWeight={tickVal === 0 ? "bold" : "normal"}
@@ -1157,8 +1467,14 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       width={bandW + 12}
                       height={plotH}
                       rx="6"
-                      fill={isHovered ? "#D4AF37" : "transparent"}
-                      fillOpacity={isHovered ? 0.07 : 0}
+                      fill={
+                        isHovered
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : "transparent"
+                      }
+                      fillOpacity={isHovered ? 0.08 : 0}
                     />
                     <rect
                       x={barX}
@@ -1171,7 +1487,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                           ? "url(#d3RoiPositiveBar)"
                           : "url(#d3RoiSubParBar)"
                       }
-                      stroke={netRoi >= 0 ? "#10B981" : "#F59E0B"}
+                      stroke={
+                        netRoi >= 0
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
+                          : isApple
+                          ? "#FF3B30"
+                          : "#F59E0B"
+                      }
                       strokeWidth="1.2"
                     />
                     <text
@@ -1181,7 +1505,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="10"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      fill={netRoi >= 0 ? "#10B981" : "#F59E0B"}
+                      fill={
+                        netRoi >= 0
+                          ? isApple
+                            ? "#34C759"
+                            : "#10B981"
+                          : isApple
+                          ? "#FF3B30"
+                          : "#F59E0B"
+                      }
                     >
                       {netRoi >= 0 ? `+${netRoi}%` : `${netRoi}%`}
                     </text>
@@ -1193,7 +1525,15 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       fontSize="10.5"
                       fontFamily="sans-serif"
                       fontWeight="bold"
-                      fill={isHovered ? "#D4AF37" : "#F3F4F0"}
+                      fill={
+                        isHovered
+                          ? isApple
+                            ? "#0071E3"
+                            : "#D4AF37"
+                          : isApple
+                          ? "#1D1D1F"
+                          : "#F3F4F0"
+                      }
                     >
                       #{idx + 1} {d.punterName}
                     </text>
@@ -1203,7 +1543,7 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                       textAnchor="middle"
                       fontSize="9"
                       fontFamily="monospace"
-                      fill="#8A9990"
+                      fill={isApple ? "#86868B" : "#8A9990"}
                     >
                       {scoreMetric === "points_score"
                         ? `${rawScore} pts / ${activeBaseline}u`
@@ -1218,14 +1558,28 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
 
         {/* Active Punter Telemetry Inspector Strip */}
         {activeHoveredDatum && (
-          <div className="p-3 rounded-lg bg-[#0B110E] border border-[#1F2D26] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+          <div
+            className={`p-3 rounded-lg border flex flex-wrap items-center justify-between gap-3 text-xs font-mono ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "bg-[#0B110E] border-[#1F2D26]"
+            }`}
+          >
             <div className="flex items-center gap-2.5">
-              <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] font-bold">
+              <span
+                className={`px-2 py-0.5 rounded font-bold ${
+                  isApple
+                    ? "bg-[#0071E3]/15 border border-[#0071E3]/40 text-[#0071E3]"
+                    : "bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37]"
+                }`}
+              >
                 {activeHoveredDatum.punterName}
               </span>
-              <span className="text-[#8A9990]">
+              <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
                 {activeHoveredDatum.racesParticipated} races ·{" "}
-                <strong className="text-[#38BDF8]">
+                <strong
+                  className={isApple ? "text-[#0071E3]" : "text-[#38BDF8]"}
+                >
                   {activeHoveredDatum.totalSelections} selections
                 </strong>{" "}
                 (= {activeHoveredDatum.baselineEachWayUnitsOutlay}u Each-Way Par
@@ -1235,30 +1589,48 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
 
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <span className="text-[#8A9990]">Total Score: </span>
-                <strong className="text-[#D4AF37]">
+                <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
+                  Total Score:{" "}
+                </span>
+                <strong
+                  className={isApple ? "text-[#0071E3]" : "text-[#D4AF37]"}
+                >
                   {activeHoveredDatum.totalPointsScore} pts
                 </strong>{" "}
-                <span className="text-[#10B981] font-bold">
+                <span
+                  className={`font-bold ${
+                    isApple ? "text-[#34C759]" : "text-[#10B981]"
+                  }`}
+                >
                   ({formatDollarReturn(activeHoveredDatum.totalDollarScore)})
                 </span>
               </div>
               <div>
-                <span className="text-[#8A9990]">Return / Pick: </span>
-                <strong className="text-[#F3F4F0]">
+                <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
+                  Return / Pick:{" "}
+                </span>
+                <strong
+                  className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}
+                >
                   {scoreMetric === "points_score"
                     ? `${activeHoveredDatum.pointsPerUnitBet} pts/pick`
                     : `$${activeHoveredDatum.dollarPerUnitBet}/pick`}
                 </strong>
               </div>
               <div>
-                <span className="text-[#8A9990]">Return Ratio: </span>
+                <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
+                  Return Ratio:{" "}
+                </span>
                 <strong
                   className={
                     (scoreMetric === "points_score"
                       ? activeHoveredDatum.pointsReturnRatioPct
                       : activeHoveredDatum.dollarReturnRatioPct) >= 100
-                      ? "text-[#10B981]"
+                      ? isApple
+                        ? "text-[#34C759]"
+                        : "text-[#10B981]"
+                      : isApple
+                      ? "text-[#FF3B30]"
                       : "text-[#F59E0B]"
                   }
                 >
@@ -1269,13 +1641,19 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                 </strong>
               </div>
               <div>
-                <span className="text-[#8A9990]">Net ROI: </span>
+                <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>
+                  Net ROI:{" "}
+                </span>
                 <strong
                   className={
                     (scoreMetric === "points_score"
                       ? activeHoveredDatum.pointsNetRoiPct
                       : activeHoveredDatum.dollarNetRoiPct) >= 0
-                      ? "text-[#10B981]"
+                      ? isApple
+                        ? "text-[#34C759]"
+                        : "text-[#10B981]"
+                      : isApple
+                      ? "text-[#FF3B30]"
                       : "text-[#F59E0B]"
                   }
                 >
@@ -1296,10 +1674,20 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
       </div>
 
       {/* Individual Punter 1-Unit Selection ROI Ledger */}
-      <div className="overflow-x-auto rounded-lg border border-[#1F2D26]">
+      <div
+        className={`overflow-x-auto rounded-lg border ${
+          isApple ? "border-[#E5E5EA] bg-white" : "border-[#1F2D26]"
+        }`}
+      >
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-[#121A16] border-b border-[#1F2D26] text-[10px] font-mono uppercase text-[#8A9990]">
+            <tr
+              className={`border-b text-[10px] font-mono uppercase ${
+                isApple
+                  ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#86868B]"
+                  : "bg-[#121A16] border-[#1F2D26] text-[#8A9990]"
+              }`}
+            >
               <th className="py-2 px-2.5">Rank &amp; Punter</th>
               <th className="py-2 px-2.5 text-center">Races / Picks</th>
               <th className="py-2 px-2.5 text-right">
@@ -1314,7 +1702,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
               <th className="py-2 px-2.5 text-right">Net EW Variance</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1F2D26] font-mono">
+          <tbody
+            className={`font-mono divide-y ${
+              isApple ? "divide-[#E5E5EA]" : "divide-[#1F2D26]"
+            }`}
+          >
             {punterRoiData.map((row, idx) => {
               const isDollarAbovePar = row.dollarReturnRatioPct >= 100;
               const isPtsAbovePar = row.pointsReturnRatioPct >= 100;
@@ -1322,44 +1714,86 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                 <tr
                   key={row.punterId}
                   onMouseEnter={() => setHoveredPunterId(row.punterId)}
-                  className="bg-[#0B110E] hover:bg-[#121A16]/90 transition-colors"
+                  className={`transition-colors ${
+                    isApple
+                      ? "bg-white hover:bg-[#F5F5F7] text-[#1D1D1F]"
+                      : "bg-[#0B110E] hover:bg-[#121A16]/90 text-[#F3F4F0]"
+                  }`}
                 >
-                  <td className="py-2 px-2.5 font-sans font-bold text-[#F3F4F0]">
+                  <td className="py-2 px-2.5 font-sans font-bold">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#16201B] text-[#D4AF37]">
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                          isApple
+                            ? "bg-[#F0F7FF] text-[#0071E3] border border-[#0071E3]/20"
+                            : "bg-[#16201B] text-[#D4AF37]"
+                        }`}
+                      >
                         #{idx + 1}
                       </span>
                       <span>{row.punterName}</span>
                     </div>
                   </td>
-                  <td className="py-2 px-2.5 text-center text-[#8A9990]">
+                  <td
+                    className={`py-2 px-2.5 text-center ${
+                      isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                    }`}
+                  >
                     {row.racesParticipated}R ·{" "}
-                    <span className="text-[#F3F4F0] font-bold">
+                    <span
+                      className={`font-bold ${
+                        isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                      }`}
+                    >
                       {row.totalSelections} picks
                     </span>
                   </td>
-                  <td className="py-2 px-2.5 text-right text-[#38BDF8] font-bold">
+                  <td
+                    className={`py-2 px-2.5 text-right font-bold ${
+                      isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+                    }`}
+                  >
                     {row.baselineEachWayUnitsOutlay}.00u ($
                     {row.baselineEachWayUnitsOutlay}.00)
                   </td>
-                  <td className="py-2 px-2.5 text-right text-[#10B981] font-bold">
+                  <td
+                    className={`py-2 px-2.5 text-right font-bold ${
+                      isApple ? "text-[#34C759]" : "text-[#10B981]"
+                    }`}
+                  >
                     {formatDollarReturn(row.totalDollarScore)}
                   </td>
                   <td
                     className={`py-2 px-2.5 text-right font-bold ${
-                      isDollarAbovePar ? "text-[#10B981]" : "text-[#F59E0B]"
+                      isDollarAbovePar
+                        ? isApple
+                          ? "text-[#34C759]"
+                          : "text-[#10B981]"
+                        : isApple
+                        ? "text-[#FF3B30]"
+                        : "text-[#F59E0B]"
                     }`}
                   >
                     {row.dollarReturnRatioPct}% (
                     {row.dollarNetRoiPct >= 0 ? "+" : ""}
                     {row.dollarNetRoiPct}%)
                   </td>
-                  <td className="py-2 px-2.5 text-right text-[#D4AF37] font-bold">
+                  <td
+                    className={`py-2 px-2.5 text-right font-bold ${
+                      isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                    }`}
+                  >
                     {row.totalPointsScore} pts
                   </td>
                   <td
                     className={`py-2 px-2.5 text-right font-bold ${
-                      isPtsAbovePar ? "text-[#10B981]" : "text-[#F59E0B]"
+                      isPtsAbovePar
+                        ? isApple
+                          ? "text-[#34C759]"
+                          : "text-[#10B981]"
+                        : isApple
+                        ? "text-[#FF3B30]"
+                        : "text-[#F59E0B]"
                     }`}
                   >
                     {row.pointsReturnRatioPct}% ({row.pointsPerUnitBet.toFixed(2)}
@@ -1368,7 +1802,11 @@ export const PunterRoiD3BarChart: React.FC<PunterRoiD3BarChartProps> = ({
                   <td
                     className={`py-2 px-2.5 text-right font-bold ${
                       row.dollarNetVariance >= 0
-                        ? "text-[#10B981]"
+                        ? isApple
+                          ? "text-[#34C759]"
+                          : "text-[#10B981]"
+                        : isApple
+                        ? "text-[#FF3B30]"
                         : "text-[#F59E0B]"
                     }`}
                   >

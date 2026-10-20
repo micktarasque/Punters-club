@@ -67,6 +67,7 @@ interface RaceReportSheetProps {
   quaddieExtraByMeeting?: Record<string, Record<number, number[]>>;
   generateReportSignal?: number;
   onTriggerToast?: (msg: string) => void;
+  isApple?: boolean;
 }
 
 const USER_LINE_COLORS = [
@@ -90,6 +91,7 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
   quaddieExtraByMeeting = {},
   generateReportSignal = 0,
   onTriggerToast,
+  isApple = false,
 }) => {
   const reportSheetRef = useRef<HTMLDivElement | null>(null);
   const emailPanelRef = useRef<HTMLDivElement | null>(null);
@@ -1558,7 +1560,10 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
             </div>
 
             {/* Dynamic Visual Analytics Suite: Cumulative Equity, Punter Heatmap, Track Bias Radar & Exotics Funnel */}
-            <DynamicReportVisualizations report={activeReport} />
+            <DynamicReportVisualizations
+              report={activeReport}
+              isApple={isApple}
+            />
 
             {/* bklit.ui Interactive Report Visualizer: 6-Month Trend Area, Punter Par vs Return Bar, Barrier/Fav Donut Rings & Sortable Archive Table */}
             <BklitReportVisualizer
@@ -1567,6 +1572,7 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
               onSelectReport={(reportId) => setSelectedReportId(reportId)}
               meetings={allKnownMeetings.length > 0 ? allKnownMeetings : meetings}
               punters={punters}
+              isApple={isApple}
             />
 
             {/* D3-Based Syndicate Success Rate & Quaddie Progression Trend Graph */}
@@ -1582,6 +1588,7 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
               trifectaBetAmount={trifectaBetAmount}
               quaddieBuyInPerUser={quaddieBuyInPerUser}
               quaddieExtraByMeeting={quaddieExtraByMeeting}
+              isApple={isApple}
             />
 
             {/* D3-Based Individual Punter ROI Bar Chart (Total Points/Score vs 1-Unit Bet on Every Selection) */}
@@ -1594,6 +1601,7 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
               }
               activeReport={activeReport}
               punters={punters}
+              isApple={isApple}
             />
 
             {/* 2x2 Primary Graphical Charts */}
@@ -2300,7 +2308,7 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
            ==================================================================== */}
         <div className="space-y-4">
           {/* Head-to-Head Duel & Leaderboard Matrix */}
-          <PunterHeadToHeadDuel report={activeReport} />
+          <PunterHeadToHeadDuel report={activeReport} isApple={isApple} />
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-bold">

@@ -1995,8 +1995,8 @@ app.post("/api/reports/send-email", async (req, res) => {
     const reportObj = req.body?.report;
 
     if (reportObj && reportObj.id) {
-      const existing = readSixMonthReportsArchive();
-      writeSixMonthReportsArchive([
+      const existing = readFourMonthReportsArchive();
+      writeFourMonthReportsArchive([
         ...existing,
         {
           ...reportObj,

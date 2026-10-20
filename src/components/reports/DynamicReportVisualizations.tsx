@@ -215,11 +215,19 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-[#10B981]" />
+                <div
+                  className={`w-3 h-3 rounded ${
+                    isApple ? "bg-[#0071E3]" : "bg-[#10B981]"
+                  }`}
+                />
                 <span className="font-mono text-current/80">Cumulative Return</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-[#D4AF37]" />
+                <div
+                  className={`w-3 h-3 rounded ${
+                    isApple ? "bg-[#8E8E93]" : "bg-[#D4AF37]"
+                  }`}
+                />
                 <span className="font-mono text-current/80">Cumulative Outlay</span>
               </div>
             </div>
@@ -228,7 +236,11 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
               <span
                 className={`font-bold ${
                   (equityData[equityData.length - 1]?.netProfit ?? 0) >= 0
-                    ? "text-[#10B981]"
+                    ? isApple
+                      ? "text-[#34C759]"
+                      : "text-[#10B981]"
+                    : isApple
+                    ? "text-[#FF3B30]"
                     : "text-[#EF4444]"
                 }`}
               >
@@ -244,12 +256,28 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
               <AreaChart data={equityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="returnGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                    <stop
+                      offset="5%"
+                      stopColor={isApple ? "#0071E3" : "#10B981"}
+                      stopOpacity={isApple ? 0.35 : 0.4}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isApple ? "#0071E3" : "#10B981"}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                   <linearGradient id="outlayGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.0} />
+                    <stop
+                      offset="5%"
+                      stopColor={isApple ? "#8E8E93" : "#D4AF37"}
+                      stopOpacity={isApple ? 0.2 : 0.25}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isApple ? "#8E8E93" : "#D4AF37"}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isApple ? "#E5E5EA" : "#1F2D26"} />
@@ -268,7 +296,7 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                         <div
                           className={`p-3 rounded-xl border text-xs font-mono shadow-xl ${
                             isApple
-                              ? "bg-white/95 border-[#D1D1D6] text-[#1D1D1F]"
+                              ? "bg-white/95 border-[#E5E5EA] text-[#1D1D1F]"
                               : "bg-[#070B09]/95 border-[#2E4539] text-[#F3F4F0]"
                           }`}
                         >
@@ -277,16 +305,50 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                           </div>
                           <div className="space-y-0.5">
                             <div>Winner: <span className="font-bold">{data.winner}</span> (${data.winnerOdds.toFixed(2)})</div>
-                            <div>Cumulative Return: <span className="font-bold text-[#10B981]">${data.return.toFixed(2)}</span></div>
-                            <div>Cumulative Outlay: <span className="font-bold text-[#D4AF37]">${data.outlay.toFixed(2)}</span></div>
+                            <div>
+                              Cumulative Return:{" "}
+                              <span
+                                className={`font-bold ${
+                                  isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                                }`}
+                              >
+                                ${data.return.toFixed(2)}
+                              </span>
+                            </div>
+                            <div>
+                              Cumulative Outlay:{" "}
+                              <span
+                                className={`font-bold ${
+                                  isApple ? "text-[#8E8E93]" : "text-[#D4AF37]"
+                                }`}
+                              >
+                                ${data.outlay.toFixed(2)}
+                              </span>
+                            </div>
                             <div>
                               Net P/L:{" "}
-                              <span className={`font-bold ${isProfit ? "text-[#10B981]" : "text-[#EF4444]"}`}>
+                              <span
+                                className={`font-bold ${
+                                  isProfit
+                                    ? isApple
+                                      ? "text-[#34C759]"
+                                      : "text-[#10B981]"
+                                    : isApple
+                                    ? "text-[#FF3B30]"
+                                    : "text-[#EF4444]"
+                                }`}
+                              >
                                 {isProfit ? "+" : ""}${data.netProfit.toFixed(2)} ({data.roiPct}%)
                               </span>
                             </div>
                             {data.trifectaHit && (
-                              <div className="text-[#D4AF37] font-bold mt-1">✓ Trifecta Hit (${data.trifectaDividend.toFixed(2)})</div>
+                              <div
+                                className={`font-bold mt-1 ${
+                                  isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                                }`}
+                              >
+                                ✓ Trifecta Hit (${data.trifectaDividend.toFixed(2)})
+                              </div>
                             )}
                           </div>
                         </div>
@@ -298,7 +360,7 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                 <Area
                   type="monotone"
                   dataKey="return"
-                  stroke="#10B981"
+                  stroke={isApple ? "#0071E3" : "#10B981"}
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#returnGradient)"
@@ -307,7 +369,7 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                 <Area
                   type="monotone"
                   dataKey="outlay"
-                  stroke="#D4AF37"
+                  stroke={isApple ? "#8E8E93" : "#D4AF37"}
                   strokeWidth={2}
                   strokeDasharray="4 4"
                   fillOpacity={1}
@@ -331,13 +393,28 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
             </span>
             <div className="flex items-center gap-3 font-mono text-[11px]">
               <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded bg-[#D4AF37]" /> 1st Win
+                <span
+                  className={`w-2.5 h-2.5 rounded ${
+                    isApple ? "bg-[#0071E3]" : "bg-[#D4AF37]"
+                  }`}
+                />{" "}
+                1st Win
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded bg-[#94A3B8]" /> 2nd
+                <span
+                  className={`w-2.5 h-2.5 rounded ${
+                    isApple ? "bg-[#8E8E93]" : "bg-[#94A3B8]"
+                  }`}
+                />{" "}
+                2nd
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded bg-[#B45309]" /> 3rd
+                <span
+                  className={`w-2.5 h-2.5 rounded ${
+                    isApple ? "bg-[#C7C7CC]" : "bg-[#B45309]"
+                  }`}
+                />{" "}
+                3rd
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded bg-current/20" /> Unplaced
@@ -345,10 +422,20 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-current/10">
+          <div
+            className={`overflow-x-auto rounded-xl border ${
+              isApple ? "border-[#E5E5EA] bg-white" : "border-current/10"
+            }`}
+          >
             <table className="w-full text-left text-xs border-collapse font-mono">
               <thead>
-                <tr className={isApple ? "bg-[#F5F5F7] text-[#6E6E73]" : "bg-[#070B09] text-[#8A9990]"}>
+                <tr
+                  className={
+                    isApple
+                      ? "bg-[#F5F5F7] text-[#1D1D1F] border-b border-[#E5E5EA]"
+                      : "bg-[#070B09] text-[#8A9990]"
+                  }
+                >
                   <th className="py-2.5 px-3 font-semibold">Punter</th>
                   {report.raceRows.map((r) => (
                     <th key={r.raceNumber} className="py-2.5 px-2 text-center font-semibold">
@@ -359,13 +446,28 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                   <th className="py-2.5 px-3 text-right font-semibold">Strike %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-current/5">
+              <tbody
+                className={`divide-y ${
+                  isApple ? "divide-[#E5E5EA]" : "divide-current/5"
+                }`}
+              >
                 {report.standings.map((punter) => {
                   return (
-                    <tr key={punter.punterId} className={isApple ? "hover:bg-[#F5F5F7]" : "hover:bg-[#14201A]"}>
+                    <tr
+                      key={punter.punterId}
+                      className={
+                        isApple ? "hover:bg-[#F5F5F7] text-[#1D1D1F]" : "hover:bg-[#14201A]"
+                      }
+                    >
                       <td className="py-2.5 px-3 font-bold whitespace-nowrap font-sans">
                         <div>{punter.punterName}</div>
-                        <div className="text-[10px] font-mono text-current/50">{punter.role}</div>
+                        <div
+                          className={`text-[10px] font-mono ${
+                            isApple ? "text-[#86868B]" : "text-current/50"
+                          }`}
+                        >
+                          {punter.role}
+                        </div>
                       </td>
 
                       {report.raceRows.map((race) => {
@@ -380,11 +482,17 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                             <div
                               className={`mx-auto w-8 h-8 rounded-lg flex flex-col items-center justify-center text-[10px] font-bold transition-transform hover:scale-110 cursor-pointer ${
                                 hasWinner
-                                  ? "bg-[#D4AF37] text-[#070B09] shadow-sm font-extrabold"
+                                  ? isApple
+                                    ? "bg-[#0071E3] text-white shadow-xs font-extrabold"
+                                    : "bg-[#D4AF37] text-[#070B09] shadow-sm font-extrabold"
                                   : points === 2
-                                  ? "bg-[#94A3B8] text-[#0F172A]"
+                                  ? isApple
+                                    ? "bg-[#E5E5EA] text-[#1D1D1F]"
+                                    : "bg-[#94A3B8] text-[#0F172A]"
                                   : points === 1
-                                  ? "bg-[#B45309] text-white"
+                                  ? isApple
+                                    ? "bg-[#F2F2F7] text-[#1D1D1F] border border-[#D1D1D6]"
+                                    : "bg-[#B45309] text-white"
                                   : isApple
                                   ? "bg-[#F5F5F7] text-current/40"
                                   : "bg-[#14201A] text-current/30"
@@ -398,7 +506,11 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                         );
                       })}
 
-                      <td className="py-2.5 px-3 text-right font-bold text-[#10B981] whitespace-nowrap">
+                      <td
+                        className={`py-2.5 px-3 text-right font-bold whitespace-nowrap ${
+                          isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                        }`}
+                      >
                         {formatDollarReturn(punter.eachWayDollarReturn || 0)}
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap font-bold">
@@ -429,7 +541,7 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                   dataKey="podiumPct"
                   stroke={isApple ? "#0071E3" : "#D4AF37"}
                   fill={isApple ? "#0071E3" : "#D4AF37"}
-                  fillOpacity={0.4}
+                  fillOpacity={isApple ? 0.25 : 0.4}
                 />
                 <Tooltip />
               </RadarChart>
@@ -442,15 +554,45 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
               Analysis of barrier positions and settling styles for {report.venue} on {report.raceDate}.
             </p>
             <div className="space-y-2 font-mono">
-              <div className="p-2.5 rounded-lg border border-current/10 flex items-center justify-between">
+              <div
+                className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                  isApple
+                    ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                    : "border-current/10"
+                }`}
+              >
                 <span>Inside Rails (Barriers 1–3)</span>
-                <span className="font-bold text-[#10B981]">{radarData[0]?.podiumPct}% Win/Podium</span>
+                <span
+                  className={`font-bold ${
+                    isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                  }`}
+                >
+                  {radarData[0]?.podiumPct}% Win/Podium
+                </span>
               </div>
-              <div className="p-2.5 rounded-lg border border-current/10 flex items-center justify-between">
+              <div
+                className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                  isApple
+                    ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                    : "border-current/10"
+                }`}
+              >
                 <span>Middle Draw (Barriers 4–7)</span>
-                <span className="font-bold text-[#38BDF8]">{radarData[1]?.podiumPct}% Win/Podium</span>
+                <span
+                  className={`font-bold ${
+                    isApple ? "text-[#34C759]" : "text-[#38BDF8]"
+                  }`}
+                >
+                  {radarData[1]?.podiumPct}% Win/Podium
+                </span>
               </div>
-              <div className="p-2.5 rounded-lg border border-current/10 flex items-center justify-between">
+              <div
+                className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                  isApple
+                    ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                    : "border-current/10"
+                }`}
+              >
                 <span>Wide Draw (Barriers 8+)</span>
                 <span className="font-bold text-current/70">{radarData[2]?.podiumPct}% Win/Podium</span>
               </div>
@@ -485,20 +627,34 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
                     key={leg.legIndex}
                     className={`p-3.5 rounded-xl border flex flex-col justify-between gap-2 transition-all ${
                       leg.isHit
-                        ? "border-[#10B981] bg-[#10B981]/10 text-current"
+                        ? isApple
+                          ? "border-[#0071E3] bg-[#0071E3]/10 text-[#1D1D1F]"
+                          : "border-[#10B981] bg-[#10B981]/10 text-current"
                         : leg.isResulted
-                        ? "border-[#EF4444]/40 bg-[#EF4444]/5 text-current/80"
+                        ? isApple
+                          ? "border-[#FF3B30]/30 bg-[#FF3B30]/5 text-[#1D1D1F]"
+                          : "border-[#EF4444]/40 bg-[#EF4444]/5 text-current/80"
+                        : isApple
+                        ? "border-[#E5E5EA] bg-[#F5F5F7] text-[#1D1D1F]"
                         : "border-current/10 bg-current/5"
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="font-bold">Leg {leg.legIndex} (R{leg.raceNumber})</span>
                       {leg.isHit ? (
-                        <span className="inline-flex items-center gap-1 text-[#10B981] font-bold">
+                        <span
+                          className={`inline-flex items-center gap-1 font-bold ${
+                            isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                          }`}
+                        >
                           <CheckCircle2 className="w-3.5 h-3.5" /> HIT
                         </span>
                       ) : leg.isResulted ? (
-                        <span className="inline-flex items-center gap-1 text-[#EF4444] font-bold">
+                        <span
+                          className={`inline-flex items-center gap-1 font-bold ${
+                            isApple ? "text-[#FF3B30]" : "text-[#EF4444]"
+                          }`}
+                        >
                           <XCircle className="w-3.5 h-3.5" /> MISSED
                         </span>
                       ) : (
@@ -527,12 +683,22 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
           )}
 
           {/* Trifecta Jackpots Boxed Summary */}
-          <div className="p-4 rounded-xl border border-current/10 bg-current/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+          <div
+            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "border-current/10 bg-current/5"
+            }`}
+          >
             <div>
               <span className="font-bold text-sm block font-sans">Boxed Trifecta Syndicate Performance</span>
               <span className="text-current/70">
                 Outlay: {formatDollarReturn(report.trifectaSummary.totalOutlay)} · Return:{" "}
-                <span className="font-bold text-[#10B981]">
+                <span
+                  className={`font-bold ${
+                    isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                  }`}
+                >
                   {formatDollarReturn(report.trifectaSummary.totalFlexiReturn)}
                 </span>
               </span>

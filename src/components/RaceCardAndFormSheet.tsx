@@ -41,6 +41,7 @@ interface RaceCardAndFormSheetProps {
     preferenceRank: 1 | 2 | 3,
     tabNumber: number
   ) => void;
+  isApple?: boolean;
 }
 
 type SortField =
@@ -62,6 +63,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
   activePunterName,
   currentMeetingSelections,
   onAssignPreference,
+  isApple = false,
 }) => {
   const [runnerSearch, setRunnerSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("finishPosition");
@@ -70,7 +72,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
     Record<number, boolean>
   >({});
   const [expandAllForm, setExpandAllForm] = useState(false);
-  const [useTanStackVirtualView, setUseTanStackVirtualView] = useState(true);
+  const [useTanStackVirtualView, setUseTanStackVirtualView] = useState(false);
   const [showHarvilleModel, setShowHarvilleModel] = useState(true);
 
   const effectiveSelectedIds = useMemo(() => {
@@ -832,6 +834,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
               onAssignPreference={onAssignPreference}
               expandedRunners={expandedRunners}
               onToggleRunnerForm={toggleRunnerForm}
+              isApple={isApple}
             />
           </div>
         ) : (

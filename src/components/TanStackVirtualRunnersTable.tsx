@@ -34,6 +34,7 @@ export interface TanStackVirtualRunnersTableProps {
   ) => void;
   expandedRunners: Record<number, boolean>;
   onToggleRunnerForm: (tabNo: number) => void;
+  isApple?: boolean;
 }
 
 export const TanStackVirtualRunnersTable: React.FC<
@@ -45,6 +46,7 @@ export const TanStackVirtualRunnersTable: React.FC<
   onAssignPreference,
   expandedRunners,
   onToggleRunnerForm,
+  isApple = false,
 }) => {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "tabNumber", desc: false },
@@ -411,32 +413,70 @@ export const TanStackVirtualRunnersTable: React.FC<
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 64,
-    overscan: 5,
+    estimateSize: () => 56,
+    overscan: 4,
   });
 
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start ?? 0 : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0)
+      : 0;
+
   return (
-    <div className="space-y-3">
+    <div
+      className={`space-y-3 relative isolate rounded-xl overflow-hidden border ${
+        isApple
+          ? "bg-white border-[#E5E5EA]"
+          : "bg-[#0B110E] border-[#1F2D26]"
+      }`}
+    >
       {/* TanStack Table Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-[#FAF9FA] border-b border-[#E5E5EA]">
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b ${
+          isApple
+            ? "bg-[#FAF9FA] border-[#E5E5EA]"
+            : "bg-[#0E1512] border-[#1F2D26]"
+        }`}
+      >
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#86868B] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search
+              className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
+                isApple ? "text-[#86868B]" : "text-[#8A9990]"
+              }`}
+            />
             <input
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Search runners, jockeys, trainers..."
-              className="bg-white border border-[#D2D2D7] rounded-full pl-8 pr-3 py-1.5 text-xs text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20 w-64"
+              className={`rounded-full pl-8 pr-3 py-1.5 text-xs focus:outline-none w-64 ${
+                isApple
+                  ? "bg-white border border-[#D2D2D7] text-[#1D1D1F] placeholder-[#86868B] focus:border-[#0071E3] focus:ring-2 focus:ring-[#0071E3]/20"
+                  : "bg-[#121A16] border border-[#1F2D26] text-[#F3F4F0] placeholder-[#8A9990] focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/20"
+              }`}
             />
           </div>
-          <span className="text-xs text-[#86868B] font-mono tabular-nums">
+          <span
+            className={`text-xs font-mono tabular-nums ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
             {rows.length} of {data.length} Runners
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EBF5FF] text-[#0071E3] flex items-center gap-1.5">
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium flex items-center gap-1.5 ${
+              isApple
+                ? "bg-[#EBF5FF] text-[#0071E3]"
+                : "bg-[#10B981]/15 text-[#10B981]"
+            }`}
+          >
             <Zap className="w-3 h-3" />
             <span>Virtual Table Active</span>
           </span>
@@ -446,16 +486,28 @@ export const TanStackVirtualRunnersTable: React.FC<
       {/* TanStack Virtual Scroll Container */}
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto max-h-[640px] border-b border-[#E5E5EA]"
+        className={`relative overflow-x-auto overflow-y-auto max-h-[640px] border-b isolate ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}
       >
         <table className="w-full text-left border-collapse min-w-[880px]">
-          <thead className="sticky top-0 z-10 bg-[#FAF9FA] border-b border-[#E5E5EA] text-[12px] text-[#86868B] font-medium shadow-xs">
+          <thead
+            className={`sticky top-0 z-10 border-b text-[12px] font-medium shadow-xs ${
+              isApple
+                ? "bg-[#FAF9FA] border-[#E5E5EA] text-[#86868B]"
+                : "bg-[#0E1512] border-[#1F2D26] text-[#8A9990]"
+            }`}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="py-2.5 px-3 whitespace-nowrap bg-[#FAF9FA] text-[#86868B]"
+                    className={`py-2.5 px-3 whitespace-nowrap ${
+                      isApple
+                        ? "bg-[#FAF9FA] text-[#86868B]"
+                        : "bg-[#0E1512] text-[#8A9990]"
+                    }`}
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -471,13 +523,19 @@ export const TanStackVirtualRunnersTable: React.FC<
           </thead>
 
           <tbody
-            className="text-xs divide-y divide-[#E5E5EA]"
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              position: "relative",
-            }}
+            className={`text-xs divide-y ${
+              isApple ? "divide-[#E5E5EA]" : "divide-[#1F2D26]"
+            }`}
           >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            {paddingTop > 0 && (
+              <tr>
+                <td
+                  style={{ height: `${paddingTop}px` }}
+                  colSpan={columns.length}
+                />
+              </tr>
+            )}
+            {virtualRows.map((virtualRow) => {
               const row = rows[virtualRow.index];
               const runner = row.original;
               const is1st = activeRaceTrio.firstPref === runner.tabNumber;
@@ -492,21 +550,20 @@ export const TanStackVirtualRunnersTable: React.FC<
                   ref={rowVirtualizer.measureElement}
                   className={`transition-colors ${
                     isPicked
-                      ? "bg-[#F2F7FF] hover:bg-[#E8F2FF]"
-                      : "hover:bg-[#FAF9FA]"
+                      ? isApple
+                        ? "bg-[#F2F7FF] hover:bg-[#E8F2FF]"
+                        : "bg-[#10B981]/15 hover:bg-[#10B981]/25"
+                      : isApple
+                      ? "hover:bg-[#FAF9FA]"
+                      : "hover:bg-[#14201A]"
                   }`}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="py-2.5 px-3 align-middle text-[#1D1D1F]"
+                      className={`py-2.5 px-3 align-middle ${
+                        isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                      }`}
                       style={{ width: cell.column.getSize() }}
                     >
                       {flexRender(
@@ -518,6 +575,14 @@ export const TanStackVirtualRunnersTable: React.FC<
                 </tr>
               );
             })}
+            {paddingBottom > 0 && (
+              <tr>
+                <td
+                  style={{ height: `${paddingBottom}px` }}
+                  colSpan={columns.length}
+                />
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

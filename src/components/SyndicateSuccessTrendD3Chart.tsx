@@ -31,6 +31,7 @@ interface SyndicateSuccessTrendD3ChartProps {
   trifectaBetAmount: number;
   quaddieBuyInPerUser?: number;
   quaddieExtraByMeeting?: Record<string, Record<number, number[]>>;
+  isApple?: boolean;
 }
 
 interface D3RaceTrendNode {
@@ -76,6 +77,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
   trifectaBetAmount,
   quaddieBuyInPerUser = DEFAULT_QUADDIE_BUY_IN_PER_USER,
   quaddieExtraByMeeting = {},
+  isApple = false,
 }) => {
   const [scopeMode, setScopeMode] = useState<"selected_meetings" | "active_card">(
     selectedMeetingIds.length > 1 || !activeReport
@@ -373,13 +375,31 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
   const lastNode = nodes[nodes.length - 1];
 
   return (
-    <div className="p-4 rounded-xl bg-[#0B110E] border border-[#1F2D26] space-y-3">
+    <div
+      className={`p-4 rounded-xl border space-y-3 transition-colors ${
+        isApple
+          ? "bg-white border-[#E5E5EA] text-[#1D1D1F] shadow-xs"
+          : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
+      }`}
+    >
       {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 border-b border-[#1F2D26] pb-3">
+      <div
+        className={`flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 border-b pb-3 ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}
+      >
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#10B981]" />
-            <span className="text-xs font-mono uppercase tracking-wider text-[#10B981] font-bold">
+            <TrendingUp
+              className={`w-4 h-4 ${
+                isApple ? "text-[#0071E3]" : "text-[#10B981]"
+              }`}
+            />
+            <span
+              className={`text-xs font-mono uppercase tracking-wider font-bold ${
+                isApple ? "text-[#0071E3]" : "text-[#10B981]"
+              }`}
+            >
               Performance Trend Graph · Syndicate Success Rate (%) &amp; $1
               Each-Way Return Rate (%) Across{" "}
               {targetMeetings.length === 1
@@ -387,9 +407,23 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                 : `${targetMeetings.length} Selected Meetings (${nodes.length} Races)`}
             </span>
           </div>
-          <p className="text-[11px] text-[#8A9990]">
-            Visualizes <strong className="text-[#D4AF37]">Syndicate Success Rate (%)</strong>{" "}
-            against <strong className="text-[#10B981]">Return Rate (% of $1 Each-Way Par)</strong>{" "}
+          <p
+            className={`text-[11px] ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            Visualizes{" "}
+            <strong
+              className={isApple ? "text-[#0071E3]" : "text-[#D4AF37]"}
+            >
+              Syndicate Success Rate (%)
+            </strong>{" "}
+            against{" "}
+            <strong
+              className={isApple ? "text-[#34C759]" : "text-[#10B981]"}
+            >
+              Return Rate (% of $1 Each-Way Par)
+            </strong>{" "}
             where Par = 6u/race on standard 8+ runner races (60u for 10 races) and
             5u/race on NTD (≤7 runner) races.
           </p>
@@ -397,13 +431,23 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
 
         <div className="flex flex-wrap items-center gap-2">
           {activeReport && selectedMeetingIds.length > 1 && (
-            <div className="flex items-center gap-1 bg-[#121A16] p-0.5 rounded-md border border-[#1F2D26] text-[10px] font-mono">
+            <div
+              className={`flex items-center gap-1 p-0.5 rounded-md border text-[10px] font-mono ${
+                isApple
+                  ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                  : "bg-[#121A16] border-[#1F2D26]"
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => setScopeMode("selected_meetings")}
                 className={`px-2.5 py-1 rounded cursor-pointer transition-colors ${
                   scopeMode === "selected_meetings"
-                    ? "bg-[#10B981] text-[#0B110E] font-bold"
+                    ? isApple
+                      ? "bg-[#0071E3] text-white font-bold"
+                      : "bg-[#10B981] text-[#0B110E] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -414,7 +458,11 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                 onClick={() => setScopeMode("active_card")}
                 className={`px-2.5 py-1 rounded cursor-pointer transition-colors ${
                   scopeMode === "active_card"
-                    ? "bg-[#D4AF37] text-[#0B110E] font-bold"
+                    ? isApple
+                      ? "bg-[#0071E3] text-white font-bold"
+                      : "bg-[#D4AF37] text-[#0B110E] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -423,13 +471,23 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
             </div>
           )}
 
-          <div className="flex items-center gap-1 bg-[#121A16] p-0.5 rounded-md border border-[#1F2D26] text-[10px] font-mono">
+          <div
+            className={`flex items-center gap-1 p-0.5 rounded-md border text-[10px] font-mono ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA]"
+                : "bg-[#121A16] border-[#1F2D26]"
+            }`}
+          >
             <button
               type="button"
               onClick={() => setRateViewMode("cumulative")}
               className={`px-2.5 py-1 rounded cursor-pointer transition-colors ${
                 rateViewMode === "cumulative"
-                  ? "bg-[#10B981] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#10B981] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -440,7 +498,11 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
               onClick={() => setRateViewMode("per_race")}
               className={`px-2.5 py-1 rounded cursor-pointer transition-colors ${
                 rateViewMode === "per_race"
-                  ? "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  ? isApple
+                    ? "bg-[#0071E3] text-white font-bold"
+                    : "bg-[#D4AF37] text-[#0B110E] font-bold"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
                   : "text-[#8A9990] hover:text-[#F3F4F0]"
               }`}
             >
@@ -453,31 +515,65 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
       {/* Legend Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-[#D4AF37] font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]" />
+          <span
+            className={`inline-flex items-center gap-1.5 font-bold ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                isApple ? "bg-[#0071E3]" : "bg-[#D4AF37]"
+              }`}
+            />
             Syndicate Success Rate (%) [Left Axis]
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[#10B981] font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+          <span
+            className={`inline-flex items-center gap-1.5 font-bold ${
+              isApple ? "text-[#34C759]" : "text-[#10B981]"
+            }`}
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                isApple ? "bg-[#34C759]" : "bg-[#10B981]"
+              }`}
+            />
             $1 Each-Way Return Rate (% of Par) [Right Axis]
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[#F59E0B]">
-            <span className="w-3 h-0.5 bg-[#F59E0B]" />
+          <span
+            className={`inline-flex items-center gap-1.5 ${
+              isApple ? "text-[#8E8E93]" : "text-[#F59E0B]"
+            }`}
+          >
+            <span
+              className={`w-3 h-0.5 ${
+                isApple ? "bg-[#8E8E93]" : "bg-[#F59E0B]"
+              }`}
+            />
             100% Par Benchmark Line
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[#38BDF8]">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#38BDF8]/25 border border-[#38BDF8]" />
+          <span
+            className={`inline-flex items-center gap-1.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+            }`}
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-sm border ${
+                isApple
+                  ? "bg-[#0071E3]/20 border-[#0071E3]"
+                  : "bg-[#38BDF8]/25 border-[#38BDF8]"
+              }`}
+            />
             Declared Quaddie Legs
           </span>
         </div>
 
-        <div className="text-[#D5DDD8]">
+        <div className={isApple ? "text-[#1D1D1F]" : "text-[#D5DDD8]"}>
           Overall Success:{" "}
-          <strong className="text-[#D4AF37]">
+          <strong className={isApple ? "text-[#0071E3]" : "text-[#D4AF37]"}>
             {lastNode.cumulativeSuccessRatePct}%
           </strong>{" "}
           · Overall Return Rate:{" "}
-          <strong className="text-[#10B981]">
+          <strong className={isApple ? "text-[#34C759]" : "text-[#10B981]"}>
             {lastNode.cumulativeReturnRatePct}% of Par
           </strong>{" "}
           ({formatDollarReturn(lastNode.cumulativeEachWayReturnDollars)} /{" "}
@@ -501,8 +597,16 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
               x2="0"
               y2="1"
             >
-              <stop offset="0%" stopColor="#10B981" stopOpacity="0.32" />
-              <stop offset="100%" stopColor="#10B981" stopOpacity="0.02" />
+              <stop
+                offset="0%"
+                stopColor={isApple ? "#0071E3" : "#10B981"}
+                stopOpacity={isApple ? 0.28 : 0.32}
+              />
+              <stop
+                offset="100%"
+                stopColor={isApple ? "#0071E3" : "#10B981"}
+                stopOpacity={0.01}
+              />
             </linearGradient>
           </defs>
 
@@ -519,7 +623,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   y1={y}
                   x2={svgWidth - margin.right}
                   y2={y}
-                  stroke="#1F2D26"
+                  stroke={isApple ? "#E5E5EA" : "#1F2D26"}
                   strokeDasharray={pct === 0 ? undefined : "3 3"}
                   strokeWidth={1}
                 />
@@ -527,7 +631,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   x={margin.left - 8}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-[#D4AF37] font-mono text-[9.5px]"
+                  className={`font-mono text-[9.5px] ${
+                    isApple ? "fill-[#0071E3]" : "fill-[#D4AF37]"
+                  }`}
                 >
                   {pct}%
                 </text>
@@ -535,7 +641,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   x={svgWidth - margin.right + 8}
                   y={y + 3}
                   textAnchor="start"
-                  className="fill-[#10B981] font-mono text-[9.5px]"
+                  className={`font-mono text-[9.5px] ${
+                    isApple ? "fill-[#34C759]" : "fill-[#10B981]"
+                  }`}
                 >
                   {rightRateVal}%
                 </text>
@@ -551,7 +659,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                 y1={par100Y}
                 x2={svgWidth - margin.right}
                 y2={par100Y}
-                stroke="#F59E0B"
+                stroke={isApple ? "#8E8E93" : "#F59E0B"}
                 strokeWidth={1.3}
                 strokeDasharray="6 4"
                 strokeOpacity={0.8}
@@ -559,7 +667,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
               <text
                 x={margin.left + 6}
                 y={par100Y - 4}
-                className="fill-[#F59E0B] font-mono text-[8.5px] font-bold"
+                className={`font-mono text-[8.5px] font-bold ${
+                  isApple ? "fill-[#8E8E93]" : "fill-[#F59E0B]"
+                }`}
               >
                 100% PAR BENCHMARK ($1 EW Break-Even)
               </text>
@@ -584,9 +694,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   width={Math.max(16, lastX - firstX)}
                   height={innerH}
                   rx={5}
-                  fill="#0EA5E9"
-                  fillOpacity={0.07}
-                  stroke="#0EA5E9"
+                  fill={isApple ? "#0071E3" : "#0EA5E9"}
+                  fillOpacity={isApple ? 0.08 : 0.07}
+                  stroke={isApple ? "#0071E3" : "#0EA5E9"}
                   strokeOpacity={0.35}
                   strokeDasharray="4 3"
                 />
@@ -594,7 +704,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   x={(firstX + lastX) / 2}
                   y={margin.top + 11}
                   textAnchor="middle"
-                  className="fill-[#38BDF8] font-mono text-[8.5px] font-bold"
+                  className={`font-mono text-[8.5px] font-bold ${
+                    isApple ? "fill-[#0071E3]" : "fill-[#38BDF8]"
+                  }`}
                 >
                   {m.venue.split(" ")[0].toUpperCase()} QUADDIE
                 </text>
@@ -607,7 +719,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
           <path
             d={returnLinePath}
             fill="none"
-            stroke="#10B981"
+            stroke={isApple ? "#0071E3" : "#10B981"}
             strokeWidth={2.5}
           />
 
@@ -615,7 +727,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
           <path
             d={successLinePath}
             fill="none"
-            stroke="#D4AF37"
+            stroke={isApple ? "#34C759" : "#D4AF37"}
             strokeWidth={2.2}
             strokeDasharray="5 2.5"
           />
@@ -639,7 +751,7 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                     y1={margin.top}
                     x2={cx}
                     y2={margin.top + innerH}
-                    stroke="#D4AF37"
+                    stroke={isApple ? "#0071E3" : "#D4AF37"}
                     strokeOpacity={0.55}
                     strokeWidth={1.2}
                   />
@@ -650,8 +762,16 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   cx={cx}
                   cy={cyReturn}
                   r={isHovered ? 5.5 : 4}
-                  fill={getReturnRateVal(node) >= 100 ? "#10B981" : "#059669"}
-                  stroke="#0B110E"
+                  fill={
+                    getReturnRateVal(node) >= 100
+                      ? isApple
+                        ? "#34C759"
+                        : "#10B981"
+                      : isApple
+                      ? "#0071E3"
+                      : "#059669"
+                  }
+                  stroke={isApple ? "#FFFFFF" : "#0B110E"}
                   strokeWidth={1.5}
                 />
 
@@ -660,8 +780,16 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   cx={cx}
                   cy={cySuccess}
                   r={isHovered ? 5 : 3.5}
-                  fill={node.isTrifectaHit ? "#10B981" : "#D4AF37"}
-                  stroke="#0B110E"
+                  fill={
+                    node.isTrifectaHit
+                      ? isApple
+                        ? "#34C759"
+                        : "#10B981"
+                      : isApple
+                      ? "#0071E3"
+                      : "#D4AF37"
+                  }
+                  stroke={isApple ? "#FFFFFF" : "#0B110E"}
                   strokeWidth={1.5}
                 />
 
@@ -671,7 +799,13 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   y={margin.top + innerH + 15}
                   textAnchor="middle"
                   className={`font-mono text-[9.5px] font-bold ${
-                    node.isQuaddieLeg ? "fill-[#38BDF8]" : "fill-[#F3F4F0]"
+                    node.isQuaddieLeg
+                      ? isApple
+                        ? "fill-[#0071E3]"
+                        : "fill-[#38BDF8]"
+                      : isApple
+                      ? "fill-[#1D1D1F]"
+                      : "fill-[#F3F4F0]"
                   }`}
                 >
                   {node.axisLabel}
@@ -683,7 +817,13 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   y={margin.top + innerH + 27}
                   textAnchor="middle"
                   className={`font-mono text-[8px] ${
-                    node.isNtdRace ? "fill-[#F59E0B]" : "fill-[#8A9990]"
+                    node.isNtdRace
+                      ? isApple
+                        ? "fill-[#FF9500]"
+                        : "fill-[#F59E0B]"
+                      : isApple
+                      ? "fill-[#86868B]"
+                      : "fill-[#8A9990]"
                   }`}
                 >
                   {node.isNtdRace
@@ -696,7 +836,9 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   x={cx}
                   y={margin.top + innerH + 38}
                   textAnchor="middle"
-                  className="fill-[#10B981] font-mono text-[8px]"
+                  className={`font-mono text-[8px] ${
+                    isApple ? "fill-[#0071E3]" : "fill-[#10B981]"
+                  }`}
                 >
                   {getReturnRateVal(node)}%
                 </text>
@@ -708,58 +850,118 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
 
       {/* Interactive Race Inspection Bar */}
       {activeNode && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 pt-2 border-t border-[#1F2D26] text-xs font-mono">
-          <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26] flex items-center justify-between gap-2">
+        <div
+          className={`grid grid-cols-1 md:grid-cols-4 gap-2.5 pt-2 border-t text-xs font-mono ${
+            isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+          }`}
+        >
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+            }`}
+          >
             <div className="min-w-0">
-              <span className="text-[10px] uppercase text-[#8A9990] block">
+              <span
+                className={`text-[10px] uppercase block ${
+                  isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                }`}
+              >
                 {activeNode.venue} · Race {activeNode.raceNumber} (
                 {activeNode.fieldSize} Runners
                 {activeNode.isNtdRace ? " · NTD" : ""})
               </span>
-              <span className="text-[#F3F4F0] font-bold truncate block">
+              <span className="font-bold truncate block">
                 {activeNode.raceName} ({activeNode.distance}m)
               </span>
             </div>
             {activeNode.isNtdRace && (
-              <span className="px-1.5 py-0.5 rounded bg-[#F59E0B]/20 border border-[#F59E0B] text-[#F59E0B] text-[9px] font-bold shrink-0">
+              <span className="px-1.5 py-0.5 rounded bg-[#FF9500]/20 border border-[#FF9500] text-[#FF9500] text-[9px] font-bold shrink-0">
                 NTD (No 3rd Div)
               </span>
             )}
           </div>
 
-          <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26] flex items-center justify-between">
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+            }`}
+          >
             <div>
-              <span className="text-[10px] uppercase text-[#8A9990] block">
+              <span
+                className={`text-[10px] uppercase block ${
+                  isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                }`}
+              >
                 Syndicate Success Rate
               </span>
-              <span className="text-[#D4AF37] font-bold">
+              <span
+                className={`font-bold ${
+                  isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                }`}
+              >
                 Race: {activeNode.raceSuccessRatePct}% ({activeNode.podiumHitCount}
                 /3) · Cum: {activeNode.cumulativeSuccessRatePct}%
               </span>
             </div>
-            <Activity className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <Activity
+              className={`w-4 h-4 shrink-0 ${
+                isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+              }`}
+            />
           </div>
 
-          <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26] flex items-center justify-between">
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+            }`}
+          >
             <div>
-              <span className="text-[10px] uppercase text-[#8A9990] block">
+              <span
+                className={`text-[10px] uppercase block ${
+                  isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                }`}
+              >
                 $1 Each-Way Return Rate vs Par
               </span>
-              <span className="text-[#10B981] font-bold">
+              <span
+                className={`font-bold ${
+                  isApple ? "text-[#34C759]" : "text-[#10B981]"
+                }`}
+              >
                 Race: {formatDollarReturn(activeNode.raceEachWayReturnDollars)} /{" "}
                 {activeNode.raceEachWayParUnits}u ({activeNode.raceReturnRatePct}
                 %) · Cum: {activeNode.cumulativeReturnRatePct}%
               </span>
             </div>
-            <BarChart3 className="w-4 h-4 text-[#10B981] shrink-0" />
+            <BarChart3
+              className={`w-4 h-4 shrink-0 ${
+                isApple ? "text-[#34C759]" : "text-[#10B981]"
+              }`}
+            />
           </div>
 
-          <div className="p-2.5 rounded-lg bg-[#121A16] border border-[#1F2D26] flex items-center justify-between">
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between ${
+              isApple
+                ? "bg-[#F5F5F7] border-[#E5E5EA] text-[#1D1D1F]"
+                : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+            }`}
+          >
             <div>
-              <span className="text-[10px] uppercase text-[#8A9990] block">
+              <span
+                className={`text-[10px] uppercase block ${
+                  isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                }`}
+              >
                 All-Users Trifecta &amp; Quaddie
               </span>
-              <span className="text-[#F3F4F0] font-bold">
+              <span className="font-bold">
                 {activeNode.combinedRunnersCount}H Box ({activeNode.boxedCombinationsCount}
                 c @ {activeNode.trifectaFlexiPct}%) ·{" "}
                 {activeNode.isTrifectaHit
@@ -767,7 +969,11 @@ export const SyndicateSuccessTrendD3Chart: React.FC<
                   : `Est ${formatDollarReturn(activeNode.trifectaFlexiPayout)}`}
               </span>
             </div>
-            <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <Sparkles
+              className={`w-4 h-4 shrink-0 ${
+                isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+              }`}
+            />
           </div>
         </div>
       )}

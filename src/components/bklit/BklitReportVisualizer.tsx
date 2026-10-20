@@ -27,6 +27,7 @@ interface BklitReportVisualizerProps {
   meetings: RaceMeeting[];
   punters: PunterProfile[];
   className?: string;
+  isApple?: boolean;
 }
 
 export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
@@ -35,6 +36,7 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
   onSelectReport,
   punters,
   className = "",
+  isApple = false,
 }) => {
   const [activeVisualTab, setActiveVisualTab] = useState<
     "archive_trend" | "member_pnl" | "market_rings" | "reports_table"
@@ -105,13 +107,38 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
     if (!activeReport?.cardTrackAssessment) {
       return {
         barrierSegments: [
-          { key: "inside", label: "Inside (1-4)", value: 4, color: "#10B981" },
-          { key: "middle", label: "Middle (5-8)", value: 3, color: "#38BDF8" },
-          { key: "outside", label: "Wide (9+)", value: 3, color: "#F59E0B" },
+          {
+            key: "inside",
+            label: "Inside (1-4)",
+            value: 4,
+            color: isApple ? "#0071E3" : "#10B981",
+          },
+          {
+            key: "middle",
+            label: "Middle (5-8)",
+            value: 3,
+            color: isApple ? "#34C759" : "#38BDF8",
+          },
+          {
+            key: "outside",
+            label: "Wide (9+)",
+            value: 3,
+            color: isApple ? "#FF9500" : "#F59E0B",
+          },
         ],
         favSegments: [
-          { key: "favs", label: "Favs Won", value: 4, color: "#D4AF37" },
-          { key: "nonfavs", label: "Non-Favs Won", value: 6, color: "#475569" },
+          {
+            key: "favs",
+            label: "Favs Won",
+            value: 4,
+            color: isApple ? "#0071E3" : "#D4AF37",
+          },
+          {
+            key: "nonfavs",
+            label: "Non-Favs Won",
+            value: 6,
+            color: isApple ? "#C7C7CC" : "#475569",
+          },
         ],
       };
     }
@@ -122,19 +149,19 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
         key: "inside",
         label: `Inside (1-4)`,
         value: bz?.inside1To4Wins ?? 0,
-        color: "#10B981",
+        color: isApple ? "#0071E3" : "#10B981",
       },
       {
         key: "middle",
         label: `Middle (5-8)`,
         value: bz?.middle5To8Wins ?? 0,
-        color: "#38BDF8",
+        color: isApple ? "#34C759" : "#38BDF8",
       },
       {
         key: "outside",
         label: `Wide (9+)`,
         value: bz?.outside9PlusWins ?? 0,
-        color: "#F59E0B",
+        color: isApple ? "#FF9500" : "#F59E0B",
       },
     ];
 
@@ -147,18 +174,18 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
         key: "favs",
         label: "Market Favourites Won",
         value: favsWon,
-        color: "#D4AF37",
+        color: isApple ? "#0071E3" : "#D4AF37",
       },
       {
         key: "nonfavs",
         label: "Non-Favourites Won",
         value: nonFavs,
-        color: "#475569",
+        color: isApple ? "#C7C7CC" : "#475569",
       },
     ];
 
     return { barrierSegments: bSegs, favSegments: fSegs };
-  }, [activeReport]);
+  }, [activeReport, isApple]);
 
   // Table columns for historical reports
   const reportColumns: BklitColumn<SavedRaceReport>[] = [
@@ -168,10 +195,26 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
       sortable: true,
       render: (r) => (
         <div className="flex items-center gap-2">
-          <Calendar className="w-3.5 h-3.5 text-[#8A9990]" />
-          <span className="font-mono text-[#F3F4F0]">{r.raceDate}</span>
+          <Calendar
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          />
+          <span
+            className={`font-mono ${
+              isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+            }`}
+          >
+            {r.raceDate}
+          </span>
           {r.id === activeReport?.id && (
-            <span className="text-[10px] bg-[#D4AF37]/20 text-[#D4AF37] px-1.5 py-0.2 rounded border border-[#D4AF37]/40">
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded border ${
+                isApple
+                  ? "bg-[#0071E3]/10 text-[#0071E3] border-[#0071E3]/30 font-semibold"
+                  : "bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40"
+              }`}
+            >
               Active
             </span>
           )}
@@ -182,7 +225,15 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
       key: "venue",
       header: "Track / Venue",
       sortable: true,
-      render: (r) => <span className="font-bold text-[#F3F4F0]">{r.venue}</span>,
+      render: (r) => (
+        <span
+          className={`font-bold ${
+            isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+          }`}
+        >
+          {r.venue}
+        </span>
+      ),
     },
     {
       key: "topPunter",
@@ -191,7 +242,11 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
       render: (r) => {
         const top = r.standings[0];
         return (
-          <span className="text-[#D4AF37] font-semibold flex items-center gap-1">
+          <span
+            className={`font-semibold flex items-center gap-1 ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          >
             <Trophy className="w-3 h-3" />
             {top ? `${top.punterName} (${top.totalPoints} pts)` : "No entries"}
           </span>
@@ -208,7 +263,11 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
           (r.trifectaSummary?.totalFlexiReturn || 0) +
           (r.quaddieSummary?.flexiPayout || 0);
         return (
-          <span className="font-bold text-[#10B981]">
+          <span
+            className={`font-bold ${
+              isApple ? "text-[#34C759]" : "text-[#10B981]"
+            }`}
+          >
             {formatDollarReturn(total)}
           </span>
         );
@@ -244,26 +303,54 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
 
   return (
     <div
-      className={`bklit-report-visualizer rounded-xl border border-[#1F2D26] bg-[#0E1612] p-4 space-y-4 ${className}`}
+      className={`bklit-report-visualizer rounded-xl border p-4 space-y-4 transition-colors ${
+        isApple
+          ? "bg-white border-[#E5E5EA] shadow-xs text-[#1D1D1F]"
+          : "border-[#1F2D26] bg-[#0E1612] text-[#F3F4F0]"
+      } ${className}`}
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1F2D26] pb-3">
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}
+      >
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-[#38BDF8]/15 border border-[#38BDF8]/40 text-[#38BDF8] font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <span
+              className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                isApple
+                  ? "bg-[#0071E3]/10 border border-[#0071E3]/30 text-[#0071E3]"
+                  : "bg-[#38BDF8]/15 border border-[#38BDF8]/40 text-[#38BDF8]"
+              }`}
+            >
               <Sparkles className="w-3 h-3" />
               bklit.ui Report Analytics
             </span>
-            <h3 className="text-base font-bold text-[#F3F4F0] font-sans">
+            <h3
+              className={`text-base font-bold font-sans ${
+                isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+              }`}
+            >
               Archived Reports &amp; Track Assessment Graphics
             </h3>
           </div>
-          <p className="text-xs text-[#8A9990]">
-            Bklit UI performance dashboards spanning the 6-month syndicate archive with barrier bias and favourite conversion rates.
+          <p
+            className={`text-xs ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}
+          >
+            Bklit UI performance dashboards spanning the 4-month syndicate archive with barrier bias and favourite conversion rates.
           </p>
         </div>
 
-        <div className="text-xs font-mono text-[#D4AF37] bg-[#0B110E] px-3 py-1 rounded border border-[#1F2D26]">
+        <div
+          className={`text-xs font-mono px-3 py-1 rounded border ${
+            isApple
+              ? "text-[#0071E3] bg-[#F5F5F7] border-[#E5E5EA] font-semibold"
+              : "text-[#D4AF37] bg-[#0B110E] border-[#1F2D26]"
+          }`}
+        >
           {reports.length} Archived Meetings Loaded
         </div>
       </div>
@@ -301,63 +388,115 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
       </div>
 
       {/* Visual Tabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0B110E] border border-[#1F2D26] overflow-x-auto text-xs font-mono">
+      <div
+        className={`flex items-center gap-1.5 p-1 rounded-lg border overflow-x-auto text-xs font-mono ${
+          isApple
+            ? "bg-[#F5F5F7] border-[#E5E5EA]"
+            : "bg-[#0B110E] border-[#1F2D26]"
+        }`}
+      >
         <button
           type="button"
           onClick={() => setActiveVisualTab("archive_trend")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "archive_trend"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <TrendingUp className="w-3.5 h-3.5 text-[#10B981]" />
+          <TrendingUp
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#10B981]"
+            }`}
+          />
           Meeting ROI Trend (Area)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("member_pnl")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "member_pnl"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5 text-[#38BDF8]" />
+          <BarChart3
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+            }`}
+          />
           Member Par vs Return (Bar)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("market_rings")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "market_rings"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <PieChart className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <PieChart
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}
+          />
           Barriers &amp; Favs (Rings)
         </button>
         <button
           type="button"
           onClick={() => setActiveVisualTab("reports_table")}
-          className={`px-3 py-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeVisualTab === "reports_table"
-              ? "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              ? isApple
+                ? "bg-white text-[#0071E3] font-bold shadow-xs border border-[#E5E5EA]"
+                : "bg-[#1F2D26] text-[#F3F4F0] font-bold"
+              : isApple
+              ? "text-[#86868B] hover:text-[#1D1D1F]"
               : "text-[#8A9990] hover:text-[#F3F4F0]"
           }`}
         >
-          <TableIcon className="w-3.5 h-3.5 text-[#A855F7]" />
+          <TableIcon
+            className={`w-3.5 h-3.5 ${
+              isApple ? "text-[#0071E3]" : "text-[#A855F7]"
+            }`}
+          />
           Archive Table (Sortable)
         </button>
       </div>
 
       {/* Chart Canvas Area */}
-      <div className="p-3 rounded-lg border border-[#1F2D26] bg-[#0B110E]">
+      <div
+        className={`p-3 rounded-lg border ${
+          isApple
+            ? "bg-white border-[#E5E5EA]"
+            : "bg-[#0B110E] border-[#1F2D26]"
+        }`}
+      >
         {activeVisualTab === "archive_trend" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-[#8A9990]">
-              <span className="text-[#10B981] font-semibold">
+            <div
+              className={`flex items-center justify-between text-xs font-mono ${
+                isApple ? "text-[#86868B]" : "text-[#8A9990]"
+              }`}
+            >
+              <span
+                className={`font-semibold ${
+                  isApple ? "text-[#0071E3]" : "text-[#10B981]"
+                }`}
+              >
                 Meeting-by-Meeting Return ($) Across Archive
               </span>
               <span>Spline with Gradient Area</span>
@@ -366,8 +505,16 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
               data={trendData}
               indexKey="label"
               series={[
-                { key: "dollars", label: "Exotic Collects ($)", color: "#10B981" },
-                { key: "par", label: "Par Turnover ($)", color: "#475569" },
+                {
+                  key: "dollars",
+                  label: "Exotic Collects ($)",
+                  color: isApple ? "#0071E3" : "#10B981",
+                },
+                {
+                  key: "par",
+                  label: "Par Turnover ($)",
+                  color: isApple ? "#8E8E93" : "#475569",
+                },
               ]}
               height={260}
               valueFormatter={(v) => formatDollarReturn(v)}
@@ -378,8 +525,16 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
 
         {activeVisualTab === "member_pnl" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-[#8A9990]">
-              <span className="text-[#38BDF8] font-semibold">
+            <div
+              className={`flex items-center justify-between text-xs font-mono ${
+                isApple ? "text-[#86868B]" : "text-[#8A9990]"
+              }`}
+            >
+              <span
+                className={`font-semibold ${
+                  isApple ? "text-[#0071E3]" : "text-[#38BDF8]"
+                }`}
+              >
                 Active Report: Punter Par Outlay vs Payout
               </span>
               <span>Grouped Bar Comparison</span>
@@ -388,8 +543,16 @@ export const BklitReportVisualizer: React.FC<BklitReportVisualizerProps> = ({
               data={punterBarData}
               indexKey="name"
               series={[
-                { key: "par", label: "Par Outlay ($)", color: "#475569" },
-                { key: "dollars", label: "Actual Return ($)", color: "#10B981" },
+                {
+                  key: "par",
+                  label: "Par Outlay ($)",
+                  color: isApple ? "#8E8E93" : "#475569",
+                },
+                {
+                  key: "dollars",
+                  label: "Actual Return ($)",
+                  color: isApple ? "#0071E3" : "#10B981",
+                },
               ]}
               height={260}
               valueFormatter={(v) => formatDollarReturn(v)}
