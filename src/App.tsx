@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
+  BarChart3,
   Bell,
   Check,
   CheckCircle2,
@@ -319,6 +320,9 @@ export default function App() {
       SEED_NSW_TAB_MEETINGS[0].id
   );
   const [selectedRaceNumber, setSelectedRaceNumber] = useState<number>(1);
+  const [overviewViewMode, setOverviewViewMode] = useState<"analytics" | "form">(
+    "analytics"
+  );
   const [verifiedSourcesUsed, setVerifiedSourcesUsed] = useState<string[]>([
     "Ladbrokes AU Racing API (v1)",
     "Neds AU Racing API (v1)",
@@ -2726,7 +2730,9 @@ export default function App() {
               punters={punters}
               selectedRaceNumber={selectedRaceNumber}
               verifiedSourcesUsed={verifiedSourcesUsed}
-              onInspectRace={(meetingId, raceNo) => {
+              overviewViewMode={overviewViewMode}
+              onChangeOverviewViewMode={setOverviewViewMode}
+              onInspectRace={(meetingId, raceNo, targetViewMode) => {
                 setSelectedMeetingId(meetingId);
                 if (!selectedMeetingIds.includes(meetingId)) {
                   handleUpdateSelectedMeetingIds([
@@ -2735,9 +2741,17 @@ export default function App() {
                   ]);
                 }
                 setSelectedRaceNumber(raceNo);
+                const nextMode = targetViewMode || overviewViewMode;
+                if (targetViewMode) {
+                  setOverviewViewMode(targetViewMode);
+                }
                 // Allow state re-render to paint the target race runners before calculating scroll position
                 setTimeout(() => {
-                  scrollToSection("section-market-analytics");
+                  scrollToSection(
+                    nextMode === "analytics"
+                      ? "section-market-analytics"
+                      : "section-full-racecard"
+                  );
                 }, 60);
               }}
               onJumpToSelectionsForMeeting={(meetingId) => {
@@ -2753,10 +2767,62 @@ export default function App() {
             />
 
             {activeMeeting && (
+              <div className="apple-card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 bg-[#F9F9FB] border border-[#E5E5EA]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868B]">
+                    Active View:
+                  </span>
+                  <span className="font-bold text-xs sm:text-sm text-[#1D1D1F]">
+                    {activeMeeting.venue} · Race {selectedRaceNumber}
+                  </span>
+                  <span className="text-xs text-[#86868B] hidden sm:inline">
+                    ({overviewViewMode === "analytics" ? "Market Analytics & Radar" : "Detailed Form Guide & Speed Maps"})
+                  </span>
+                </div>
+                <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA] border border-black/[0.04] text-xs font-mono shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOverviewViewMode("analytics");
+                      audioAlerts.playTapClick();
+                      audioAlerts.triggerHapticFeedback(10);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                      overviewViewMode === "analytics"
+                        ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                        : "text-[#86868B] hover:text-[#1D1D1F]"
+                    }`}
+                    title="Switch to Market Analytics (Odds Distribution & Radar)"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    <span>Market Analytics</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOverviewViewMode("form");
+                      audioAlerts.playTapClick();
+                      audioAlerts.triggerHapticFeedback(10);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                      overviewViewMode === "form"
+                        ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                        : "text-[#86868B] hover:text-[#1D1D1F]"
+                    }`}
+                    title="Switch to Detailed Form Guide (Speed Maps & Full Field)"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>Detailed Form Guide</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeMeeting && overviewViewMode === "analytics" && (
               <div
                 id="section-market-analytics"
                 style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 24px)" }}
-                className="scroll-section-clearance"
+                className="scroll-section-clearance animate-fadeIn"
               >
                 <RaceMarketRadarBarChart
                   meeting={activeMeeting}
@@ -2798,17 +2864,20 @@ export default function App() {
                     );
                   }}
                   onInspectFormGuide={() => {
-                    scrollToSection("section-full-racecard");
+                    setOverviewViewMode("form");
+                    setTimeout(() => {
+                      scrollToSection("section-full-racecard");
+                    }, 50);
                   }}
                 />
               </div>
             )}
 
-            {activeMeeting && (
+            {activeMeeting && overviewViewMode === "form" && (
               <section
                 id="section-full-racecard"
                 style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 32px)" }}
-                className="scroll-section-clearance space-y-4"
+                className="scroll-section-clearance space-y-4 animate-fadeIn"
               >
                 <div className="apple-card p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -2829,6 +2898,19 @@ export default function App() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOverviewViewMode("analytics");
+                        setTimeout(() => {
+                          scrollToSection("section-market-analytics");
+                        }, 50);
+                      }}
+                      className="rounded-full border border-[#0071E3]/30 bg-white text-[#0071E3] px-3.5 py-1.5 text-xs font-semibold hover:bg-[#EBF5FF] shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Switch to Market Analytics</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -2949,6 +3031,8 @@ export default function App() {
               onSelectMeeting={setSelectedMeetingId}
               selectedMeetingIds={selectedMeetingIds}
               onChangeSelectedMeetingIds={handleUpdateSelectedMeetingIds}
+              selectedRaceNumber={selectedRaceNumber}
+              onSelectRaceNumber={setSelectedRaceNumber}
               selectedDate={selectedDate}
               onChangeDate={(newIsoDate) => {
                 setDateMode("single");

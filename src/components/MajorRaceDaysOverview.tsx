@@ -17,10 +17,12 @@ import {
   Eye,
   X,
   BarChart3,
+  FileText,
 } from "lucide-react";
 import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { RaceCardCountdownClock } from "./RaceCardCountdownClock";
+import { audioAlerts } from "../utils/audioAlerts";
 
 interface MajorRaceDaysOverviewProps {
   meetings: RaceMeeting[];
@@ -29,11 +31,13 @@ interface MajorRaceDaysOverviewProps {
   onChangeSelectedMeetingIds?: (ids: string[]) => void;
   punters?: PunterProfile[];
   selectedRaceNumber: number;
-  onInspectRace: (meetingId: string, raceNumber: number) => void;
+  onInspectRace: (meetingId: string, raceNumber: number, targetViewMode?: "analytics" | "form") => void;
   onJumpToSelectionsForMeeting: (meetingId: string) => void;
   verifiedSourcesUsed?: string[];
   extraSelectedMeetingIds?: string[];
   onChangeExtraSelectedMeetingIds?: (ids: string[]) => void;
+  overviewViewMode?: "analytics" | "form";
+  onChangeOverviewViewMode?: (mode: "analytics" | "form") => void;
 }
 
 function getTopFavourites(runners: RaceRunner[], count = 3): RaceRunner[] {
@@ -63,7 +67,28 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
     "PointsBet AU API",
     "Racing & Sports AU",
   ],
+  overviewViewMode = "analytics",
+  onChangeOverviewViewMode,
 }) => {
+  const [internalViewMode, setInternalViewMode] = useState<"analytics" | "form">(
+    overviewViewMode || "analytics"
+  );
+
+  useEffect(() => {
+    if (overviewViewMode) {
+      setInternalViewMode(overviewViewMode);
+    }
+  }, [overviewViewMode]);
+
+  const currentViewMode = overviewViewMode || internalViewMode;
+
+  const handleToggleViewMode = (mode: "analytics" | "form") => {
+    setInternalViewMode(mode);
+    onChangeOverviewViewMode?.(mode);
+    audioAlerts.playTapClick();
+    audioAlerts.triggerHapticFeedback(12);
+  };
+
   const sorted = useMemo(() => sortMeetingsByMetroPriority(meetings), [meetings]);
   const { sydneyMeeting, melbourneMeeting, combinedRequiredMeetings } = useMemo(
     () => getSydneyAndMelbourneMeetings(sorted),
@@ -141,7 +166,37 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
               <span>{meeting.tier}</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Overview Card View Toggle: Market Analytics vs Detailed Form Guide */}
+              <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA]/80 border border-black/[0.04] text-[11px] font-mono shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => handleToggleViewMode("analytics")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                    currentViewMode === "analytics"
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                      : "text-[#86868B] hover:text-[#1D1D1F]"
+                  }`}
+                  title="Switch View to Market Analytics (Odds Distribution & Radar)"
+                >
+                  <BarChart3 className="h-3 w-3" />
+                  <span>Market Analytics</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleViewMode("form")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                    currentViewMode === "form"
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                      : "text-[#86868B] hover:text-[#1D1D1F]"
+                  }`}
+                  title="Switch View to Detailed Form Guide (Speed Maps & Full Card)"
+                >
+                  <FileText className="h-3 w-3" />
+                  <span>Detailed Form Guide</span>
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => onJumpToSelectionsForMeeting(meeting.id)}
@@ -313,12 +368,32 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                     <button
                       type="button"
                       onClick={() =>
-                        onInspectRace(meeting.id, race.raceNumber)
+                        onInspectRace(meeting.id, race.raceNumber, "analytics")
                       }
-                      className="apple-btn-secondary"
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition cursor-pointer active:scale-95 ${
+                        isSelected && currentViewMode === "analytics"
+                          ? "border-[#0071E3] bg-[#0071E3] text-white font-semibold shadow-xs"
+                          : "border-[#E5E5EA] bg-white text-[#86868B] hover:border-[#0071E3] hover:text-[#0071E3]"
+                      }`}
+                      title="Inspect Market Analytics & Radar Charts"
                     >
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>Full Field ({race.runners.length})</span>
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      <span>Analytics</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onInspectRace(meeting.id, race.raceNumber, "form")
+                      }
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition cursor-pointer active:scale-95 ${
+                        isSelected && currentViewMode === "form"
+                          ? "border-[#0071E3] bg-[#0071E3] text-white font-semibold shadow-xs"
+                          : "border-[#E5E5EA] bg-[#F2F2F7] text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                      }`}
+                      title="Inspect Detailed Form Guide Sheet"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>Form ({race.runners.length})</span>
                     </button>
                   </div>
                 </div>
@@ -472,8 +547,37 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
           </p>
         </div>
 
-        {/* Multi-Select Race Card Dropdown with Checkboxes */}
-        <div className="self-start lg:self-center flex flex-wrap items-center gap-2">
+        {/* Multi-Select Race Card Dropdown & View Mode Switcher */}
+        <div className="self-start lg:self-center flex flex-wrap items-center gap-2.5">
+          <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA] border border-black/[0.04] text-xs font-mono shadow-xs">
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode("analytics")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                currentViewMode === "analytics"
+                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                  : "text-[#86868B] hover:text-[#1D1D1F]"
+              }`}
+              title="Switch Overview to Market Analytics View"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span>Market Analytics</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode("form")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                currentViewMode === "form"
+                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                  : "text-[#86868B] hover:text-[#1D1D1F]"
+              }`}
+              title="Switch Overview to Detailed Form Guide View"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Detailed Form Guide</span>
+            </button>
+          </div>
+
           <RaceCardMultiSelectDropdown
             meetings={sorted}
             selectedMeetingIds={activeSelectedIds}

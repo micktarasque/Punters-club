@@ -57,6 +57,7 @@ import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { StickySyndicateDock } from "./StickySyndicateDock";
 import { TactileOddsFlucBadge, OddsTrendIndicator } from "./TactileOddsFlucBadge";
 import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
+import { audioAlerts } from "../utils/audioAlerts";
 
 interface BettingLedgerSheetProps {
   meetings: RaceMeeting[];
@@ -65,6 +66,8 @@ interface BettingLedgerSheetProps {
   onSelectMeeting: (id: string) => void;
   selectedMeetingIds?: string[];
   onChangeSelectedMeetingIds?: (ids: string[]) => void;
+  selectedRaceNumber?: number;
+  onSelectRaceNumber?: (raceNo: number) => void;
   selectedDate?: string;
   onChangeDate?: (newIsoDate: string) => void;
   onRefreshSelectedDay?: () => void;
@@ -297,6 +300,8 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
   onSelectMeeting,
   selectedMeetingIds: controlledSelectedIds,
   onChangeSelectedMeetingIds,
+  selectedRaceNumber,
+  onSelectRaceNumber,
   punters,
   activePunterId,
   onSelectPunter,
@@ -338,7 +343,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     }));
   };
 
-  const [selectionViewMode, setSelectionViewMode] = useState<"cards" | "stepper" | "table">("cards");
+  const [selectionViewMode, setSelectionViewMode] = useState<"cards" | "stepper" | "table">("stepper");
   const [activeRacePerMeeting, setActiveRacePerMeeting] = useState<Record<string, number>>({});
   const [expandedHarvilleRaces, setExpandedHarvilleRaces] = useState<Record<string, boolean>>({});
 
@@ -383,11 +388,65 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
   };
 
   const triggerHaptic = (pattern: number | number[] = 15) => {
-    try {
-      if (typeof window !== "undefined" && "navigator" in window && navigator.vibrate) {
-        navigator.vibrate(pattern);
+    audioAlerts.triggerHapticFeedback(pattern);
+  };
+
+  // Touch Swipe & Keyboard Navigation Engine for Focused Single-Race View
+  const touchStartXRef = React.useRef<number | null>(null);
+  const touchStartYRef = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, meeting: RaceMeeting) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+
+    // Must be predominantly horizontal gesture (> 45px and > 1.3x deltaY)
+    if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX < 0) {
+        // Swiped left -> Next Race
+        handleStepRace(meeting, 1);
+      } else {
+        // Swiped right -> Previous Race
+        handleStepRace(meeting, -1);
       }
-    } catch {}
+    }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  };
+
+  const selectRace = (meetingId: string, raceNo: number) => {
+    setActiveRacePerMeeting((prev) => ({
+      ...prev,
+      [meetingId]: raceNo,
+    }));
+    onSelectRaceNumber?.(raceNo);
+    audioAlerts.playTapClick();
+    triggerHaptic(10);
+
+    setTimeout(() => {
+      const chip = document.getElementById(`ribbon-race-btn-${meetingId}-${raceNo}`);
+      if (chip) {
+        chip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    }, 40);
+  };
+
+  const handleStepRace = (meeting: RaceMeeting, delta: number) => {
+    const curRaceNo =
+      activeRacePerMeeting[meeting.id] ??
+      (selectedRaceNumber && meeting.races.some((r) => r.raceNumber === selectedRaceNumber)
+        ? selectedRaceNumber
+        : meeting.races[0]?.raceNumber ?? 1);
+    const currentIndex = meeting.races.findIndex((r) => r.raceNumber === curRaceNo);
+    const targetIndex = currentIndex + delta;
+    if (targetIndex >= 0 && targetIndex < meeting.races.length) {
+      selectRace(meeting.id, meeting.races[targetIndex].raceNumber);
+    }
   };
 
   const handleTogglePreferenceChip = (
@@ -411,6 +470,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     // Toggle off if already selected
     if (currentAtRank === tabNumber) {
       onUpdateRaceSelection(punterId, meetingId, raceNumber, rank, null);
+      audioAlerts.playTapClick();
       triggerHaptic(10);
       return;
     }
@@ -426,9 +486,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
       onUpdateRaceSelection(punterId, meetingId, raceNumber, 3, null);
     }
 
-    // Set new preference
+    // Set new preference with crisp click audio and haptic pulse
     onUpdateRaceSelection(punterId, meetingId, raceNumber, rank, tabNumber);
-    triggerHaptic(20);
+    audioAlerts.playSelectionClick(rank);
+    triggerHaptic(rank === 1 ? [18, 12] : 15);
   };
 
   const handleApplyStrategyToRace = (
@@ -447,6 +508,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     if (res.thirdPref) {
       onUpdateRaceSelection(punterId, meetingId, race.raceNumber, 3, res.thirdPref);
     }
+    audioAlerts.playSelectionClick(1);
     triggerHaptic([15, 20, 15]);
     onSaveConfirmation?.(res.summaryText);
   };
@@ -459,6 +521,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     onUpdateRaceSelection(punterId, meetingId, raceNumber, 1, null);
     onUpdateRaceSelection(punterId, meetingId, raceNumber, 2, null);
     onUpdateRaceSelection(punterId, meetingId, raceNumber, 3, null);
+    audioAlerts.playTapClick();
     triggerHaptic(10);
   };
 
@@ -760,6 +823,32 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     }
     onSaveConfirmation?.(`Auto-picked ${result.summaryText}`);
   };
+
+  // Desktop keyboard ArrowLeft / ArrowRight navigation in Focused Single-Race mode
+  useEffect(() => {
+    if (selectionViewMode !== "stepper") return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      const targetMeeting = displayedMeetings[0];
+      if (!targetMeeting || !targetMeeting.races.length) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleStepRace(targetMeeting, -1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleStepRace(targetMeeting, 1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectionViewMode, displayedMeetings, activeRacePerMeeting, selectedRaceNumber]);
 
   return (
     <div className="space-y-6">
@@ -1325,6 +1414,18 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   <div className="flex items-center p-0.5 bg-[#E5E5EA]/70 rounded-full border border-black/[0.04]">
                     <button
                       type="button"
+                      onClick={() => setSelectionViewMode("stepper")}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                        selectionViewMode === "stepper"
+                          ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
+                          : "text-[#86868B] hover:text-[#1D1D1F]"
+                      }`}
+                    >
+                      <Zap className="w-3.5 h-3.5 text-[#0071E3]" />
+                      <span>Focused Race</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setSelectionViewMode("cards")}
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
                         selectionViewMode === "cards"
@@ -1333,19 +1434,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       }`}
                     >
                       <LayoutList className="w-3.5 h-3.5" />
-                      <span>All Cards</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectionViewMode("stepper")}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
-                        selectionViewMode === "stepper"
-                          ? "bg-white text-[#1D1D1F] font-semibold shadow-xs"
-                          : "text-[#86868B] hover:text-[#1D1D1F]"
-                      }`}
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Race Focus</span>
+                      <span>All Races</span>
                     </button>
                     <button
                       type="button"
@@ -1502,15 +1591,71 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* Race Stepper Bar */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            {/* STICKY QUICK-JUMP RACE RIBBON (Pinned below header during scroll) */}
+            <div className="sticky top-[var(--app-header-height,68px)] z-20 bg-white/95 backdrop-blur-md dark:bg-[#0E1512]/95 border-b border-[#E5E5EA] dark:border-[#1F2D26] px-4 sm:px-5 py-2.5 shadow-xs transition-all">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#1D1D1F] dark:text-[#F3F4F0] flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[#0071E3]" />
+                    Race Navigation Ribbon
+                  </span>
+                  <span className="hidden sm:inline-block text-[11px] text-[#86868B] font-mono">
+                    · Tap to jump or swipe ← → on race card
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={
+                      (activeRacePerMeeting[meetingCard.id] ??
+                        meetingCard.races[0]?.raceNumber ??
+                        1) <= (meetingCard.races[0]?.raceNumber ?? 1)
+                    }
+                    onClick={() => handleStepRace(meetingCard, -1)}
+                    className="p-1 rounded-full border border-[#E5E5EA] dark:border-[#1F2D26] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F2F2F7] disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition active:scale-95"
+                    title="Previous Race"
+                    aria-label="Previous Race"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-xs font-mono font-bold text-[#1D1D1F] dark:text-[#F3F4F0] px-1">
+                    R
+                    {activeRacePerMeeting[meetingCard.id] ??
+                      meetingCard.races[0]?.raceNumber ??
+                      1}
+                    /{meetingCard.races.length}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={
+                      (activeRacePerMeeting[meetingCard.id] ??
+                        meetingCard.races[0]?.raceNumber ??
+                        1) >=
+                      (meetingCard.races[meetingCard.races.length - 1]?.raceNumber ??
+                        meetingCard.races.length)
+                    }
+                    onClick={() => handleStepRace(meetingCard, 1)}
+                    className="p-1 rounded-full border border-[#E5E5EA] dark:border-[#1F2D26] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F2F2F7] disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition active:scale-95"
+                    title="Next Race"
+                    aria-label="Next Race"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Race Navigation Buttons */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
                 {meetingCard.races.map((r) => {
                   const isJoker = activeJokerRaceNo === r.raceNumber;
                   const isFeature = featureRaceNo === r.raceNumber;
-                  const isCurrentActive =
+                  const curActive =
                     (activeRacePerMeeting[meetingCard.id] ??
-                      meetingCard.races[0]?.raceNumber) === r.raceNumber;
+                      (selectedRaceNumber && meetingCard.races.some((rc) => rc.raceNumber === selectedRaceNumber)
+                        ? selectedRaceNumber
+                        : meetingCard.races[0]?.raceNumber ?? 1)) === r.raceNumber;
                   const ev = evaluateRaceTrio(
                     r,
                     cardSelections[r.raceNumber],
@@ -1526,12 +1671,10 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                   return (
                     <button
                       key={r.raceNumber}
+                      id={`ribbon-race-btn-${meetingCard.id}-${r.raceNumber}`}
                       type="button"
                       onClick={() => {
-                        setActiveRacePerMeeting((prev) => ({
-                          ...prev,
-                          [meetingCard.id]: r.raceNumber,
-                        }));
+                        selectRace(meetingCard.id, r.raceNumber);
                         if (selectionViewMode === "cards") {
                           const el = document.getElementById(
                             `race-card-${meetingCard.id}-${r.raceNumber}`
@@ -1541,11 +1684,13 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           }
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-full border font-mono text-xs tabular-nums shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isCurrentActive
-                          ? "bg-[#0071E3] border-[#0071E3] text-white font-semibold shadow-xs"
+                      className={`px-3 py-1.5 rounded-full border font-mono text-xs tabular-nums shrink-0 transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                        curActive
+                          ? "bg-[#0071E3] border-[#0071E3] text-white font-bold shadow-sm scale-102 ring-2 ring-[#0071E3]/35"
                           : ev.isComplete
-                          ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#34C759]"
+                          ? "bg-[#EAFBF0] border-[#34C759]/40 text-[#34C759] hover:border-[#34C759]"
+                          : pickCount > 0
+                          ? "bg-[#FFF9F2] border-[#FF9500]/40 text-[#FF9500] hover:border-[#FF9500]"
                           : "bg-white border-[#E5E5EA] text-[#86868B] hover:border-[#D2D2D7] hover:text-[#1D1D1F]"
                       }`}
                     >
@@ -1555,9 +1700,13 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       </span>
                       <span className="text-[10px]">
                         {ev.isComplete ? (
-                          <strong className={isCurrentActive ? "text-white" : "text-[#34C759]"}>3/3 ✓</strong>
+                          <strong className={curActive ? "text-white" : "text-[#34C759]"}>
+                            3/3 ✓
+                          </strong>
                         ) : pickCount > 0 ? (
-                          <span className={isCurrentActive ? "text-white" : "text-[#0071E3]"}>{pickCount}/3</span>
+                          <span className={curActive ? "text-white" : "text-[#FF9500]"}>
+                            {pickCount}/3
+                          </span>
                         ) : (
                           "Pick 3"
                         )}
@@ -2310,8 +2459,9 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
               (() => {
                 const curActiveRaceNo =
                   activeRacePerMeeting[meetingCard.id] ??
-                  meetingCard.races[0]?.raceNumber ??
-                  1;
+                  (selectedRaceNumber && meetingCard.races.some((rc) => rc.raceNumber === selectedRaceNumber)
+                    ? selectedRaceNumber
+                    : meetingCard.races[0]?.raceNumber ?? 1);
                 const activeRace =
                   meetingCard.races.find(
                     (r) => r.raceNumber === curActiveRaceNo
@@ -2337,9 +2487,43 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                 );
 
                 return (
-                  <div className="p-4 space-y-4">
+                  <div
+                    key={`focused-race-${meetingCard.id}-${activeRace.raceNumber}`}
+                    className="p-3 sm:p-5 space-y-4 swipe-card-enter select-none sm:select-auto"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={(e) => handleTouchEnd(e, meetingCard)}
+                  >
                     {/* Active Race Header Strip */}
-                    <div className="apple-card p-5 space-y-4">
+                    <div className="apple-card p-4 sm:p-5 space-y-4">
+                      {/* Swipe & Keyboard Gesture Affordance Ribbon */}
+                      <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-[#F2F2F7] text-[11px] font-mono text-[#86868B]">
+                        <button
+                          type="button"
+                          disabled={activeRace.raceNumber <= (meetingCard.races[0]?.raceNumber ?? 1)}
+                          onClick={() => handleStepRace(meetingCard, -1)}
+                          className="hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold transition"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span>R{activeRace.raceNumber - 1}</span>
+                        </button>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <span className="text-[#0071E3] font-bold">Swipe ← →</span> or Left/Right Arrow Keys
+                        </span>
+                        <button
+                          type="button"
+                          disabled={
+                            activeRace.raceNumber >=
+                            (meetingCard.races[meetingCard.races.length - 1]?.raceNumber ??
+                              meetingCard.races.length)
+                          }
+                          onClick={() => handleStepRace(meetingCard, 1)}
+                          className="hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold transition"
+                        >
+                          <span>R{activeRace.raceNumber + 1}</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#E5E5EA] pb-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -2374,16 +2558,24 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         <div className="flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              const nextJoker = isJokerOnActiveRace ? null : activeRace.raceNumber;
                               onToggleJokerRace?.(
                                 activePunter.id,
                                 meetingCard.id,
-                                isJokerOnActiveRace ? null : activeRace.raceNumber
-                              )
-                            }
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                                nextJoker
+                              );
+                              if (nextJoker !== null) {
+                                audioAlerts.playSelectionClick(1);
+                                triggerHaptic([20, 30, 20]);
+                              } else {
+                                audioAlerts.playTapClick();
+                                triggerHaptic(10);
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 ${
                               isJokerOnActiveRace
-                                ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs"
+                                ? "bg-[#FF9500] text-white border-[#FF9500] shadow-xs scale-102 ring-2 ring-[#FF9500]/30"
                                 : "bg-white text-[#1D1D1F] border-[#E5E5EA] hover:border-[#FF9500] hover:text-[#FF9500]"
                             }`}
                           >
@@ -2404,7 +2596,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "market-consensus"
                                 )
                               }
-                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#1D1D1F] hover:bg-white transition-all cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#1D1D1F] hover:bg-white transition-all cursor-pointer active:scale-95"
                               title="Pick top 3 favourites in market order"
                             >
                               Consensus
@@ -2419,7 +2611,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "value-hunter"
                                 )
                               }
-                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer active:scale-95"
                               title="Pick $3.50-$12 value contenders"
                             >
                               Value
@@ -2434,7 +2626,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "front-runner"
                                 )
                               }
-                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#0071E3] hover:bg-white transition-all cursor-pointer active:scale-95"
                               title="Pick low barrier speed map leaders"
                             >
                               Speed
@@ -2449,7 +2641,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   "balanced"
                                 )
                               }
-                              className="px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#0071E3] bg-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#0071E3] bg-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-1 active:scale-95"
                               title="Randomly pick 1 top-3 favourite + 2 other runners"
                             >
                               <Sparkles className="w-3 h-3 text-[#0071E3]" />
@@ -2462,7 +2654,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                             onClick={() =>
                               toggleHarvilleModel(meetingCard.id, activeRace.raceNumber)
                             }
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-95 ${
                               isHarvilleExpanded
                                 ? "bg-[#EBF5FF] border-[#0071E3] text-[#0071E3]"
                                 : "bg-white border-[#E5E5EA] text-[#86868B] hover:text-[#1D1D1F]"
@@ -2484,7 +2676,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                   activeRace.raceNumber
                                 )
                               }
-                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#FF3B30] transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#86868B] hover:text-[#FF3B30] transition-colors cursor-pointer active:scale-95"
                             >
                               Clear
                             </button>
@@ -2585,7 +2777,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         </div>
                       )}
 
-                      {/* High-Density Quick-Pick Runner Cards */}
+                      {/* High-Density Quick-Pick Runner Cards with Tactile Elevation & Border Pulse */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         {activeRace.runners.map((runner) => {
                           const is1st = activeTrio?.firstPref === runner.tabNumber;
@@ -2641,29 +2833,29 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                           return (
                             <div
                               key={runner.tabNumber}
-                              className={`p-3.5 rounded-2xl border transition-all ${
+                              className={`tactile-runner-card p-3.5 rounded-2xl border transition-all duration-200 ${
                                 is1st
-                                  ? "bg-[#FFF9F2] border-[#FF9500] shadow-sm"
+                                  ? "tactile-rank-1-active bg-[#FFF9F2] border-[#FF9500] ring-2 ring-[#FF9500]/30 shadow-md -translate-y-0.5"
                                   : is2nd
-                                  ? "bg-[#F2F7FF] border-[#0071E3] shadow-sm"
+                                  ? "tactile-rank-2-active bg-[#F2F7FF] border-[#0071E3] ring-2 ring-[#0071E3]/30 shadow-md -translate-y-0.5"
                                   : is3rd
-                                  ? "bg-[#F2FBF5] border-[#34C759] shadow-sm"
+                                  ? "tactile-rank-3-active bg-[#F2FBF5] border-[#34C759] ring-2 ring-[#34C759]/30 shadow-md -translate-y-0.5"
                                   : runner.isScratched
                                   ? "bg-[#FAF9FA] border-[#E5E5EA] opacity-40"
-                                  : "bg-white border-[#E5E5EA] hover:border-[#0071E3]/40 shadow-xs"
+                                  : "bg-white border-[#E5E5EA] hover:border-[#0071E3]/40 hover:-translate-y-0.5 shadow-xs"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span
-                                      className={`w-6 h-6 rounded-full font-mono font-bold text-xs flex items-center justify-center ${
+                                      className={`w-6 h-6 rounded-full font-mono font-bold text-xs flex items-center justify-center transition-all ${
                                         is1st
-                                          ? "bg-[#FF9500] text-white"
+                                          ? "bg-[#FF9500] text-white ring-2 ring-[#FF9500]/40 scale-105"
                                           : is2nd
-                                          ? "bg-[#0071E3] text-white"
+                                          ? "bg-[#0071E3] text-white ring-2 ring-[#0071E3]/40 scale-105"
                                           : is3rd
-                                          ? "bg-[#34C759] text-white"
+                                          ? "bg-[#34C759] text-white ring-2 ring-[#34C759]/40 scale-105"
                                           : "bg-[#F2F2F7] text-[#1D1D1F] border border-[#E5E5EA]"
                                       }`}
                                     >
@@ -2720,7 +2912,7 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                 </div>
                               </div>
 
-                              {/* Preference Selectors */}
+                              {/* Tactile Preference Selectors */}
                               <div className="mt-3 pt-2.5 border-t border-[#E5E5EA] flex items-center justify-between gap-2 flex-wrap">
                                 <div className="flex items-center gap-1.5 text-[10px] font-mono">
                                   {isStevePick && (
@@ -2753,14 +2945,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
+                                      className={`min-h-[30px] px-3.5 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 ${
                                         is1st
-                                          ? "bg-[#FF9500] text-white shadow-xs"
+                                          ? "bg-[#FF9500] text-white shadow-xs ring-2 ring-[#FF9500]/40 scale-102"
                                           : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#FF9500] hover:text-[#FF9500]"
                                       }`}
                                       title="Nominate as 1st Preference (3 pts)"
                                     >
-                                      1st (3pts)
+                                      {is1st ? "✓ 1st (3pts)" : "1st (3pts)"}
                                     </button>
                                     <button
                                       type="button"
@@ -2773,14 +2965,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
+                                      className={`min-h-[30px] px-3.5 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 ${
                                         is2nd
-                                          ? "bg-[#0071E3] text-white shadow-xs"
+                                          ? "bg-[#0071E3] text-white shadow-xs ring-2 ring-[#0071E3]/40 scale-102"
                                           : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#0071E3] hover:text-[#0071E3]"
                                       }`}
                                       title="Nominate as 2nd Preference (2 pts)"
                                     >
-                                      2nd (2pts)
+                                      {is2nd ? "✓ 2nd (2pts)" : "2nd (2pts)"}
                                     </button>
                                     <button
                                       type="button"
@@ -2793,14 +2985,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                           runner.tabNumber
                                         )
                                       }
-                                      className={`min-h-[28px] px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
+                                      className={`min-h-[30px] px-3.5 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 ${
                                         is3rd
-                                          ? "bg-[#34C759] text-white shadow-xs"
+                                          ? "bg-[#34C759] text-white shadow-xs ring-2 ring-[#34C759]/40 scale-102"
                                           : "bg-white border border-[#E5E5EA] text-[#86868B] hover:border-[#34C759] hover:text-[#34C759]"
                                       }`}
                                       title="Nominate as 3rd Preference (1 pt)"
                                     >
-                                      3rd (1pt)
+                                      {is3rd ? "✓ 3rd (1pt)" : "3rd (1pt)"}
                                     </button>
                                   </div>
                                 )}
@@ -2811,49 +3003,53 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                       </div>
 
                       {/* Stepper Bottom Navigation */}
-                      <div className="pt-3 flex items-center justify-between gap-3 border-t border-[#E5E5EA]">
+                      <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#E5E5EA]">
                         <button
                           type="button"
-                          disabled={activeRace.raceNumber <= 1}
-                          onClick={() =>
-                            setActiveRacePerMeeting((prev) => ({
-                              ...prev,
-                              [meetingCard.id]: activeRace.raceNumber - 1,
-                            }))
-                          }
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E5E5EA] bg-white text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-xs transition-all"
+                          disabled={activeRace.raceNumber <= (meetingCard.races[0]?.raceNumber ?? 1)}
+                          onClick={() => handleStepRace(meetingCard, -1)}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full border border-[#E5E5EA] bg-white text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F2F2F7] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-xs active:scale-95 transition-all"
                         >
                           <ChevronLeft className="w-4 h-4" />
-                          <span>Previous Race</span>
+                          <span>Previous Race (← R{activeRace.raceNumber - 1})</span>
                         </button>
 
-                        <span className="text-xs font-medium text-[#86868B]">
-                          Race {activeRace.raceNumber} of {meetingCard.races.length} ·{" "}
-                          {activeEvaluated.isComplete ? (
-                            <strong className="text-[#34C759]">3/3 Picked</strong>
-                          ) : (
-                            <span className="text-[#FF9500]">Incomplete</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-[#86868B]">
+                            Race {activeRace.raceNumber} of {meetingCard.races.length} ·{" "}
+                            {activeEvaluated.isComplete ? (
+                              <strong className="text-[#34C759]">3/3 Picked ✓</strong>
+                            ) : (
+                              <span className="text-[#FF9500] font-semibold">Incomplete</span>
+                            )}
+                          </span>
+
+                          {!activeEvaluated.isComplete && (
+                            <button
+                              type="button"
+                              onClick={() => handleAutoPickSingleRace(activeRace, meetingCard.id)}
+                              className="px-2.5 py-1 rounded-full bg-[#EBF5FF] border border-[#0071E3]/25 text-[#0071E3] hover:bg-[#0071E3] hover:text-white text-[11px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                            >
+                              🎲 Auto-Pick Race
+                            </button>
                           )}
-                        </span>
+                        </div>
 
                         <button
                           type="button"
                           disabled={
-                            activeRace.raceNumber >= meetingCard.races.length
+                            activeRace.raceNumber >=
+                            (meetingCard.races[meetingCard.races.length - 1]?.raceNumber ??
+                              meetingCard.races.length)
                           }
-                          onClick={() =>
-                            setActiveRacePerMeeting((prev) => ({
-                              ...prev,
-                              [meetingCard.id]: activeRace.raceNumber + 1,
-                            }))
-                          }
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
+                          onClick={() => handleStepRace(meetingCard, 1)}
+                          className={`w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full border text-xs font-semibold active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
                             activeEvaluated.isComplete
                               ? "bg-[#0071E3] text-white border-[#0071E3] shadow-xs"
-                              : "border-[#E5E5EA] bg-white text-[#86868B] hover:text-[#1D1D1F] shadow-xs"
+                              : "border-[#E5E5EA] bg-white text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F2F2F7] shadow-xs"
                           }`}
                         >
-                          <span>Next Race</span>
+                          <span>Next Race (R{activeRace.raceNumber + 1} →)</span>
                           <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>

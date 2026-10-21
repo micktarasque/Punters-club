@@ -147,6 +147,47 @@ class TurfSheetAudioSynthesizer {
     osc.start(now);
     osc.stop(now + 0.04);
   }
+
+  /**
+   * Subtle crisp mechanical click for runner selection (1st, 2nd, 3rd ranks)
+   */
+  public playSelectionClick(rank: 1 | 2 | 3 = 1): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    // Subtle crisp pitch: 1400Hz for 1st, 1200Hz for 2nd, 1000Hz for 3rd
+    const freq = rank === 1 ? 1400 : rank === 2 ? 1200 : 1000;
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.028);
+
+    gainNode.gain.setValueAtTime(0.09, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.028);
+  }
+
+  /**
+   * Safe native device vibration haptic pulse
+   */
+  public triggerHapticFeedback(pattern: number | number[] = 15): void {
+    try {
+      if (typeof window !== "undefined" && "vibrate" in navigator && typeof navigator.vibrate === "function") {
+        navigator.vibrate(pattern);
+      }
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const audioAlerts = new TurfSheetAudioSynthesizer();
