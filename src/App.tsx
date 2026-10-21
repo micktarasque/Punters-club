@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Cloud,
+  Cpu,
   DollarSign,
   FileText,
   Flame,
@@ -49,6 +50,7 @@ import {
   formatReadableDate,
 } from "./components/DateRangeCalendarBar";
 import { MajorRaceDaysOverview } from "./components/MajorRaceDaysOverview";
+import { RaceMarketRadarBarChart } from "./components/RaceMarketRadarBarChart";
 import { RaceCardAndFormSheet } from "./components/RaceCardAndFormSheet";
 import { BettingLedgerSheet } from "./components/BettingLedgerSheet";
 import {
@@ -61,6 +63,7 @@ import { ExoticsBentoStudio } from "./components/ExoticsBentoStudio";
 import { PersistentRaceRibbon } from "./components/PersistentRaceRibbon";
 import { FloatingBottomActionDock } from "./components/FloatingBottomActionDock";
 import { RaceReportSheet } from "./components/RaceReportSheet";
+import { EnterpriseAiStudioArchitectureModal } from "./components/EnterpriseAiStudioArchitectureModal";
 import { PunterLeaderboard } from "./components/PunterLeaderboard";
 import { OfflineIndicator } from "./components/PWAInstallControl";
 import {
@@ -215,6 +218,7 @@ export default function App() {
     return "default";
   });
   const [showThemeMenu, setShowThemeMenu] = useState<boolean>(false);
+  const [showAiArchitectureModal, setShowAiArchitectureModal] = useState<boolean>(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(72);
@@ -2231,6 +2235,21 @@ export default function App() {
               <span className="hidden md:inline">Report</span>
             </button>
 
+            {/* Enterprise AI Studio Architecture Studio Modal Button */}
+            <button
+              type="button"
+              onClick={() => setShowAiArchitectureModal(true)}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold transition cursor-pointer border ${
+                isApple
+                  ? "bg-[#0071E3]/10 border-[#0071E3]/30 text-[#0071E3] hover:bg-[#0071E3]/20 shadow-xs"
+                  : "bg-[#10B981]/15 border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/25 shadow-xs"
+              }`}
+              title="Open Enterprise AI Studio Architecture Studio & LangGraph Simulator"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">AI Studio Blueprint</span>
+            </button>
+
             {/* Sound Toggle */}
             <button
               type="button"
@@ -2718,7 +2737,7 @@ export default function App() {
                 setSelectedRaceNumber(raceNo);
                 // Allow state re-render to paint the target race runners before calculating scroll position
                 setTimeout(() => {
-                  scrollToSection("section-full-racecard");
+                  scrollToSection("section-market-analytics");
                 }, 60);
               }}
               onJumpToSelectionsForMeeting={(meetingId) => {
@@ -2732,6 +2751,58 @@ export default function App() {
                 switchTab("selections");
               }}
             />
+
+            {activeMeeting && (
+              <div
+                id="section-market-analytics"
+                style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 24px)" }}
+                className="scroll-section-clearance"
+              >
+                <RaceMarketRadarBarChart
+                  meeting={activeMeeting}
+                  raceNumber={selectedRaceNumber}
+                  onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+                  allMeetings={visibleMeetings}
+                  onSelectMeeting={(mId) => {
+                    setSelectedMeetingId(mId);
+                    if (!selectedMeetingIds.includes(mId)) {
+                      handleUpdateSelectedMeetingIds([
+                        ...selectedMeetingIds,
+                        mId,
+                      ]);
+                    }
+                  }}
+                  isApple={isApple}
+                  activePunter={activePunter}
+                  currentSelections={
+                    activePunter.selectionsByMeeting[activeMeeting.id]?.[
+                      selectedRaceNumber
+                    ]
+                  }
+                  onAssignPreference={(prefRank, tabNo) => {
+                    handleUpdateRaceSelection(
+                      activePunter.id,
+                      activeMeeting.id,
+                      selectedRaceNumber,
+                      prefRank,
+                      tabNo
+                    );
+                    const rankText =
+                      prefRank === 1
+                        ? "1st Preference"
+                        : prefRank === 2
+                        ? "2nd Preference"
+                        : "3rd Preference";
+                    triggerToast(
+                      `Set Runner #${tabNo} as ${rankText} in Race ${selectedRaceNumber} for ${activePunter.name}`
+                    );
+                  }}
+                  onInspectFormGuide={() => {
+                    scrollToSection("section-full-racecard");
+                  }}
+                />
+              </div>
+            )}
 
             {activeMeeting && (
               <section

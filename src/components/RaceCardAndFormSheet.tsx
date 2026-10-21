@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ArrowUpDown,
   Check,
@@ -8,6 +8,11 @@ import {
   TrendingDown,
   TrendingUp,
   Zap,
+  Clock,
+  Radio,
+  Flame,
+  AlertCircle,
+  Timer,
 } from "lucide-react";
 import {
   PunterProfile,
@@ -22,7 +27,11 @@ import { TanStackVirtualRunnersTable } from "./TanStackVirtualRunnersTable";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { TactileOddsFlucBadge } from "./TactileOddsFlucBadge";
 import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
-import { RaceCardCountdownClock } from "./RaceCardCountdownClock";
+import {
+  RaceCardCountdownClock,
+  computeMinutesAndSecondsToJump,
+} from "./RaceCardCountdownClock";
+import { isRaceOfficialOrCompleted } from "../data/seedNswTab";
 
 interface RaceCardAndFormSheetProps {
   meetings: RaceMeeting[];
@@ -118,6 +127,66 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
       }
     );
   }, [currentMeetingSelections, activeRace]);
+
+  // Live 1-second interval ticker for dynamic "Time to Start" calculations
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Determine if active race has completed / official results
+  const isCurrentRaceOfficial = useMemo(() => {
+    if (!activeRace || !activeMeeting) return false;
+    return isRaceOfficialOrCompleted(activeRace, activeMeeting.date);
+  }, [activeRace, activeMeeting]);
+
+  // Dynamic countdown to jump time fetched from current meeting's race objects
+  const jumpCountdown = useMemo(() => {
+    if (!activeRace || !activeMeeting || isCurrentRaceOfficial) return null;
+    return computeMinutesAndSecondsToJump(
+      activeMeeting.date,
+      activeRace.startTime,
+      nowMs
+    );
+  }, [activeMeeting, activeRace, nowMs, isCurrentRaceOfficial]);
+
+  const timeToStartInfo = useMemo(() => {
+    if (!jumpCountdown || !activeRace) return null;
+    const { totalSeconds } = jumpCountdown;
+    const isRacing = totalSeconds <= 0 && totalSeconds > -600;
+    const isOverdue = totalSeconds <= -600;
+    const isImminent = totalSeconds > 0 && totalSeconds <= 120;
+    const isUrgent = totalSeconds > 120 && totalSeconds <= 600;
+    const absSec = Math.abs(totalSeconds);
+    const hrs = Math.floor(absSec / 3600);
+    const mins = Math.floor((absSec % 3600) / 60);
+    const secs = absSec % 60;
+
+    let formattedDisplay = "";
+    if (isRacing) {
+      formattedDisplay = "GATES OPEN · RACING NOW";
+    } else if (isOverdue) {
+      formattedDisplay = "Awaiting Official Result";
+    } else if (hrs > 0) {
+      formattedDisplay = `${hrs}h ${mins}m ${String(secs).padStart(2, "0")}s`;
+    } else {
+      formattedDisplay = `${mins}m ${String(secs).padStart(2, "0")}s`;
+    }
+
+    return {
+      formattedDisplay,
+      isRacing,
+      isOverdue,
+      isImminent,
+      isUrgent,
+      totalSeconds,
+      scheduledTime: activeRace.startTime,
+    };
+  }, [jumpCountdown, activeRace]);
 
   const sortedRunners = useMemo(() => {
     if (!activeRace) return [];
@@ -611,6 +680,31 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                 </span>
               </>
             )}
+            {timeToStartInfo && !isCurrentRaceOfficial && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span
+                  className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
+                    timeToStartInfo.isRacing
+                      ? "bg-[#EF4444]/20 text-[#EF4444] animate-pulse"
+                      : timeToStartInfo.isImminent
+                      ? "bg-[#FF3B30]/20 text-[#FF3B30] animate-bounce"
+                      : isApple
+                      ? "bg-[#0071E3]/10 text-[#0071E3]"
+                      : "bg-[#10241A] text-[#10B981]"
+                  }`}
+                >
+                  {timeToStartInfo.isRacing ? (
+                    <Radio className="w-3 h-3 text-[#EF4444]" />
+                  ) : (
+                    <Clock className="w-3 h-3" />
+                  )}
+                  <span>
+                    Time to Start: {timeToStartInfo.formattedDisplay}
+                  </span>
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -748,7 +842,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
       <div className="bg-[#121A16] border border-[#1F2D26] rounded-lg overflow-hidden">
         {/* Table Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-[#1F2D26]">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-[#8A9990] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -756,12 +850,54 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                 value={runnerSearch}
                 onChange={(e) => setRunnerSearch(e.target.value)}
                 placeholder="Filter horse, jockey, trainer, #..."
-                className="bg-[#0B110E] border border-[#1F2D26] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#F3F4F0] placeholder-[#8A9990] focus:outline-none focus:border-[#D4AF37] w-64"
+                className="bg-[#0B110E] border border-[#1F2D26] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#F3F4F0] placeholder-[#8A9990] focus:outline-none focus:border-[#D4AF37] w-56 sm:w-64"
               />
             </div>
             <span className="text-xs text-[#8A9990] font-mono tabular-nums">
               {sortedRunners.length} Runners
             </span>
+
+            {/* Dynamic 'Time to Start' Countdown for Upcoming, Non-Completed Races */}
+            {timeToStartInfo && !isCurrentRaceOfficial && (
+              <div
+                aria-live="polite"
+                title={`Jump scheduled for ${activeRace?.startTime || ""} AEDT`}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-xs transition-all shadow-xs ${
+                  timeToStartInfo.isRacing
+                    ? "bg-[#EF4444]/15 border-[#EF4444]/40 text-[#EF4444] animate-pulse font-bold"
+                    : timeToStartInfo.isImminent
+                    ? isApple
+                      ? "bg-[#FFF2F0] border-[#FF3B30]/40 text-[#FF3B30] font-bold ring-1 ring-[#FF3B30]/20"
+                      : "bg-[#2A0F0D] border-[#EF4444]/50 text-[#EF4444] font-bold ring-1 ring-[#EF4444]/25"
+                    : timeToStartInfo.isUrgent
+                    ? isApple
+                      ? "bg-[#FFF9EB] border-[#FF9500]/40 text-[#B25E00] font-semibold"
+                      : "bg-[#261A08] border-[#F59E0B]/40 text-[#FBBF24] font-semibold"
+                    : isApple
+                    ? "bg-[#F2F7FF] border-[#0071E3]/25 text-[#0071E3]"
+                    : "bg-[#10241A] border-[#10B981]/30 text-[#10B981]"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {timeToStartInfo.isRacing ? (
+                    <Radio className="w-3.5 h-3.5 text-[#EF4444] animate-pulse" />
+                  ) : timeToStartInfo.isImminent ? (
+                    <Flame className="w-3.5 h-3.5 text-[#FF3B30] animate-bounce" />
+                  ) : (
+                    <Clock className="w-3.5 h-3.5" />
+                  )}
+                  <span className="text-[11px] font-sans font-semibold tracking-wide uppercase">
+                    {timeToStartInfo.isRacing ? "Racing Now" : "Time to Start"}
+                  </span>
+                </div>
+                <span className="font-bold tabular-nums text-xs">
+                  {timeToStartInfo.formattedDisplay}
+                </span>
+                <span className="text-[10px] text-current/70 hidden lg:inline">
+                  (Starts {timeToStartInfo.scheduledTime})
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -823,6 +959,75 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Dynamic 'Time to Start' Full-Width Sub-Strip for the Field */}
+        {timeToStartInfo && !isCurrentRaceOfficial && (
+          <div
+            className={`px-4 py-2 border-b flex flex-wrap items-center justify-between gap-2 text-xs transition-colors ${
+              timeToStartInfo.isRacing
+                ? "bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444]"
+                : timeToStartInfo.isImminent
+                ? isApple
+                  ? "bg-[#FFF5F4] border-[#FF3B30]/20 text-[#FF3B30]"
+                  : "bg-[#250E0C] border-[#EF4444]/30 text-[#EF4444]"
+                : timeToStartInfo.isUrgent
+                ? isApple
+                  ? "bg-[#FFFBF0] border-[#FF9500]/20 text-[#B25E00]"
+                  : "bg-[#1E1609] border-[#F59E0B]/20 text-[#FBBF24]"
+                : isApple
+                ? "bg-[#F8F9FA] border-[#E5E5EA] text-[#48484A]"
+                : "bg-[#0E1512] border-[#1F2D26] text-[#8A9990]"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative">
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    timeToStartInfo.isRacing
+                      ? "bg-red-500"
+                      : timeToStartInfo.isImminent
+                      ? "bg-orange-500"
+                      : "bg-emerald-500"
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    timeToStartInfo.isRacing
+                      ? "bg-red-600"
+                      : timeToStartInfo.isImminent
+                      ? "bg-orange-600"
+                      : "bg-emerald-600"
+                  }`}
+                />
+              </span>
+              <span className="font-semibold text-current">
+                Race {activeRace?.raceNumber} ({activeMeeting?.venue}) · Jump Scheduled at{" "}
+                <strong className="font-mono text-current font-bold">
+                  {timeToStartInfo.scheduledTime}
+                </strong>
+              </span>
+              <span aria-hidden="true" className="opacity-40">·</span>
+              <span className="font-mono tabular-nums">
+                Fixed Odds Live &amp; Accepting Wagers
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 font-mono tabular-nums">
+              <span className="text-[11px] uppercase tracking-wider font-sans font-medium text-current/70">
+                Time to Start:
+              </span>
+              <span
+                className={`font-bold text-sm ${
+                  timeToStartInfo.isImminent
+                    ? "text-[#FF3B30] dark:text-[#EF4444] animate-pulse"
+                    : "text-current"
+                }`}
+              >
+                {timeToStartInfo.formattedDisplay}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* High-Density Data Table (Visible on iPad Pro & Desktop) */}
         {useTanStackVirtualView ? (
@@ -1273,6 +1478,25 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
 
         {/* Mobile Touch-First Runner Cards (Optimized for Chrome on iPhone < 768px) */}
         <div className="md:hidden divide-y divide-[#1F2D26]">
+          {timeToStartInfo && !isCurrentRaceOfficial && (
+            <div
+              className={`p-3 border-b flex items-center justify-between text-xs ${
+                timeToStartInfo.isRacing
+                  ? "bg-[#EF4444]/15 text-[#EF4444] font-bold"
+                  : timeToStartInfo.isImminent
+                  ? "bg-[#FF3B30]/15 text-[#FF3B30] font-bold"
+                  : "bg-[#0B110E] text-[#10B981]"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="font-semibold">Race {activeRace?.raceNumber} Time to Start:</span>
+              </div>
+              <span className="font-mono font-bold text-sm tabular-nums">
+                {timeToStartInfo.formattedDisplay}
+              </span>
+            </div>
+          )}
           {sortedRunners.map((runner) => {
             const isExpanded =
               expandAllForm || Boolean(expandedRunners[runner.tabNumber]);

@@ -29,7 +29,6 @@ import {
   Filter,
 } from "lucide-react";
 import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
-import { TrifectaCombinationsChart } from "./TrifectaCombinationsChart";
 import {
   RaceEvent,
   RaceMeeting,
@@ -166,10 +165,6 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
 
   // Option to modify trifecta selections (defaults to false / auto-final)
   const [isCustomizing, setIsCustomizing] = useState<boolean>(false);
-  // Expandable Sportsbet & TAB reference table
-  const [showFlexiReference, setShowFlexiReference] = useState<boolean>(false);
-  // Dynamic Recharts Combinations Growth & Trade-Off Chart
-  const [showCombinationsChart, setShowCombinationsChart] = useState<boolean>(true);
 
   // Evaluate Trifecta for active race
   const activeTrifectaEval: CombinedRaceTrifectaEvaluation | null = useMemo(() => {
@@ -1096,32 +1091,6 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
                 ))}
               </div>
 
-              {/* Trade-Off Curve Toggle */}
-              <button
-                type="button"
-                onClick={() => setShowCombinationsChart((prev) => !prev)}
-                className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  showCombinationsChart
-                    ? "bg-[#10B981]/20 border border-[#10B981]/50 text-[#10B981]"
-                    : "bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0]"
-                }`}
-                title="Toggle dynamic Recharts curve of combination growth and cost-to-coverage trade-off"
-              >
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>{showCombinationsChart ? "Hide Chart" : "Trade-Off Chart"}</span>
-              </button>
-
-              {/* Verified Bookmaker Flexi Guide Toggle */}
-              <button
-                type="button"
-                onClick={() => setShowFlexiReference((prev) => !prev)}
-                className="px-3 py-1.5 rounded-xl bg-[#14231B] border border-[#23352B] text-[#8A9990] hover:text-[#F3F4F0] font-mono text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                title="View verified Sportsbet and TAB Flexi calculation tables"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{showFlexiReference ? "Hide Guide" : "Flexi % Guide"}</span>
-              </button>
-
               {/* Expand / Collapse All Meetings */}
               <div className="flex items-center gap-1">
                 <button
@@ -1141,150 +1110,6 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
               </div>
             </div>
           </div>
-
-          {/* -----------------------------------------------------------------
-              DYNAMIC RECHARTS COMBINATIONS GROWTH & COST-TO-COVERAGE CHART
-             ----------------------------------------------------------------- */}
-          {showCombinationsChart && (
-            <div className="animate-in fade-in duration-200">
-              <TrifectaCombinationsChart
-                currentHorsesCount={uniqueHorsesCount}
-                currentCombosCount={trifectaPermutations.count}
-                currentFlexiPct={flexiPercentage}
-                stake={trifectaBetAmount}
-                isStandoutActive={Boolean(standoutPosition && standoutTab)}
-                standoutHorseName={
-                  activeRace.runners.find((r) => r.tabNumber === standoutTab)?.horseName
-                }
-                fieldSize={
-                  activeRace.runners.filter((r) => !isRunnerScratched(r)).length || 12
-                }
-              />
-            </div>
-          )}
-
-          {/* -----------------------------------------------------------------
-              EXPANDABLE VERIFIED BOOKMAKER FLEXI REFERENCE TABLE (SPORTSBET / TAB)
-             ----------------------------------------------------------------- */}
-          {showFlexiReference && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#09110D] border border-[#23352B] space-y-4 font-mono text-xs animate-in fade-in duration-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#1E2E25]">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#D4AF37]" />
-                  <span className="font-bold text-[#F3F4F0] text-sm">
-                    Sportsbet &amp; TAB Australia Verified Flexi &amp; Combinations Table
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#10B981] font-bold">
-                  Formula: Flexi % = (Stake / Combinations) × 100%
-                </span>
-              </div>
-
-              <p className="text-[11px] text-[#8A9990] leading-relaxed">
-                In real syndicate betting, pooling selections from 4 to 6 punters typically yields <strong>5 to 8 unique horses</strong> (<strong>60 to 336 combinations</strong>). Because a 100% full unit costs $60 to $336, Australian wagering operators (Sportsbet, TAB, Ladbrokes) calculate a <strong>sub-100% Flexi percentage</strong> (typically <strong>5% to 33.33%</strong>) on standard $10 to $20 syndicate stakes.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Table A: Boxed Trifectas */}
-                <div className="overflow-x-auto rounded-xl border border-[#1E2E25] bg-[#0E1512]">
-                  <div className="px-3 py-2 bg-[#121C17] border-b border-[#1E2E25] font-bold text-[#D4AF37] text-[11px] flex items-center justify-between">
-                    <span>A. Boxed Trifecta (N × (N-1) × (N-2))</span>
-                    <span className="text-[10px] text-[#8A9990]">All Tips Pooled</span>
-                  </div>
-                  <table className="w-full text-left border-collapse text-[11px]">
-                    <thead>
-                      <tr className="border-b border-[#1E2E25] bg-[#080D0B] text-[#8A9990]">
-                        <th className="py-1.5 px-2">Horses</th>
-                        <th className="py-1.5 px-2 text-right">Combos</th>
-                        <th className="py-1.5 px-2 text-right">100% Unit</th>
-                        <th className="py-1.5 px-2 text-right text-[#10B981]">$10 Stake</th>
-                        <th className="py-1.5 px-2 text-right text-[#D4AF37]">$20 Stake</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1A2620] text-[#D5DDD8]">
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">5 Horses</td>
-                        <td className="py-1.5 px-2 text-right">60</td>
-                        <td className="py-1.5 px-2 text-right">$60</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">16.67%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">33.33%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">6 Horses</td>
-                        <td className="py-1.5 px-2 text-right">120</td>
-                        <td className="py-1.5 px-2 text-right">$120</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">8.33%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">16.67%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">7 Horses</td>
-                        <td className="py-1.5 px-2 text-right">210</td>
-                        <td className="py-1.5 px-2 text-right">$210</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">4.76%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">9.52%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">8 Horses</td>
-                        <td className="py-1.5 px-2 text-right">336</td>
-                        <td className="py-1.5 px-2 text-right">$336</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">2.98%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">5.95%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Table B: Standout Banker Trifectas */}
-                <div className="overflow-x-auto rounded-xl border border-[#1E2E25] bg-[#0E1512]">
-                  <div className="px-3 py-2 bg-[#121C17] border-b border-[#1E2E25] font-bold text-[#10B981] text-[11px] flex items-center justify-between">
-                    <span>B. Standout Banker (&lt; $1.90 Fav Locked 1st)</span>
-                    <span className="text-[10px] text-[#8A9990]">1 × M × (M-1)</span>
-                  </div>
-                  <table className="w-full text-left border-collapse text-[11px]">
-                    <thead>
-                      <tr className="border-b border-[#1E2E25] bg-[#080D0B] text-[#8A9990]">
-                        <th className="py-1.5 px-2">Other Picks</th>
-                        <th className="py-1.5 px-2 text-right">Combos</th>
-                        <th className="py-1.5 px-2 text-right">100% Unit</th>
-                        <th className="py-1.5 px-2 text-right text-[#10B981]">$10 Stake</th>
-                        <th className="py-1.5 px-2 text-right text-[#D4AF37]">$20 Stake</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1A2620] text-[#D5DDD8]">
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">4 Others (5H)</td>
-                        <td className="py-1.5 px-2 text-right">12</td>
-                        <td className="py-1.5 px-2 text-right">$12</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">83.33%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">166.67%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">5 Others (6H)</td>
-                        <td className="py-1.5 px-2 text-right">20</td>
-                        <td className="py-1.5 px-2 text-right">$20</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">50.00%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">100.00%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">6 Others (7H)</td>
-                        <td className="py-1.5 px-2 text-right">30</td>
-                        <td className="py-1.5 px-2 text-right">$30</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">33.33%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">66.67%</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 font-bold">7 Others (8H)</td>
-                        <td className="py-1.5 px-2 text-right">42</td>
-                        <td className="py-1.5 px-2 text-right">$42</td>
-                        <td className="py-1.5 px-2 text-right text-[#10B981] font-bold">23.81%</td>
-                        <td className="py-1.5 px-2 text-right text-[#D4AF37] font-bold">47.62%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ====================================================================
               ALL PARTICIPATED MEETING CARD TRIFECTAS (Collapsible Accordions)

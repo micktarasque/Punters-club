@@ -2338,6 +2338,239 @@ Write a crisp, single-sentence summary (under 25 words) of this horse's performa
   }
 });
 
+// ============================================================================
+// ENTERPRISE AI STUDIO & GEMINI 2.5 FLASH ARCHITECTURE ROUTES
+// ============================================================================
+
+app.get("/api/ai/architecture-meta", (_req, res) => {
+  res.json({
+    ok: true,
+    architecture: {
+      targetModel: "gemini-2.5-flash",
+      orchestration: "LangGraph Stateful Directed Cyclic Graph",
+      contextCaching: {
+        minimumTokens: 32768,
+        discountPercentage: 75,
+        defaultTtlSeconds: 3600,
+        rollingRenewal: true,
+      },
+      agentNodes: [
+        { id: "supervisor", name: "Supervisor Router", role: "Triage & Task Decomposition" },
+        { id: "planner", name: "Architect & Planner", role: "AST Mutation Graph & Plan DAG" },
+        { id: "coder_worker", name: "Coder Worker", role: "Code Synthesis & Native Tool Calling" },
+        { id: "sandbox_verifier", name: "Sandboxed Verifier", role: "Non-interactive Compiler & Lint Check" },
+        { id: "critic", name: "Critic & Evaluator", role: "Self-Healing Compiler Repair Loop (max 3 cycles)" },
+        { id: "synthesizer", name: "Output Synthesizer", role: "Verified Pull Request & Diff Generator" },
+      ],
+      githubRepositories: [
+        {
+          name: "langchain-ai/langgraph",
+          url: "https://github.com/langchain-ai/langgraph",
+          category: "Multi-Agent State Machine",
+          description: "Reference implementation for supervisor-worker patterns, conditional retries, and checkpointing.",
+        },
+        {
+          name: "google-gemini/cookbook",
+          url: "https://github.com/google-gemini/cookbook",
+          category: "Google GenAI SDK",
+          description: "Official Google repository for Context Caching, typed function calling, and structured outputs.",
+        },
+        {
+          name: "Arize-ai/phoenix",
+          url: "https://github.com/Arize-ai/phoenix",
+          category: "Observability & Tracing",
+          description: "OpenTelemetry tracing for Time-to-First-Token (TTFT), token caching economics, and tool spans.",
+        },
+        {
+          name: "Aider-AI/aider",
+          url: "https://github.com/Aider-AI/aider",
+          category: "Autonomous Code Generation",
+          description: "Git-aware AST repository mapping, compact diff generation, and compiler-in-the-loop repair.",
+        },
+        {
+          name: "explodinggradients/ragas",
+          url: "https://github.com/explodinggradients/ragas",
+          category: "Automated Evaluation CI/CD",
+          description: "Automated evaluation of code faithfulness, instruction adherence, and regression testing.",
+        },
+      ],
+    },
+  });
+});
+
+app.post("/api/ai/calculate-economics", (req, res) => {
+  const codebaseTokens = Number(req.body?.codebaseTokens) || 85_000;
+  const turnsPerSession = Number(req.body?.turnsPerSession) || 8;
+  const sessionsPerDay = Number(req.body?.sessionsPerDay) || 25;
+  const daysPerMonth = 30;
+
+  const REG_INPUT_RATE = 0.075 / 1_000_000;
+  const CACHED_INPUT_RATE = 0.01875 / 1_000_000;
+  const OUTPUT_RATE = 0.30 / 1_000_000;
+
+  const promptTokensPerTurn = 1_200;
+  const outputTokensPerTurn = 650;
+
+  // Uncached: Entire codebase re-sent on every single turn
+  const uncachedCostPerTurn =
+    (codebaseTokens + promptTokensPerTurn) * REG_INPUT_RATE +
+    outputTokensPerTurn * OUTPUT_RATE;
+  const uncachedMonthlyCost =
+    uncachedCostPerTurn * turnsPerSession * sessionsPerDay * daysPerMonth;
+
+  // Cached: Codebase sent once at full rate, then subsequent turns use cached rate (75% off)
+  const cachedFirstTurnCost =
+    (codebaseTokens + promptTokensPerTurn) * REG_INPUT_RATE +
+    outputTokensPerTurn * OUTPUT_RATE;
+  const cachedSubsequentTurnCost =
+    promptTokensPerTurn * REG_INPUT_RATE +
+    codebaseTokens * CACHED_INPUT_RATE +
+    outputTokensPerTurn * OUTPUT_RATE;
+
+  const cachedSessionCost =
+    cachedFirstTurnCost + cachedSubsequentTurnCost * (turnsPerSession - 1);
+  const cachedMonthlyCost = cachedSessionCost * sessionsPerDay * daysPerMonth;
+
+  const monthlySavingsUsd = uncachedMonthlyCost - cachedMonthlyCost;
+  const savingsPct =
+    uncachedMonthlyCost > 0
+      ? (monthlySavingsUsd / uncachedMonthlyCost) * 100
+      : 0;
+
+  res.json({
+    ok: true,
+    codebaseTokens,
+    turnsPerSession,
+    sessionsPerDay,
+    uncachedMonthlyCostUsd: Number(uncachedMonthlyCost.toFixed(2)),
+    cachedMonthlyCostUsd: Number(cachedMonthlyCost.toFixed(2)),
+    monthlySavingsUsd: Number(monthlySavingsUsd.toFixed(2)),
+    savingsPct: Number(savingsPct.toFixed(1)),
+    ttftImprovementMs: {
+      uncachedAverageMs: 3850,
+      cachedAverageMs: 420,
+      speedupFactor: "9.1x",
+    },
+  });
+});
+
+app.post("/api/ai/simulate-agent", async (req, res) => {
+  const taskPrompt =
+    req.body?.taskPrompt ||
+    "Implement an OAuth2 PKCE login route and add strict TypeScript types.";
+  const codebaseTokens = Number(req.body?.codebaseTokens) || 92_000;
+  const simulateErrorRepair = req.body?.simulateErrorRepair !== false;
+
+  const steps = [
+    {
+      node: "supervisor",
+      name: "Supervisor Router",
+      action: "Triage & Task Decomposition",
+      status: "completed",
+      details: `Decomposed prompt into 2 target operations. Identified target workspace AST context (${codebaseTokens.toLocaleString()} tokens).`,
+      durationMs: 95,
+    },
+    {
+      node: "planner",
+      name: "Architect & Planner",
+      action: "AST Mutation Planning",
+      status: "completed",
+      details:
+        "Generated execution DAG: 1. Create src/auth/pkce.ts, 2. Add express middleware in server.ts, 3. Run tsc --noEmit.",
+      durationMs: 140,
+    },
+    {
+      node: "coder_worker",
+      name: "Coder Worker (Turn 1)",
+      action: "Synthesize Code & Tool Call",
+      status: "completed",
+      details:
+        "Emitted tool call 'write_file(src/auth/pkce.ts)'. Referenced cached codebase context.",
+      durationMs: 380,
+    },
+  ];
+
+  if (simulateErrorRepair) {
+    steps.push(
+      {
+        node: "sandbox_verifier",
+        name: "Sandbox Verifier",
+        action: "Execute 'tsc --noEmit'",
+        status: "failed",
+        details:
+          "Compilation error detected: 'TS2304: Cannot find name BufferSource' in src/auth/pkce.ts:18.",
+        durationMs: 310,
+      },
+      {
+        node: "critic",
+        name: "Critic & Evaluator",
+        action: "Self-Healing Loop Triggered",
+        status: "rerouted",
+        details:
+          "Evaluator captured compiler diagnostic. Capping repair loop (Attempt 1 of 3). Re-routing back to Coder Worker.",
+        durationMs: 85,
+      },
+      {
+        node: "coder_worker",
+        name: "Coder Worker (Turn 2 - Self-Healing)",
+        action: "Synthesize Patch Fix",
+        status: "completed",
+        details:
+          "Applied tool call 'patch_file_chunk'. Added missing Uint8Array type casting to resolve TS2304.",
+        durationMs: 290,
+      },
+      {
+        node: "sandbox_verifier",
+        name: "Sandbox Verifier",
+        action: "Re-run 'tsc --noEmit'",
+        status: "completed",
+        details: "Clean compilation: 0 errors found across 48 project files.",
+        durationMs: 270,
+      }
+    );
+  } else {
+    steps.push({
+      node: "sandbox_verifier",
+      name: "Sandbox Verifier",
+      action: "Execute 'tsc --noEmit'",
+      status: "completed",
+      details: "Clean compilation: 0 errors found.",
+      durationMs: 260,
+    });
+  }
+
+  steps.push({
+    node: "synthesizer",
+    name: "PR Synthesizer",
+    action: "Output Verification & PR Summary",
+    status: "completed",
+    details:
+      "Synthesized clean pull request diff: 1 file created, 0 regressions, all unit tests passing.",
+    durationMs: 120,
+  });
+
+  const totalDurationMs = steps.reduce((sum, s) => sum + s.durationMs, 0);
+
+  res.json({
+    ok: true,
+    taskPrompt,
+    status: "SUCCESS",
+    totalSteps: steps.length,
+    repairLoopsUsed: simulateErrorRepair ? 1 : 0,
+    executionTimeMs: totalDurationMs,
+    steps,
+    tokenEconomics: {
+      cachedTokens: codebaseTokens,
+      promptTokens: 1_450,
+      outputTokens: 820,
+      cachedSavingsPercentage: 75,
+      costSavingsUsd: Number(
+        (codebaseTokens * (0.075 - 0.01875) / 1_000_000).toFixed(6)
+      ),
+    },
+  });
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
