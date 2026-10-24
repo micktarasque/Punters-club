@@ -1,6 +1,6 @@
 {
-  "summary":  "Comprehensive architecture and UX plan to transform TurfSheet with a unified executive top bar, streamlined 4-stage tab flow (Overview -> Selections -> Exotics -> Results), and Apple-grade typography, subtle hairline borders, and micro-elevation.",
-  "updatedAt":  "2026-10-21T09:37:39.669498465Z",
+  "summary":  "Comprehensive UX and workflow optimization plan for the Selections and Race Navigation system. Incorporates member initials badges directly on runner rows, a sticky floating race jump dock with keyboard shortcuts, and smooth auto-advancement across races once a trio of preferences is completed.",
+  "updatedAt":  "2026-10-23T10:51:40.847521887Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

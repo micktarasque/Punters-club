@@ -30,6 +30,7 @@ export interface PunterLeaderboardProps {
   onJumpToSelections?: (punterId: string, meetingId: string) => void;
   scoringMode?: ScoringDisplayMode;
   onToggleScoringMode?: (mode: ScoringDisplayMode) => void;
+  isApple?: boolean;
 }
 
 export type LeaderboardSortMode = "points" | "dollars" | "strikeRate";
@@ -54,7 +55,7 @@ interface PunterStats {
   roiPercentage: number;
 }
 
-export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
+const PunterLeaderboardComponent: React.FC<PunterLeaderboardProps> = ({
   meetings,
   punters,
   selectedMeetingId,
@@ -62,6 +63,7 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
   onJumpToSelections,
   scoringMode = "points",
   onToggleScoringMode,
+  isApple = false,
 }) => {
   const [sortMode, setSortMode] = useState<LeaderboardSortMode>("points");
   const [venueScope, setVenueScope] = useState<"all" | "selected">("all");
@@ -206,18 +208,26 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Bento Header & Executive Summary */}
-      <div className="p-6 rounded-2xl bg-[#0B120E] border border-[#1E2E25] shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#1C2C23]">
+      <div className={`p-6 rounded-2xl border transition-all ${
+        isApple ? "bg-white border-[#E5E5EA] shadow-sm text-[#1D1D1F]" : "bg-[#0B120E] border-[#1E2E25] shadow-xl text-[#F3F4F0]"
+      }`}>
+        <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1C2C23]"
+        }`}>
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37]">
+              <span className={`p-2 rounded-xl border ${
+                isApple ? "bg-[#0071E3]/10 border-[#0071E3]/25 text-[#0071E3]" : "bg-[#D4AF37]/15 border-[#D4AF37]/30 text-[#D4AF37]"
+              }`}>
                 <Trophy className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="text-xl sm:text-2xl font-display font-bold text-[#F3F4F0] tracking-tight">
+                <h2 className={`text-xl sm:text-2xl font-display font-bold tracking-tight ${
+                  isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                }`}>
                   Official Syndicate Leaderboard
                 </h2>
-                <p className="text-xs text-[#8A9990] mt-0.5">
+                <p className={`text-xs mt-0.5 ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
                   Live rankings across {punters.length} registered punters by total points and official TAB dollar dividends.
                 </p>
               </div>
@@ -227,13 +237,19 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
           {/* Scope & Sort Controls */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Scope Pill Toggle */}
-            <div className="flex items-center bg-[#070D0A] p-1 rounded-xl border border-[#1C2C23] text-xs font-mono">
+            <div className={`flex items-center p-1 rounded-xl border text-xs font-mono ${
+              isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#070D0A] border-[#1C2C23]"
+            }`}>
               <button
                 type="button"
                 onClick={() => setVenueScope("all")}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-semibold ${
                   venueScope === "all"
-                    ? "bg-[#D4AF37] text-[#070B09] font-bold"
+                    ? isApple
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs"
+                      : "bg-[#D4AF37] text-[#070B09] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -244,7 +260,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                 onClick={() => setVenueScope("selected")}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-semibold ${
                   venueScope === "selected"
-                    ? "bg-[#D4AF37] text-[#070B09] font-bold"
+                    ? isApple
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs"
+                      : "bg-[#D4AF37] text-[#070B09] font-bold"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -253,13 +273,19 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
             </div>
 
             {/* Ranking Mode Toggle */}
-            <div className="flex items-center bg-[#070D0A] p-1 rounded-xl border border-[#1C2C23] text-xs font-mono">
+            <div className={`flex items-center p-1 rounded-xl border text-xs font-mono ${
+              isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#070D0A] border-[#1C2C23]"
+            }`}>
               <button
                 type="button"
                 onClick={() => setSortMode("points")}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-semibold flex items-center gap-1.5 ${
                   sortMode === "points"
-                    ? "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
+                    ? isApple
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs"
+                      : "bg-[#D4AF37] text-[#070B09] font-bold shadow-sm"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -271,7 +297,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                 onClick={() => setSortMode("dollars")}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-semibold flex items-center gap-1.5 ${
                   sortMode === "dollars"
-                    ? "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
+                    ? isApple
+                      ? "bg-white text-[#34C759] font-bold shadow-xs"
+                      : "bg-[#10B981] text-[#070B09] font-bold shadow-sm"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -283,7 +313,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                 onClick={() => setSortMode("strikeRate")}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-semibold flex items-center gap-1.5 ${
                   sortMode === "strikeRate"
-                    ? "bg-[#38BDF8] text-[#070B09] font-bold shadow-sm"
+                    ? isApple
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs"
+                      : "bg-[#38BDF8] text-[#070B09] font-bold shadow-sm"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
                     : "text-[#8A9990] hover:text-[#F3F4F0]"
                 }`}
               >
@@ -296,52 +330,76 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
 
         {/* Aggregate KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <div className="p-3.5 rounded-xl bg-[#101A14]/70 border border-[#1E2E25]">
-            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+          <div className={`p-3.5 rounded-xl border ${
+            isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#101A14]/70 border-[#1E2E25]"
+          }`}>
+            <span className={`text-[11px] font-mono uppercase tracking-wider block ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}>
               Club Leader 👑
             </span>
             <div className="mt-1 flex items-center gap-2">
-              <span className="font-display font-bold text-base text-[#D4AF37]">
+              <span className={`font-display font-bold text-base ${
+                isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+              }`}>
                 {leader?.punter.name || "—"}
               </span>
             </div>
-            <span className="text-xs text-[#8A9990] font-mono">
+            <span className={`text-xs font-mono ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
               {leader ? `${leader.totalPoints} pts · ${formatDollarReturn(leader.totalDollarReturn)}` : "—"}
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#101A14]/70 border border-[#1E2E25]">
-            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+          <div className={`p-3.5 rounded-xl border ${
+            isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#101A14]/70 border-[#1E2E25]"
+          }`}>
+            <span className={`text-[11px] font-mono uppercase tracking-wider block ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}>
               Syndicate Points
             </span>
-            <div className="mt-1 font-mono font-bold text-lg text-[#F3F4F0]">
+            <div className={`mt-1 font-mono font-bold text-lg ${
+              isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+            }`}>
               {aggregateStats.totalPts} pts
             </div>
-            <span className="text-xs text-[#8A9990] font-mono">
+            <span className={`text-xs font-mono ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
               Across {targetMeetings.reduce((acc, m) => acc + m.races.length, 0)} races
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#101A14]/70 border border-[#1E2E25]">
-            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+          <div className={`p-3.5 rounded-xl border ${
+            isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#101A14]/70 border-[#1E2E25]"
+          }`}>
+            <span className={`text-[11px] font-mono uppercase tracking-wider block ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}>
               Total Returns
             </span>
-            <div className="mt-1 font-mono font-bold text-lg text-[#10B981]">
+            <div className={`mt-1 font-mono font-bold text-lg ${
+              isApple ? "text-[#34C759]" : "text-[#10B981]"
+            }`}>
               {formatDollarReturn(aggregateStats.totalDiv)}
             </div>
-            <span className="text-xs text-[#8A9990] font-mono">
+            <span className={`text-xs font-mono ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
               TAB dividends collected
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#101A14]/70 border border-[#1E2E25]">
-            <span className="text-[11px] font-mono text-[#8A9990] uppercase tracking-wider block">
+          <div className={`p-3.5 rounded-xl border ${
+            isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#101A14]/70 border-[#1E2E25]"
+          }`}>
+            <span className={`text-[11px] font-mono uppercase tracking-wider block ${
+              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+            }`}>
               Winners Picked
             </span>
-            <div className="mt-1 font-mono font-bold text-lg text-[#D4AF37]">
+            <div className={`mt-1 font-mono font-bold text-lg ${
+              isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+            }`}>
               {aggregateStats.totalWins} 🏆
             </div>
-            <span className="text-xs text-[#8A9990] font-mono">
+            <span className={`text-xs font-mono ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
               1st place consensus strikes
             </span>
           </div>
@@ -354,13 +412,6 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
           {podiumTop3.map((stat, idx) => {
             const isFirst = idx === 0;
             const isSecond = idx === 1;
-            const isThird = idx === 2;
-
-            const medalColor = isFirst
-              ? "border-[#D4AF37]/60 bg-[#D4AF37]/5 text-[#D4AF37]"
-              : isSecond
-              ? "border-slate-400/50 bg-slate-400/5 text-slate-300"
-              : "border-amber-700/50 bg-amber-700/5 text-amber-500";
 
             const badgeTitle = isFirst ? "1st · Leader" : isSecond ? "2nd · Silver" : "3rd · Bronze";
             const badgeIcon = isFirst ? "🥇" : isSecond ? "🥈" : "🥉";
@@ -369,19 +420,29 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
               <div
                 key={stat.punter.id}
                 className={`p-5 rounded-2xl border transition-all ${
-                  isFirst
+                  isApple
+                    ? isFirst
+                      ? "border-[#0071E3]/50 bg-white shadow-md ring-1 ring-[#0071E3]/30"
+                      : "border-[#E5E5EA] bg-white hover:border-[#D2D2D7] shadow-sm"
+                    : isFirst
                     ? "border-[#D4AF37] bg-[#121B15] shadow-[0_8px_24px_rgba(212,175,55,0.12)] ring-1 ring-[#D4AF37]/40"
                     : "border-[#1F2E26] bg-[#0E1612] hover:border-[#2E4237]"
                 }`}
               >
-                <div className="flex items-center justify-between pb-3 border-b border-[#1C2C23]">
+                <div className={`flex items-center justify-between pb-3 border-b ${
+                  isApple ? "border-[#E5E5EA]" : "border-[#1C2C23]"
+                }`}>
                   <div className="flex items-center gap-2.5">
                     <span className="text-2xl">{badgeIcon}</span>
                     <div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#8A9990]">
+                      <span className={`text-[10px] font-mono uppercase tracking-wider font-bold ${
+                        isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                      }`}>
                         {badgeTitle}
                       </span>
-                      <h3 className="text-base font-display font-bold text-[#F3F4F0]">
+                      <h3 className={`text-base font-display font-bold ${
+                        isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                      }`}>
                         {stat.punter.name}
                       </h3>
                     </div>
@@ -389,7 +450,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                   {stat.jokerTriggered && (
                     <span
                       title="🃏 2× Joker Round Hit!"
-                      className="px-2 py-0.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] font-mono text-[10px] font-bold"
+                      className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold border ${
+                        isApple
+                          ? "bg-[#FFF5E6] border-[#FF9500]/40 text-[#FF9500]"
+                          : "bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#D4AF37]"
+                      }`}
                     >
                       🃏 2× Hit
                     </span>
@@ -398,23 +463,39 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
 
                 {/* Score Big Display */}
                 <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-                  <div className="p-2.5 rounded-xl bg-[#080D0A] border border-[#1A2820]">
-                    <span className="text-[10px] font-mono text-[#8A9990] uppercase block">
+                  <div className={`p-2.5 rounded-xl border ${
+                    isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#080D0A] border-[#1A2820]"
+                  }`}>
+                    <span className={`text-[10px] font-mono uppercase block ${
+                      isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                    }`}>
                       Total Points
                     </span>
-                    <span className="text-xl font-mono font-black text-[#D4AF37]">
+                    <span className={`text-xl font-mono font-black ${
+                      isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                    }`}>
                       {stat.totalPoints}
                     </span>
-                    <span className="text-[10px] text-[#8A9990] block">pts</span>
+                    <span className={`text-[10px] block ${
+                      isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                    }`}>pts</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#080D0A] border border-[#1A2820]">
-                    <span className="text-[10px] font-mono text-[#8A9990] uppercase block">
+                  <div className={`p-2.5 rounded-xl border ${
+                    isApple ? "bg-[#F2F2F7] border-[#E5E5EA]" : "bg-[#080D0A] border-[#1A2820]"
+                  }`}>
+                    <span className={`text-[10px] font-mono uppercase block ${
+                      isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                    }`}>
                       Dollar Return
                     </span>
-                    <span className="text-xl font-mono font-black text-[#10B981]">
+                    <span className={`text-xl font-mono font-black ${
+                      isApple ? "text-[#34C759]" : "text-[#10B981]"
+                    }`}>
                       ${stat.totalDollarReturn.toFixed(2)}
                     </span>
-                    <span className="text-[10px] text-[#8A9990] block">
+                    <span className={`text-[10px] block ${
+                      isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                    }`}>
                       ROI: {stat.roiPercentage > 0 ? `+${stat.roiPercentage}%` : `${stat.roiPercentage}%`}
                     </span>
                   </div>
@@ -422,21 +503,29 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
 
                 {/* Performance Metrics */}
                 <div className="mt-3.5 space-y-1.5 text-xs font-mono">
-                  <div className="flex items-center justify-between text-[#8A9990]">
+                  <div className={`flex items-center justify-between ${
+                    isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                  }`}>
                     <span>Win Strike Rate:</span>
-                    <strong className="text-[#F3F4F0]">
+                    <strong className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}>
                       {stat.winStrikeRate}% ({stat.winnersPicked} wins)
                     </strong>
                   </div>
-                  <div className="flex items-center justify-between text-[#8A9990]">
+                  <div className={`flex items-center justify-between ${
+                    isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                  }`}>
                     <span>Podium (1-2-3):</span>
-                    <strong className="text-[#F3F4F0]">
+                    <strong className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}>
                       {stat.podiumsPicked} places ({stat.secondsPicked} 2nd · {stat.thirdsPicked} 3rd)
                     </strong>
                   </div>
-                  <div className="flex items-center justify-between text-[#8A9990]">
+                  <div className={`flex items-center justify-between ${
+                    isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                  }`}>
                     <span>Races Tipped:</span>
-                    <strong className="text-[#F3F4F0]">{stat.racesTipped} races</strong>
+                    <strong className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}>
+                      {stat.racesTipped} races
+                    </strong>
                   </div>
                 </div>
 
@@ -445,7 +534,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                   <button
                     type="button"
                     onClick={() => onJumpToSelections(stat.punter.id, selectedMeetingId)}
-                    className="mt-4 w-full py-2 rounded-xl bg-[#14231B] border border-[#23352B] hover:border-[#D4AF37]/50 text-xs font-mono font-semibold text-[#D5DDD8] hover:text-[#D4AF37] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    className={`mt-4 w-full py-2 rounded-xl border text-xs font-mono font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isApple
+                        ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#0071E3] hover:bg-[#E5E5EA]"
+                        : "bg-[#14231B] border-[#23352B] hover:border-[#D4AF37]/50 text-[#D5DDD8] hover:text-[#D4AF37]"
+                    }`}
                   >
                     <span>View Selections</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -458,14 +551,20 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
       )}
 
       {/* Full Leaderboard Table */}
-      <div className="rounded-2xl border border-[#1E2E25] bg-[#0A120E] overflow-hidden shadow-lg">
-        <div className="px-5 py-3.5 bg-[#080D0A] border-b border-[#1E2E25] flex items-center justify-between gap-2">
-          <span className="font-mono text-xs uppercase font-bold text-[#D4AF37] tracking-wider">
+      <div className={`rounded-2xl border overflow-hidden shadow-lg ${
+        isApple ? "border-[#E5E5EA] bg-white" : "border-[#1E2E25] bg-[#0A120E]"
+      }`}>
+        <div className={`px-5 py-3.5 border-b flex items-center justify-between gap-2 ${
+          isApple ? "bg-[#FAF9FA] border-[#E5E5EA]" : "bg-[#080D0A] border-[#1E2E25]"
+        }`}>
+          <span className={`font-mono text-xs uppercase font-bold tracking-wider ${
+            isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+          }`}>
             Full Registered Punters Standings ({sortedStats.length} Players)
           </span>
-          <span className="text-xs text-[#8A9990] font-mono">
+          <span className={`text-xs font-mono ${isApple ? "text-[#86868B]" : "text-[#8A9990]"}`}>
             Sorted by:{" "}
-            <strong className="text-[#F3F4F0]">
+            <strong className={isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}>
               {sortMode === "points"
                 ? "Total Points"
                 : sortMode === "dollars"
@@ -478,7 +577,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[#1E2E25] bg-[#0C1510] text-[11px] font-mono text-[#8A9990] uppercase tracking-wider">
+              <tr className={`border-b text-[11px] font-mono uppercase tracking-wider ${
+                isApple
+                  ? "border-[#E5E5EA] bg-[#F2F2F7] text-[#86868B]"
+                  : "border-[#1E2E25] bg-[#0C1510] text-[#8A9990]"
+              }`}>
                 <th className="py-3 px-4 w-12 text-center">Rank</th>
                 <th className="py-3 px-4 min-w-[160px]">Punter</th>
                 <th className="py-3 px-3 text-center">Total Points</th>
@@ -489,7 +592,7 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#16231C]">
+            <tbody className={`divide-y ${isApple ? "divide-[#E5E5EA]" : "divide-[#16231C]"}`}>
               {sortedStats.map((stat, idx) => {
                 const rank = idx + 1;
                 const isLeader = rank === 1;
@@ -498,13 +601,21 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                   <tr
                     key={stat.punter.id}
                     className={`transition-colors ${
-                      isLeader ? "bg-[#D4AF37]/5 hover:bg-[#D4AF37]/10" : "hover:bg-[#101A14]"
+                      isApple
+                        ? isLeader
+                          ? "bg-[#0071E3]/5 hover:bg-[#0071E3]/10"
+                          : "hover:bg-[#F2F2F7]"
+                        : isLeader
+                        ? "bg-[#D4AF37]/5 hover:bg-[#D4AF37]/10"
+                        : "hover:bg-[#101A14]"
                     }`}
                   >
                     {/* Rank Badge */}
                     <td className="py-3.5 px-4 text-center align-middle font-mono font-bold">
                       {rank === 1 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#D4AF37] text-[#070B09] font-black text-xs shadow-sm">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-black text-xs shadow-sm ${
+                          isApple ? "bg-[#0071E3] text-white" : "bg-[#D4AF37] text-[#070B09]"
+                        }`}>
                           1
                         </span>
                       ) : rank === 2 ? (
@@ -516,7 +627,7 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                           3
                         </span>
                       ) : (
-                        <span className="text-[#8A9990]">#{rank}</span>
+                        <span className={isApple ? "text-[#86868B]" : "text-[#8A9990]"}>#{rank}</span>
                       )}
                     </td>
 
@@ -524,16 +635,24 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                     <td className="py-3.5 px-4 align-middle">
                       <div className="flex items-center gap-2.5">
                         <span
-                          className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shadow-sm bg-[#12241A] text-[#10B981] border border-[#1E3A2B]"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shadow-sm border ${
+                            isApple
+                              ? "bg-[#EBF5FF] text-[#0071E3] border-[#0071E3]/30"
+                              : "bg-[#12241A] text-[#10B981] border-[#1E3A2B]"
+                          }`}
                         >
                           {stat.punter.name.slice(0, 2).toUpperCase()}
                         </span>
                         <div>
-                          <div className="font-display font-bold text-sm text-[#F3F4F0] flex items-center gap-1.5">
+                          <div className={`font-display font-bold text-sm flex items-center gap-1.5 ${
+                            isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                          }`}>
                             <span>{stat.punter.name}</span>
                             {isLeader && <span>👑</span>}
                           </div>
-                          <span className="text-[11px] text-[#8A9990] font-mono">
+                          <span className={`text-[11px] font-mono ${
+                            isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                          }`}>
                             {stat.completedRaces} races resulted
                           </span>
                         </div>
@@ -542,11 +661,15 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
 
                     {/* Total Points */}
                     <td className="py-3.5 px-3 text-center align-middle font-mono">
-                      <span className="text-sm font-bold text-[#D4AF37]">
+                      <span className={`text-sm font-bold ${
+                        isApple ? "text-[#0071E3]" : "text-[#D4AF37]"
+                      }`}>
                         {stat.totalPoints} pts
                       </span>
                       {stat.jokerBonusPoints > 0 && (
-                        <span className="block text-[10px] text-[#A6B5AD]">
+                        <span className={`block text-[10px] ${
+                          isApple ? "text-[#86868B]" : "text-[#A6B5AD]"
+                        }`}>
                           (+{stat.jokerBonusPoints} Joker)
                         </span>
                       )}
@@ -554,12 +677,16 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
 
                     {/* Dollar Return */}
                     <td className="py-3.5 px-3 text-center align-middle font-mono">
-                      <span className="text-sm font-bold text-[#10B981]">
+                      <span className={`text-sm font-bold ${
+                        isApple ? "text-[#34C759]" : "text-[#10B981]"
+                      }`}>
                         ${stat.totalDollarReturn.toFixed(2)}
                       </span>
                       <span
                         className={`block text-[10px] ${
-                          stat.roiPercentage >= 0 ? "text-[#10B981]" : "text-rose-400"
+                          stat.roiPercentage >= 0
+                            ? isApple ? "text-[#34C759]" : "text-[#10B981]"
+                            : "text-rose-500"
                         }`}
                       >
                         {stat.roiPercentage >= 0 ? `+${stat.roiPercentage}%` : `${stat.roiPercentage}%`} ROI
@@ -569,13 +696,21 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                     {/* Placings breakdown */}
                     <td className="py-3.5 px-3 text-center align-middle font-mono">
                       <div className="inline-flex items-center gap-1">
-                        <span className="px-1.5 py-0.5 rounded bg-[#D4AF37]/15 text-[#D4AF37] font-bold" title="1st Place Wins">
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${
+                          isApple
+                            ? "bg-[#FFF5E6] text-[#FF9500]"
+                            : "bg-[#D4AF37]/15 text-[#D4AF37]"
+                        }`} title="1st Place Wins">
                           {stat.winnersPicked}W
                         </span>
-                        <span className="px-1.5 py-0.5 rounded bg-slate-300/15 text-slate-300 font-bold" title="2nd Place">
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${
+                          isApple ? "bg-[#F2F2F7] text-[#1D1D1F]" : "bg-slate-300/15 text-slate-300"
+                        }`} title="2nd Place">
                           {stat.secondsPicked}P
                         </span>
-                        <span className="px-1.5 py-0.5 rounded bg-amber-700/20 text-amber-400 font-bold" title="3rd Place">
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${
+                          isApple ? "bg-[#EAFBF0] text-[#34C759]" : "bg-amber-700/20 text-amber-400"
+                        }`} title="3rd Place">
                           {stat.thirdsPicked}S
                         </span>
                       </div>
@@ -584,10 +719,16 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                     {/* Strike Rate */}
                     <td className="py-3.5 px-3 text-center align-middle font-mono">
                       <div className="flex flex-col items-center">
-                        <span className="font-bold text-[#F3F4F0]">{stat.winStrikeRate}%</span>
-                        <div className="w-16 h-1.5 bg-[#17231C] rounded-full overflow-hidden mt-1">
+                        <span className={`font-bold ${isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"}`}>
+                          {stat.winStrikeRate}%
+                        </span>
+                        <div className={`w-16 h-1.5 rounded-full overflow-hidden mt-1 ${
+                          isApple ? "bg-[#E5E5EA]" : "bg-[#17231C]"
+                        }`}>
                           <div
-                            className="h-full bg-[#10B981] rounded-full"
+                            className={`h-full rounded-full ${
+                              isApple ? "bg-[#34C759]" : "bg-[#10B981]"
+                            }`}
                             style={{ width: `${Math.min(100, stat.winStrikeRate)}%` }}
                           />
                         </div>
@@ -598,8 +739,12 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                     <td className="py-3.5 px-3 text-center align-middle font-mono">
                       {stat.jokerRaceNo ? (
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
-                            stat.jokerTriggered
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold border ${
+                            isApple
+                              ? stat.jokerTriggered
+                                ? "bg-[#FFF5E6] border-[#FF9500]/40 text-[#FF9500]"
+                                : "bg-[#F2F2F7] border-[#E5E5EA] text-[#86868B]"
+                              : stat.jokerTriggered
                               ? "bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37]"
                               : "bg-[#14201A] border border-[#23352B] text-[#8A9990]"
                           }`}
@@ -608,7 +753,7 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                           {stat.jokerTriggered && <span>✓</span>}
                         </span>
                       ) : (
-                        <span className="text-[#64756B]">—</span>
+                        <span className={isApple ? "text-[#C7C7CC]" : "text-[#64756B]"}>—</span>
                       )}
                     </td>
 
@@ -618,7 +763,11 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
                         <button
                           type="button"
                           onClick={() => onJumpToSelections(stat.punter.id, selectedMeetingId)}
-                          className="px-2.5 py-1 rounded-lg bg-[#14231B] border border-[#23352B] hover:border-[#D4AF37]/40 text-[#D5DDD8] hover:text-[#D4AF37] transition cursor-pointer"
+                          className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                            isApple
+                              ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#0071E3] hover:bg-[#E5E5EA]"
+                              : "bg-[#14231B] border-[#23352B] hover:border-[#D4AF37]/40 text-[#D5DDD8] hover:text-[#D4AF37]"
+                          }`}
                         >
                           Picks →
                         </button>
@@ -634,3 +783,6 @@ export const PunterLeaderboard: React.FC<PunterLeaderboardProps> = ({
     </div>
   );
 };
+
+export const PunterLeaderboard = React.memo(PunterLeaderboardComponent);
+

@@ -46,6 +46,7 @@ interface CombinedTrifectaTrackerProps {
   trifectaBetAmount?: number;
   onChangeTrifectaBetAmount?: (amount: number) => void;
   onTriggerToast?: (msg: string) => void;
+  isApple?: boolean;
 }
 
 const STORAGE_KEY_TRIFECTA_BET = "turfsheet_trifecta_bet_amount_v1";
@@ -217,6 +218,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
   trifectaBetAmount: controlledBetAmount,
   onChangeTrifectaBetAmount,
   onTriggerToast,
+  isApple = false,
 }) => {
   const [filterMode, setFilterMode] =
     useState<"ALL" | "SELECTED_ONLY">("SELECTED_ONLY");
@@ -778,8 +780,14 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
   return (
     <div className="space-y-4">
       {/* 1. Multi-Select Race Card Switcher + Custom Trifecta Bet Amount Calculator + Scoreboard */}
-      <div className="bg-[#121A16] border border-[#1F2D26] rounded-xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1F2D26] pb-4">
+      <div className={`rounded-xl p-4 sm:p-5 space-y-4 border ${
+        isApple
+          ? "bg-white border-[#E5E5EA] text-[#1D1D1F] shadow-sm"
+          : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+      }`}>
+        <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}>
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="flex items-center gap-2">

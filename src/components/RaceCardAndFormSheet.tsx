@@ -31,6 +31,8 @@ import {
   RaceCardCountdownClock,
   computeMinutesAndSecondsToJump,
 } from "./RaceCardCountdownClock";
+import { RaceIntelligenceBrief } from "./RaceIntelligenceBrief";
+import { RaceSpeedMapVisualizer } from "./RaceSpeedMapVisualizer";
 import { isRaceOfficialOrCompleted } from "../data/seedNswTab";
 
 interface RaceCardAndFormSheetProps {
@@ -51,6 +53,7 @@ interface RaceCardAndFormSheetProps {
     tabNumber: number
   ) => void;
   isApple?: boolean;
+  isObsidian?: boolean;
 }
 
 type SortField =
@@ -73,6 +76,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
   currentMeetingSelections,
   onAssignPreference,
   isApple = false,
+  isObsidian = false,
 }) => {
   const [runnerSearch, setRunnerSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("finishPosition");
@@ -718,114 +722,128 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
         onSelectMeeting={onSelectMeeting}
       />
 
-      {/* NSW TAB Exotic Dividends & Speed Map Summary Strip */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* NSW TAB Exotic Tote Dividends */}
-        <div className="lg:col-span-7 bg-[#121A16] border border-[#1F2D26] rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2.5">
-            <h3 className="text-xs font-semibold text-[#F3F4F0]">
-              NSW TAB Official Exotic Tote Dividends (R{activeRace.raceNumber})
+      {/* Short Overview of Speed Map, Probability and Predictions under Race Header */}
+      <RaceIntelligenceBrief
+        race={activeRace}
+        meetingVenue={activeMeeting.venue}
+        trackCondition={activeMeeting.trackCondition}
+        railPosition={activeMeeting.railPosition}
+        isApple={isApple}
+        isObsidian={isObsidian}
+        onAssignPreference={(rank, tabNo) =>
+          onAssignPreference(activeMeeting.id, activeRace.raceNumber, rank, tabNo)
+        }
+      />
+
+      {/* Comprehensive Speed Map Visualization based on Career Average Closing Speeds */}
+      <RaceSpeedMapVisualizer
+        race={activeRace}
+        allRacesInMeeting={activeMeeting.races}
+        selectedRaceNumber={activeRace.raceNumber}
+        onSelectRaceNumber={onSelectRaceNumber}
+        trackCondition={activeMeeting.trackCondition}
+        railPosition={activeMeeting.railPosition}
+        meetingVenue={activeMeeting.venue}
+        activeRaceTrio={activeRaceTrio}
+        onAssignPreference={(rank, tabNo) =>
+          onAssignPreference(activeMeeting.id, activeRace.raceNumber, rank, tabNo)
+        }
+        isApple={isApple}
+        isObsidian={isObsidian}
+      />
+
+      {/* NSW TAB Official Exotic Dividends & Consensus Selections */}
+      <div className={`p-4 rounded-xl border ${
+        isApple
+          ? "bg-white border-[#E5E5EA] shadow-xs"
+          : isObsidian
+          ? "bg-[#111827] border-[#1E293B]"
+          : "bg-[#121A16] border-[#1F2D26]"
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pb-2.5 border-b border-inherit/40">
+          <div>
+            <h3 className={`text-xs font-semibold ${isApple ? "text-[#1D1D1F]" : isObsidian ? "text-[#F1F5F9]" : "text-[#F3F4F0]"}`}>
+              NSW TAB Official Exotic Tote Dividends (Race {activeRace.raceNumber})
             </h3>
-            <span className="text-xs text-[#8A9990]">
+            <span className={`text-[11px] ${isApple ? "text-[#86868B]" : isObsidian ? "text-[#94A3B8]" : "text-[#8A9990]"}`}>
               Status: {activeRace.status} · Scoring: 1st = 3 pts · 2nd = 2 pts · 3rd = 1 pt
             </span>
           </div>
-          {activeRace.exotics.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {activeRace.exotics.map((ex, idx) => (
-                <div
-                  key={`${ex.poolType}-${idx}`}
-                  className="bg-[#0B110E] border border-[#1F2D26] rounded p-2.5"
-                >
-                  <div className="text-xs text-[#8A9990]">{ex.poolType}</div>
-                  <div className="font-mono text-xs font-semibold text-[#F3F4F0] mt-0.5 tabular-nums">
-                    {ex.combination}
-                  </div>
-                  <div className="font-mono text-sm font-semibold text-[#10B981] mt-1 tabular-nums">
-                    ${ex.dividend.toFixed(2)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#0B110E] border border-[#1F2D26] rounded p-3 space-y-1.5 text-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-mono text-[#D4AF37] font-semibold">
-                  Race Upcoming ({activeRace.startTime}) — Exotics Pending Official All-Clear
-                </span>
-                {activeRace.tip && (
-                  <span className="font-mono text-[#10B981]">
-                    Top Rated: {activeRace.tip}
-                  </span>
-                )}
-              </div>
-              {activeRace.verdict && (
-                <p className="text-[#8A9990]">{activeRace.verdict}</p>
-              )}
-            </div>
-          )}
+
+          <div className="flex items-center gap-2">
+            <span className={`text-xs ${isApple ? "text-[#86868B]" : isObsidian ? "text-[#94A3B8]" : "text-[#8A9990]"}`}>
+              {activePunterName}:{" "}
+              <span className="font-mono text-[#D4AF37] font-semibold">
+                1st #{activeRaceTrio.firstPref ?? "-"} · 2nd #{activeRaceTrio.secondPref ?? "-"} · 3rd #{activeRaceTrio.thirdPref ?? "-"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={handleAutoPickActiveRace}
+              className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold border transition-colors cursor-pointer ${
+                isApple
+                  ? "bg-[#0071E3]/10 border-[#0071E3]/30 text-[#0071E3] hover:bg-[#0071E3]/20"
+                  : isObsidian
+                  ? "bg-[#38BDF8]/15 border-[#38BDF8]/40 text-[#38BDF8] hover:bg-[#38BDF8]/25"
+                  : "bg-[#152920] border-[#10B981]/50 text-[#10B981] hover:bg-[#1A3327]"
+              }`}
+              title="Auto Pick 1st, 2nd, and 3rd preferences based on market odds"
+            >
+              🎲 Auto Pick
+            </button>
+          </div>
         </div>
 
-        {/* Pace & Speed Map Overview */}
-        <div className="lg:col-span-5 bg-[#121A16] border border-[#1F2D26] rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2.5">
-            <h3 className="text-xs font-semibold text-[#F3F4F0]">
-              Race Speed Map & Settling Positions ({activeRace.distance}m)
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[#8A9990]">
-                {activePunterName}:{" "}
-                <span className="font-mono text-[#D4AF37]">
-                  1st #{activeRaceTrio.firstPref ?? "-"} · 2nd #
-                  {activeRaceTrio.secondPref ?? "-"} · 3rd #
-                  {activeRaceTrio.thirdPref ?? "-"}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={handleAutoPickActiveRace}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#152920] border border-[#10B981]/50 text-[#10B981] hover:bg-[#1A3327] cursor-pointer transition-colors"
-                title="Randomly select at least one of the top three favourites, and then randomly pick the other two"
+        {activeRace.exotics.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {activeRace.exotics.map((ex, idx) => (
+              <div
+                key={`${ex.poolType}-${idx}`}
+                className={`p-2.5 rounded-lg border ${
+                  isApple
+                    ? "bg-[#F9F9FB] border-[#E5E5EA]"
+                    : isObsidian
+                    ? "bg-[#0B111D] border-[#1E293B]"
+                    : "bg-[#0B110E] border-[#1F2D26]"
+                }`}
               >
-                🎲 Auto Pick
-              </button>
-            </div>
+                <div className={`text-xs ${isApple ? "text-[#86868B]" : isObsidian ? "text-[#94A3B8]" : "text-[#8A9990]"}`}>
+                  {ex.poolType}
+                </div>
+                <div className="font-mono text-xs font-semibold mt-0.5 tabular-nums">
+                  {ex.combination}
+                </div>
+                <div className="font-mono text-sm font-semibold text-emerald-400 mt-1 tabular-nums">
+                  ${ex.dividend.toFixed(2)}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-4 gap-2 text-xs">
-            {(["Leader", "On Pace", "Midfield", "Backmarker"] as const).map(
-              (posLabel) => {
-                const matching = activeRace.runners.filter(
-                  (r) => (r.speedMapPosition || "Midfield") === posLabel
-                );
-                return (
-                  <div
-                    key={posLabel}
-                    className="bg-[#0B110E] border border-[#1F2D26] rounded p-2"
-                  >
-                    <div className="text-[11px] text-[#8A9990] mb-1">
-                      {posLabel}
-                    </div>
-                    <div className="space-y-1">
-                      {matching.length === 0 ? (
-                        <span className="text-[11px] text-[#8A9990]/50">-</span>
-                      ) : (
-                        matching.map((m) => (
-                          <div
-                            key={m.tabNumber}
-                            className="font-mono text-[11px] text-[#F3F4F0] truncate"
-                            title={`#${m.tabNumber} ${m.horseName} (Barrier ${m.barrier})`}
-                          >
-                            #{m.tabNumber} {m.horseName.split(" ")[0]}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              }
+        ) : (
+          <div className={`p-3 rounded-lg border space-y-1.5 text-xs ${
+            isApple
+              ? "bg-[#F9F9FB] border-[#E5E5EA]"
+              : isObsidian
+              ? "bg-[#0B111D] border-[#1E293B]"
+              : "bg-[#0B110E] border-[#1F2D26]"
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[#D4AF37] font-semibold">
+                Race Upcoming ({activeRace.startTime}) — Exotics Pending Official All-Clear
+              </span>
+              {activeRace.tip && (
+                <span className="font-mono text-emerald-400">
+                  Top Rated: {activeRace.tip}
+                </span>
+              )}
+            </div>
+            {activeRace.verdict && (
+              <p className={isApple ? "text-[#86868B]" : isObsidian ? "text-[#94A3B8]" : "text-[#8A9990]"}>
+                {activeRace.verdict}
+              </p>
             )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Race Overview Market Probability Model & Runner Win Likelihood */}

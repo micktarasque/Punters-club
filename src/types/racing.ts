@@ -51,6 +51,9 @@ export interface RaceRunner {
   wetTrackRecord?: string;
   firstUpSecondUp?: string;
   speedMapPosition?: "Leader" | "On Pace" | "Midfield" | "Backmarker";
+  speedMapRole?: "Leader" | "Stalker" | "Backmarker";
+  careerClosingSpeed?: number; // e.g. 61.8 (km/h)
+  closingSpeedL600?: number; // e.g. 34.9 (seconds)
   speedRating?: number;
   formComment?: string;
   lastStarts?: PastRun[];

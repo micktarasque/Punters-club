@@ -40,6 +40,7 @@ interface CombinedQuaddieTrackerProps {
   ) => void;
   onClearQuaddieExtrasForLeg: (meetingId: string, raceNumber: number) => void;
   onJumpToSelections: (punterId?: string, meetingId?: string) => void;
+  isApple?: boolean;
 }
 
 const STORAGE_KEY_QUADDIE_BUY_IN_PER_USER =
@@ -59,6 +60,7 @@ export const CombinedQuaddieTracker: React.FC<CombinedQuaddieTrackerProps> = ({
   onToggleQuaddieExtraRunner,
   onClearQuaddieExtrasForLeg,
   onJumpToSelections,
+  isApple = false,
 }) => {
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([
     selectedMeetingId,
@@ -205,9 +207,15 @@ export const CombinedQuaddieTracker: React.FC<CombinedQuaddieTrackerProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Control & Stake Customiser Card */}
-      <div className="bg-[#121A16] border border-[#1F2D26] rounded-xl p-4 sm:p-5 space-y-4">
+      <div className={`rounded-xl p-4 sm:p-5 space-y-4 border ${
+        isApple
+          ? "bg-white border-[#E5E5EA] text-[#1D1D1F] shadow-sm"
+          : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0]"
+      }`}>
         {/* Multi-Select Venue Switcher */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1F2D26] pb-4">
+        <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b ${
+          isApple ? "border-[#E5E5EA]" : "border-[#1F2D26]"
+        }`}>
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="flex items-center gap-2">

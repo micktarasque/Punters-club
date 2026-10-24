@@ -57,6 +57,7 @@ import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { StickySyndicateDock } from "./StickySyndicateDock";
 import { TactileOddsFlucBadge, OddsTrendIndicator } from "./TactileOddsFlucBadge";
 import { RunnerAiAnalysisButton } from "./RunnerAiAnalysisButton";
+import { RaceIntelligenceBrief } from "./RaceIntelligenceBrief";
 import { audioAlerts } from "../utils/audioAlerts";
 
 interface BettingLedgerSheetProps {
@@ -391,6 +392,61 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     audioAlerts.triggerHapticFeedback(pattern);
   };
 
+  // Auto-Advance to next race once all three preferences are chosen
+  const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState<boolean>(true);
+  const [autoAdvanceToast, setAutoAdvanceToast] = useState<{
+    message: string;
+    fromRace: number;
+    toRace: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!autoAdvanceToast) return;
+    const timer = setTimeout(() => {
+      setAutoAdvanceToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [autoAdvanceToast]);
+
+  // Member initials badges lookup helper
+  const getMemberInitials = (name: string): string => {
+    const parts = (name || "").trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return (name || "").slice(0, 2).toUpperCase();
+  };
+
+  const getOtherMembersPicksForRunner = (
+    meetingId: string,
+    raceNumber: number,
+    tabNumber: number,
+    excludePunterId?: string
+  ): { punterId: string; punterName: string; initials: string; rank: 1 | 2 | 3; rankLabel: "1st" | "2nd" | "3rd" }[] => {
+    const result: { punterId: string; punterName: string; initials: string; rank: 1 | 2 | 3; rankLabel: "1st" | "2nd" | "3rd" }[] = [];
+    punters.forEach((p) => {
+      if (excludePunterId && p.id === excludePunterId) return;
+      const trio = p.selectionsByMeeting?.[meetingId]?.[raceNumber];
+      if (!trio) return;
+
+      let rank: (1 | 2 | 3) | null = null;
+      if (trio.firstPref === tabNumber) rank = 1;
+      else if (trio.secondPref === tabNumber) rank = 2;
+      else if (trio.thirdPref === tabNumber) rank = 3;
+
+      if (rank) {
+        result.push({
+          punterId: p.id,
+          punterName: p.name,
+          initials: getMemberInitials(p.name),
+          rank,
+          rankLabel: rank === 1 ? "1st" : rank === 2 ? "2nd" : "3rd",
+        });
+      }
+    });
+    return result;
+  };
+
   // Touch Swipe & Keyboard Navigation Engine for Focused Single-Race View
   const touchStartXRef = React.useRef<number | null>(null);
   const touchStartYRef = React.useRef<number | null>(null);
@@ -490,6 +546,44 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
     onUpdateRaceSelection(punterId, meetingId, raceNumber, rank, tabNumber);
     audioAlerts.playSelectionClick(rank);
     triggerHaptic(rank === 1 ? [18, 12] : 15);
+
+    // Auto-advance check: if setting this preference completes all 3 preferences (1st, 2nd, 3rd)
+    const next1st = rank === 1 ? tabNumber : (currentTrio?.firstPref === tabNumber ? null : currentTrio?.firstPref);
+    const next2nd = rank === 2 ? tabNumber : (currentTrio?.secondPref === tabNumber ? null : currentTrio?.secondPref);
+    const next3rd = rank === 3 ? tabNumber : (currentTrio?.thirdPref === tabNumber ? null : currentTrio?.thirdPref);
+
+    if (
+      next1st &&
+      next2nd &&
+      next3rd &&
+      autoAdvanceEnabled &&
+      punterId === activePunter.id
+    ) {
+      const targetMeeting = meetings.find((m) => m.id === meetingId);
+      if (targetMeeting) {
+        const curIdx = targetMeeting.races.findIndex(
+          (r) => r.raceNumber === raceNumber
+        );
+        if (curIdx >= 0 && curIdx < targetMeeting.races.length - 1) {
+          const nextRace = targetMeeting.races[curIdx + 1];
+          setTimeout(() => {
+            selectRace(meetingId, nextRace.raceNumber);
+            setAutoAdvanceToast({
+              message: `Race ${raceNumber} selections complete · Advancing to Race ${nextRace.raceNumber}`,
+              fromRace: raceNumber,
+              toRace: nextRace.raceNumber,
+            });
+            audioAlerts.playSelectionClick(3);
+          }, 350);
+        } else if (curIdx === targetMeeting.races.length - 1) {
+          setAutoAdvanceToast({
+            message: `Card Complete! All selections set through Race ${raceNumber}.`,
+            fromRace: raceNumber,
+            toRace: raceNumber,
+          });
+        }
+      }
+    }
   };
 
   const handleApplyStrategyToRace = (
@@ -2072,9 +2166,28 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         </div>
                       </div>
 
+                      {/* Race Intelligence Overview: Speed Map, Probability & Predictions */}
+                      <div className="px-4 py-3 bg-[#FAF9FA] dark:bg-[#09110D] border-b border-[#E5E5EA] dark:border-[#1A2820]">
+                        <RaceIntelligenceBrief
+                          race={race}
+                          meetingVenue={meetingCard.venue}
+                          trackCondition={meetingCard.trackCondition}
+                          railPosition={meetingCard.railPosition}
+                          onAssignPreference={(rank, tabNo) =>
+                            handleTogglePreferenceChip(
+                              activePunter.id,
+                              meetingCard.id,
+                              race.raceNumber,
+                              rank,
+                              tabNo
+                            )
+                          }
+                        />
+                      </div>
+
                       {/* Selection Summary Pill Bar */}
                       {pickCount > 0 && (
-                        <div className="px-4 py-2 bg-[#0B1410] border-b border-[#1A2820] flex items-center gap-2.5 text-xs font-mono overflow-x-auto">
+                        <div className="px-4 py-2 bg-[#F2F2F7] dark:bg-[#0B1410] border-b border-[#E5E5EA] dark:border-[#1A2820] flex items-center gap-2.5 text-xs font-mono overflow-x-auto">
                           <span className="text-[#8A9990] shrink-0 font-medium">Your Selections:</span>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span
@@ -2280,6 +2393,36 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         </span>
                                       )}
                                     </div>
+                                    {(() => {
+                                      const tableMemberPicks = getOtherMembersPicksForRunner(
+                                        meetingCard.id,
+                                        race.raceNumber,
+                                        runner.tabNumber,
+                                        activePunter.id
+                                      );
+                                      if (tableMemberPicks.length === 0) return null;
+                                      return (
+                                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                          <span className="text-[10px] text-[#86868B] font-mono">Syndicate:</span>
+                                          {tableMemberPicks.map((pick) => (
+                                            <span
+                                              key={pick.punterId}
+                                              title={`${pick.punterName} (${pick.rankLabel} Preference)`}
+                                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight border transition-transform hover:scale-105 cursor-help ${
+                                                pick.rank === 1
+                                                  ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                                  : pick.rank === 2
+                                                  ? "bg-blue-500/15 text-blue-800 dark:text-blue-300 border-blue-500/40"
+                                                  : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/40"
+                                              }`}
+                                            >
+                                              <span>{pick.initials}</span>
+                                              <span className="text-[9px] opacity-75">:{pick.rank}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                   </td>
 
                                   {/* Form & Brief Analysis */}
@@ -2684,6 +2827,23 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                         </div>
                       </div>
 
+                      {/* Race Intelligence Overview: Speed Map, Probability & Predictions */}
+                      <RaceIntelligenceBrief
+                        race={activeRace}
+                        meetingVenue={meetingCard.venue}
+                        trackCondition={meetingCard.trackCondition}
+                        railPosition={meetingCard.railPosition}
+                        onAssignPreference={(rank, tabNo) =>
+                          handleTogglePreferenceChip(
+                            activePunter.id,
+                            meetingCard.id,
+                            activeRace.raceNumber,
+                            rank,
+                            tabNo
+                          )
+                        }
+                      />
+
                       {/* Official Placegetters (if resulted) */}
                       {activeEvaluated.isRaceResulted && (
                         <div className="p-3.5 rounded-2xl bg-[#EAFBF0] border border-[#34C759]/30 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -2830,6 +2990,13 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                               ? "3rd"
                               : null;
 
+                          const otherMemberPicks = getOtherMembersPicksForRunner(
+                            meetingCard.id,
+                            activeRace.raceNumber,
+                            runner.tabNumber,
+                            activePunter.id
+                          );
+
                           return (
                             <div
                               key={runner.tabNumber}
@@ -2877,6 +3044,26 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
                                         {mapShort}
                                       </span>
                                     )}
+                                    {otherMemberPicks.length > 0 && (
+                                      <div className="flex items-center gap-1">
+                                        {otherMemberPicks.map((pick) => (
+                                          <span
+                                            key={pick.punterId}
+                                            title={`${pick.punterName} (${pick.rankLabel} Preference)`}
+                                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight border cursor-help ${
+                                              pick.rank === 1
+                                                ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                                : pick.rank === 2
+                                                ? "bg-blue-500/15 text-blue-800 dark:text-blue-300 border-blue-500/40"
+                                                : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/40"
+                                            }`}
+                                          >
+                                            <span>{pick.initials}</span>
+                                            <span className="text-[9px] opacity-75">:{pick.rank}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
                                     <RunnerAiAnalysisButton
                                       runner={runner}
                                       race={activeRace}
@@ -2914,16 +3101,27 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
 
                               {/* Tactile Preference Selectors */}
                               <div className="mt-3 pt-2.5 border-t border-[#E5E5EA] flex items-center justify-between gap-2 flex-wrap">
-                                <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                                  {isStevePick && (
-                                    <span className="px-2 py-0.5 rounded-full bg-[#FFF5E6] border border-[#FF9500]/40 text-[#FF9500] font-semibold">
-                                      Steve F ({isStevePick})
-                                    </span>
-                                  )}
-                                  {isMarkPick && (
-                                    <span className="px-2 py-0.5 rounded-full bg-[#EAFBF0] border border-[#34C759]/40 text-[#34C759] font-semibold">
-                                      Mark S ({isMarkPick})
-                                    </span>
+                                <div className="flex items-center gap-1.5 text-[10px] font-mono flex-wrap">
+                                  {otherMemberPicks.length > 0 && (
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[10px] text-[#86868B] font-mono">Syndicate:</span>
+                                      {otherMemberPicks.map((pick) => (
+                                        <span
+                                          key={pick.punterId}
+                                          title={`${pick.punterName} (${pick.rankLabel} Preference)`}
+                                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                                            pick.rank === 1
+                                              ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                              : pick.rank === 2
+                                              ? "bg-blue-500/15 text-blue-800 dark:text-blue-300 border-blue-500/40"
+                                              : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/40"
+                                          }`}
+                                        >
+                                          <strong>{pick.punterName}</strong>
+                                          <span className="opacity-80 font-normal">({pick.rankLabel})</span>
+                                        </span>
+                                      ))}
+                                    </div>
                                   )}
                                   {runner.isScratched && (
                                     <span className="text-[#FF3B30] font-bold">
@@ -3822,6 +4020,38 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
         );
       })}
 
+      {/* Floating Auto-Advance Toast Notification */}
+      {autoAdvanceToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1D1D1F] dark:bg-[#121A16] text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/20 dark:border-[#23352C] animate-fade-in text-xs font-medium"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{autoAdvanceToast.message}</span>
+          {autoAdvanceToast.fromRace !== autoAdvanceToast.toRace && displayedMeetings[0] && (
+            <button
+              type="button"
+              onClick={() => {
+                selectRace(displayedMeetings[0].id, autoAdvanceToast.fromRace);
+                setAutoAdvanceToast(null);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-mono text-[11px] font-semibold transition-all cursor-pointer active:scale-95"
+            >
+              Stay on R{autoAdvanceToast.fromRace}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setAutoAdvanceToast(null)}
+            className="p-1 text-white/60 hover:text-white cursor-pointer ml-1"
+            aria-label="Dismiss Notification"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Persistent Sticky Syndicate Selection Dock */}
       {displayedMeetings.length > 0 && (
         <StickySyndicateDock
@@ -3856,6 +4086,14 @@ export const BettingLedgerSheet: React.FC<BettingLedgerSheetProps> = ({
               displayedMeetings[0].races[0]?.raceNumber)
           }
           activePunterName={activePunter.name}
+          allMeetingSelections={
+            getPunterSelectionsForMeeting(activePunter, displayedMeetings[0]) || {}
+          }
+          jokerRaceNumber={
+            getPunterJokerForMeeting(activePunter, displayedMeetings[0])
+          }
+          autoAdvanceEnabled={autoAdvanceEnabled}
+          onToggleAutoAdvance={() => setAutoAdvanceEnabled((prev) => !prev)}
           onSelectRaceNumber={(raceNo) =>
             setActiveRacePerMeeting((prev) => ({
               ...prev,

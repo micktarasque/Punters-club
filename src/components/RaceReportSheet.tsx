@@ -54,6 +54,7 @@ import { InteractiveRunnerTelemetry } from "./reports/InteractiveRunnerTelemetry
 import { DynamicReportVisualizations } from "./reports/DynamicReportVisualizations";
 import { PunterHeadToHeadDuel } from "./reports/PunterHeadToHeadDuel";
 import { TabDividendFlexiCalculator } from "./reports/TabDividendFlexiCalculator";
+import { AussieTracksideBanterWidget } from "./reports/AussieTracksideBanterWidget";
 
 interface RaceReportSheetProps {
   meetings: RaceMeeting[];
@@ -1250,6 +1251,16 @@ export const RaceReportSheet: React.FC<RaceReportSheetProps> = ({
             </button>
           </div>
         </div>
+
+        {/* ====================================================================
+            AUSSIE TRACKSIDE BANTER, ROASTS, AWARDS & BEER FUND WIDGET
+           ==================================================================== */}
+        <AussieTracksideBanterWidget
+          punters={punters}
+          meeting={activeMeetingObj || undefined}
+          netProfit={totalSyndicateCash - (analytics?.combinedExoticsOutlay || 50)}
+          isApple={isApple}
+        />
 
         {/* ====================================================================
             6-CARD GRAPHICAL KPI & EXOTICS TELEMETRY RIBBON

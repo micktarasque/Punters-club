@@ -43,7 +43,7 @@ interface DynamicReportVisualizationsProps {
   isApple?: boolean;
 }
 
-export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsProps> = ({
+const DynamicReportVisualizationsComponent: React.FC<DynamicReportVisualizationsProps> = ({
   report,
   isApple = false,
 }) => {
@@ -717,3 +717,5 @@ export const DynamicReportVisualizations: React.FC<DynamicReportVisualizationsPr
     </div>
   );
 };
+
+export const DynamicReportVisualizations = React.memo(DynamicReportVisualizationsComponent);

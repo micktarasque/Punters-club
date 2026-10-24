@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { spawnSync } from "child_process";
 import dotenv from "dotenv";
+import { GoogleGenAI } from "@google/genai";
 import {
   getMeetingsForDateRange,
   clampDateRangeTo5Days,
@@ -2569,6 +2570,259 @@ app.post("/api/ai/simulate-agent", async (req, res) => {
       ),
     },
   });
+});
+
+app.post("/api/ai/race-trends", async (req, res) => {
+  try {
+    const {
+      meetingVenue = "Metropolitan Track",
+      meetingState = "NSW",
+      meetingDate = "Today",
+      trackRating = "Good 4",
+      weather = "Fine",
+      raceNumber = 1,
+      raceName = "Handicap",
+      distance = 1200,
+      runners = [],
+    } = req.body || {};
+
+    const runnersList = Array.isArray(runners) ? runners : [];
+
+    const runnersSummary = runnersList
+      .slice(0, 16)
+      .map((r: any) => {
+        const edgeStr =
+          typeof r.valueEdgePct === "number"
+            ? ` (${r.valueEdgePct >= 0 ? "+" : ""}${r.valueEdgePct.toFixed(0)}% edge)`
+            : "";
+        const rtgStr = r.speedRating ? ` [Spd ${r.speedRating}]` : "";
+        return `• #${r.tabNumber} ${r.horseName} (Barrier ${r.barrier}, Jockey: ${r.jockey || "TBA"}, Weight: ${r.weight || 56}kg) — Fixed Odds: $${Number(r.bookmakerOdds || 0).toFixed(2)}${edgeStr}${rtgStr}`;
+      })
+      .join("\n");
+
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+
+    if (
+      geminiApiKey &&
+      geminiApiKey !== "MY_GEMINI_API_KEY" &&
+      geminiApiKey.trim().length > 15
+    ) {
+      try {
+        const ai = new GoogleGenAI({
+          apiKey: geminiApiKey,
+          httpOptions: {
+            headers: {
+              "User-Agent": "aistudio-build",
+            },
+          },
+        });
+
+        const prompt = `You are a legendary Australian trackside race caller and witty punters club strategist for TurfSheet Syndicate.
+Analyze this Australian horse race based on the provided field data and market parameters:
+
+Venue: ${meetingVenue} (${meetingState})
+Date: ${meetingDate}
+Race: Race ${raceNumber} - ${raceName}
+Distance: ${distance}m
+Track Condition: ${trackRating}
+Weather: ${weather}
+
+Contenders Field:
+${runnersSummary || "Standard metropolitan handicap field."}
+
+TONE & STYLE (CRITICAL):
+- Speak with authentic Australian trackside banter, lively punchlines, and punter slang (e.g. "paying like a telephone number", "ran like a hairy goat", "peach of a steer", "sprouted wings down the outside", "caught three-wide no cover", "taking the bookies to the cleaners", "shouting the beer fund").
+- Avoid corporate robotic AI prose. Keep it entertaining, sharp, and cheeky while delivering real quantitative tactical insights!
+
+Please provide:
+1. Executive Synopsis (2-3 punchy sentences with Aussie racing flavor summarizing the race shape and primary angle).
+2. Speed Map & Pace Scenario (Speed pressure, barrier bias, rail position, and who gets the gun run).
+3. Market Dynamics & Key Contenders (Analyze the top runners: Consensus Anchor, Prime Value Overlay, Tactical Threat, and Vulnerable Drifter with witty rationale).
+4. Syndicate Exotics & Strategy (Trifecta banker and Quaddie leg coverage).
+5. Aussie Banter & Syndicate Awards (Trackside roast, punter call, Golden Whip candidate, and beer fund prognosis).
+6. 3 to 4 Bullet Key Takeaways.
+
+Return your response in valid JSON matching this structure:
+{
+  "synopsis": string,
+  "paceScenario": {
+    "paceRating": "Fast / Hot" | "Genuine" | "Moderate" | "Slow",
+    "speedMapDescription": string,
+    "favoredRunStyle": string
+  },
+  "keyContenders": [
+    {
+      "tabNumber": number,
+      "horseName": string,
+      "role": "Consensus Anchor" | "Prime Value Overlay" | "Tactical Threat" | "Vulnerable Drifter",
+      "odds": string,
+      "analysis": string
+    }
+  ],
+  "exoticsStrategy": {
+    "trifectaBanker": string,
+    "valueInclusions": string[],
+    "quaddieAngle": string
+  },
+  "aussieBanter": {
+    "tracksideRoast": string,
+    "punterCall": string,
+    "goldenWhipTip": string,
+    "beerFundImpact": string
+  },
+  "takeaways": string[],
+  "fullNarrative": string
+}
+Ensure the JSON is completely valid, clean, and properly escaped.`;
+
+        const aiPromise = ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            temperature: 0.4,
+          },
+        });
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Gemini API request timed out after 7s")),
+            7000
+          )
+        );
+
+        const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+
+        const rawText = aiResponse.text?.trim() || "";
+        let parsedData: any = null;
+        try {
+          parsedData = JSON.parse(rawText);
+        } catch {
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsedData = JSON.parse(jsonMatch[0]);
+          }
+        }
+
+        if (parsedData && parsedData.synopsis) {
+          res.json({
+            ok: true,
+            source: "gemini-3.8-flash",
+            data: parsedData,
+          });
+          return;
+        }
+      } catch (err: any) {
+        console.warn(
+          "Gemini race trends generation error, falling back to algorithmic analysis:",
+          err?.message || err
+        );
+      }
+    }
+
+    // High-quality algorithmic fallback with authentic Aussie trackside banter
+    const sortedByOdds = [...runnersList].sort(
+      (a, b) => (a.bookmakerOdds || 99) - (b.bookmakerOdds || 99)
+    );
+    const fav =
+      sortedByOdds[0] || {
+        tabNumber: 1,
+        horseName: "Market Leader",
+        bookmakerOdds: 2.8,
+        barrier: 2,
+        jockey: "Top Jockey",
+      };
+    const secondFav =
+      sortedByOdds[1] || {
+        tabNumber: 2,
+        horseName: "Second Pick",
+        bookmakerOdds: 4.6,
+        barrier: 5,
+        jockey: "Jockey",
+      };
+    const bestValue =
+      [...runnersList].sort(
+        (a, b) => (b.valueEdgePct || 0) - (a.valueEdgePct || 0)
+      )[0] || secondFav;
+    const roughie =
+      [...runnersList]
+        .filter((r) => (r.bookmakerOdds || 0) >= 8.0)
+        .sort((a, b) => (b.speedRating || 0) - (a.speedRating || 0))[0] ||
+      sortedByOdds[2] ||
+      fav;
+
+    const fallbackData = {
+      synopsis: `Hold onto your meat pies at ${meetingVenue}! Race ${raceNumber} over ${distance}m is shaped up as an absolute cracker on ${trackRating} turf. While the bookies have rolled the red carpet out for #${fav.tabNumber} ${fav.horseName} at $${Number(fav.bookmakerOdds || 0).toFixed(2)}, our syndicate radar screams that #${bestValue.tabNumber} ${bestValue.horseName} is paying like an international phone number with massive value edge!`,
+      paceScenario: {
+        paceRating:
+          distance <= 1200
+            ? "Fast / Hot"
+            : distance <= 1600
+            ? "Genuine"
+            : "Moderate",
+        speedMapDescription: `Expect the speed to be on from the jump! Runners drawn 1 to 5 get the gun trail along the paint, while anyone stuck three-wide without cover into the bend is going to run like a hairy goat down the straight.`,
+        favoredRunStyle:
+          distance <= 1200
+            ? "On-Pace / Box Seat"
+            : "Midfield stalkers primed to sprout wings over the final 200m",
+      },
+      keyContenders: [
+        {
+          tabNumber: fav.tabNumber,
+          horseName: fav.horseName,
+          role: "Consensus Anchor",
+          odds: `$${Number(fav.bookmakerOdds || 0).toFixed(2)}`,
+          analysis: `Punters club consensus favorite. Draws barrier ${fav.barrier} under ${fav.jockey}. If he gets clear air at the 300m, he'll give the bookmakers serious palpitations.`,
+        },
+        {
+          tabNumber: bestValue.tabNumber,
+          horseName: bestValue.horseName,
+          role: "Prime Value Overlay",
+          odds: `$${Number(bestValue.bookmakerOdds || 0).toFixed(2)}`,
+          analysis: `The syndicate's prime value play! The quantitative model flags an undeniable overlay edge against bloated corporate odds. An absolute peach of an each-way ticket.`,
+        },
+        {
+          tabNumber: roughie.tabNumber,
+          horseName: roughie.horseName,
+          role: "Tactical Threat",
+          odds: `$${Number(roughie.bookmakerOdds || 0).toFixed(2)}`,
+          analysis: `Wildcard roughie with closing speed that could knock the quaddie out cold. Sneak him into all exotic flexi permutations.`,
+        },
+      ],
+      exoticsStrategy: {
+        trifectaBanker: `#${fav.tabNumber} ${fav.horseName} anchored on top with #${bestValue.tabNumber} flexi-boxed.`,
+        valueInclusions: [
+          `#${bestValue.tabNumber} ${bestValue.horseName}`,
+          `#${roughie.tabNumber} ${roughie.horseName}`,
+        ],
+        quaddieAngle: `Do not dare leave #${bestValue.tabNumber} out of this Quaddie leg unless you enjoy crying into your beer at 5 PM!`,
+      },
+      aussieBanter: {
+        tracksideRoast: `Stevie F was seen strutting toward the bar claiming his tip on #${fav.tabNumber} is safer than government bonds, while Mark S is quietly loading the roughie #${bestValue.tabNumber} for glory!`,
+        punterCall: `Look at #${bestValue.tabNumber} coming down the outside like a scolded cat—that's how you put the bookies to the sword!`,
+        goldenWhipTip: `#${bestValue.tabNumber} ${bestValue.horseName} for the syndicate Golden Whip award.`,
+        beerFundImpact: `+4 Pints locked into the syndicate beer fund if the overlay gets home!`,
+      },
+      takeaways: [
+        `Market consensus points firmly to #${fav.tabNumber} ${fav.horseName} as the anchor.`,
+        `Value edge indicators strongly favor #${bestValue.tabNumber} ${bestValue.horseName} at bloated odds.`,
+        `Speed map suggests leaders having first kick into the straight hold the aces.`,
+        `Trifecta play: Stand out #${fav.tabNumber} / Box #${bestValue.tabNumber} & #${roughie.tabNumber} for a healthy dividend!`,
+      ],
+      fullNarrative: `An authentic Aussie trackside tactical evaluation for Race ${raceNumber} at ${meetingVenue}. With ${runnersList.length} contenders locked and loaded, the TurfSheet syndicate is positioned to take the bookies to the cleaners.`,
+    };
+
+    res.json({
+      ok: true,
+      source: "algorithmic-model",
+      data: fallbackData,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error?.message || "Failed to generate race trends analysis",
+    });
+  }
 });
 
 async function startServer() {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -32,12 +32,23 @@ import {
   ArrowUpDown,
   Search,
   SlidersHorizontal,
+  Swords,
+  Filter,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import { RaceMeeting, RaceEvent, RaceRunner, PunterProfile } from "../types/racing";
 import {
   analyzeRaceBettingStrategy,
   RunnerStrategyAnalysis,
 } from "../utils/bettingStrategyEngine";
+import { AiRaceTrendsDrawer } from "./AiRaceTrendsDrawer";
+import { MarketOddsAlertModal, MarketOddsAlert } from "./MarketOddsAlertModal";
+import {
+  dispatchBackgroundRaceAlert,
+  playDingDingChime,
+  playCashRegisterSound,
+} from "../utils/soundEffects";
 
 export interface RaceMarketRadarBarChartProps {
   meeting: RaceMeeting;
@@ -47,6 +58,7 @@ export interface RaceMarketRadarBarChartProps {
   onSelectMeeting?: (meetingId: string) => void;
   isApple?: boolean;
   activePunter?: PunterProfile;
+  punters?: PunterProfile[];
   currentSelections?: {
     firstPref?: number | null;
     secondPref?: number | null;
@@ -56,9 +68,16 @@ export interface RaceMarketRadarBarChartProps {
   onInspectFormGuide?: () => void;
 }
 
-type ChartViewMode = "bar" | "radar";
-type BarMetricMode = "oddsVsFair" | "ratingsVsImplied" | "valueEdge";
-type SortOption = "oddsAsc" | "valueEdgeDesc" | "ratingDesc" | "tabAsc";
+type ChartViewMode = "bar" | "radar" | "headToHead";
+type BarMetricMode = "oddsVsFair" | "ratingsVsImplied" | "valueEdge" | "barrierSpeed";
+type OddsThreshold = "all" | "shorties" | "value" | "roughies";
+type SortOption =
+  | "oddsAsc"
+  | "oddsDesc"
+  | "tabAsc"
+  | "tabDesc"
+  | "valueEdgeDesc"
+  | "ratingDesc";
 
 const RADAR_COLORS = [
   { stroke: "#0071E3", fill: "#0071E3", label: "Favorite" },
@@ -67,7 +86,7 @@ const RADAR_COLORS = [
   { stroke: "#AF52DE", fill: "#AF52DE", label: "Challenger" },
 ];
 
-export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = ({
+const RaceMarketRadarBarChartComponent: React.FC<RaceMarketRadarBarChartProps> = ({
   meeting,
   raceNumber,
   onSelectRaceNumber,
@@ -75,29 +94,144 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
   onSelectMeeting,
   isApple = true,
   activePunter,
+  punters = [],
   currentSelections,
   onAssignPreference,
   onInspectFormGuide,
 }) => {
   const [viewMode, setViewMode] = useState<ChartViewMode>("bar");
   const [barMetricMode, setBarMetricMode] = useState<BarMetricMode>("oddsVsFair");
+  const [oddsThreshold, setOddsThreshold] = useState<OddsThreshold>("all");
   const [sortOption, setSortOption] = useState<SortOption>("oddsAsc");
   const [selectedRadarTabs, setSelectedRadarTabs] = useState<number[]>([]);
   const [hoveredRunnerTab, setHoveredRunnerTab] = useState<number | null>(null);
+  const [h2hTabs, setH2hTabs] = useState<[number, number]>([1, 2]);
+  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState<boolean>(false);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState<boolean>(false);
+  const [marketAlerts, setMarketAlerts] = useState<MarketOddsAlert[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("turfsheet_market_odds_alerts_v1");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
 
   // Locate currently targeted race event
-  const currentRace: RaceEvent | undefined = useMemo(() => {
+  const currentRace: RaceEvent = useMemo(() => {
     return (
       meeting.races.find((r) => r.raceNumber === raceNumber) ||
       meeting.races[0]
     );
   }, [meeting, raceNumber]);
 
+  const [selectedAlertRunnerTab, setSelectedAlertRunnerTab] = useState<number | undefined>(undefined);
+
   // Compute quantitative model analytics for active runners
   const analysisData: RunnerStrategyAnalysis[] = useMemo(() => {
     if (!currentRace) return [];
     return analyzeRaceBettingStrategy(currentRace, meeting);
   }, [currentRace, meeting]);
+
+  // Active un-triggered alerts count for currently selected race
+  const activeRaceAlertsCount = useMemo(() => {
+    return marketAlerts.filter(
+      (a) => a.meetingId === meeting.id && a.raceNumber === currentRace.raceNumber && !a.triggered
+    ).length;
+  }, [marketAlerts, meeting.id, currentRace.raceNumber]);
+
+  // Persist alerts helper
+  const persistMarketAlerts = (updated: MarketOddsAlert[]) => {
+    setMarketAlerts(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("turfsheet_market_odds_alerts_v1", JSON.stringify(updated));
+      } catch (err) {
+        console.warn("Could not save market alerts to localStorage", err);
+      }
+    }
+  };
+
+  // Add new alert
+  const handleAddMarketAlert = (
+    newAlertData: Omit<MarketOddsAlert, "id" | "createdAt" | "triggered">
+  ) => {
+    const newAlert: MarketOddsAlert = {
+      ...newAlertData,
+      id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      createdAt: Date.now(),
+      triggered: false,
+    };
+    persistMarketAlerts([...marketAlerts, newAlert]);
+  };
+
+  // Remove alert by id
+  const handleRemoveMarketAlert = (alertId: string) => {
+    persistMarketAlerts(marketAlerts.filter((a) => a.id !== alertId));
+  };
+
+  // Clear all alerts for current race
+  const handleClearRaceAlerts = () => {
+    persistMarketAlerts(
+      marketAlerts.filter(
+        (a) => !(a.meetingId === meeting.id && a.raceNumber === currentRace.raceNumber)
+      )
+    );
+  };
+
+  // Automated odds threshold evaluation engine for active alerts
+  useEffect(() => {
+    if (!analysisData.length || !marketAlerts.length) return;
+
+    let triggeredAny = false;
+    const updatedAlerts = marketAlerts.map((alert) => {
+      // Only evaluate pending alerts for current meeting and race
+      if (alert.triggered) return alert;
+      if (alert.meetingId !== meeting.id || alert.raceNumber !== currentRace.raceNumber) return alert;
+
+      const runner = analysisData.find((r) => r.tabNumber === alert.tabNumber);
+      if (!runner) return alert;
+
+      let isTriggered = false;
+      let triggerDetail = "";
+
+      if (alert.condition === "below" && runner.bookmakerOdds <= alert.threshold) {
+        isTriggered = true;
+        triggerDetail = `Plunged to $${runner.bookmakerOdds.toFixed(2)} (Threshold: ≤ $${alert.threshold.toFixed(2)})`;
+      } else if (alert.condition === "above" && runner.bookmakerOdds >= alert.threshold) {
+        isTriggered = true;
+        triggerDetail = `Drifted to $${runner.bookmakerOdds.toFixed(2)} (Threshold: ≥ $${alert.threshold.toFixed(2)})`;
+      } else if (alert.condition === "edge" && runner.edgePct >= alert.threshold) {
+        isTriggered = true;
+        triggerDetail = `Value Edge surged to +${runner.edgePct.toFixed(1)}% (Threshold: ≥ +${alert.threshold}%)`;
+      }
+
+      if (isTriggered) {
+        triggeredAny = true;
+        dispatchBackgroundRaceAlert({
+          title: `🚨 Market Alert: #${runner.tabNumber} ${runner.horseName}`,
+          body: `${meeting.venue} R${currentRace.raceNumber}: ${triggerDetail}. Model Fair Odds: $${runner.modelFairOdds.toFixed(2)}.`,
+          tag: `turfsheet-alert-${alert.id}`,
+        });
+        if (alert.condition === "below" || alert.condition === "edge") {
+          playCashRegisterSound();
+        } else {
+          playDingDingChime();
+        }
+        return {
+          ...alert,
+          triggered: true,
+          triggeredAt: Date.now(),
+        };
+      }
+      return alert;
+    });
+
+    if (triggeredAny) {
+      persistMarketAlerts(updatedAlerts);
+    }
+  }, [analysisData, marketAlerts, meeting.id, meeting.venue, currentRace.raceNumber]);
 
   // Identify Market Favorite, Top Value Overlay, and Best Roughie
   const marketFavorite = useMemo(() => {
@@ -150,21 +284,38 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
     switch (sortOption) {
       case "oddsAsc":
         return list.sort((a, b) => a.bookmakerOdds - b.bookmakerOdds);
+      case "oddsDesc":
+        return list.sort((a, b) => b.bookmakerOdds - a.bookmakerOdds);
+      case "tabAsc":
+        return list.sort((a, b) => a.tabNumber - b.tabNumber);
+      case "tabDesc":
+        return list.sort((a, b) => b.tabNumber - a.tabNumber);
       case "valueEdgeDesc":
         return list.sort((a, b) => b.edgePct - a.edgePct);
       case "ratingDesc":
         return list.sort((a, b) => b.compositeRating - a.compositeRating);
-      case "tabAsc":
       default:
-        return list.sort((a, b) => a.tabNumber - b.tabNumber);
+        return list.sort((a, b) => a.bookmakerOdds - b.bookmakerOdds);
     }
   }, [analysisData, sortOption]);
 
+  // Apply Odds Bracket Filtering to sorted data
+  const filteredBarData = useMemo(() => {
+    return sortedBarData.filter((item) => {
+      if (oddsThreshold === "shorties") return item.bookmakerOdds < 4.0;
+      if (oddsThreshold === "value")
+        return item.bookmakerOdds >= 4.0 && item.bookmakerOdds < 12.0;
+      if (oddsThreshold === "roughies") return item.bookmakerOdds >= 12.0;
+      return true;
+    });
+  }, [sortedBarData, oddsThreshold]);
+
   // Transform data for Recharts Bar Chart
   const chartData = useMemo(() => {
-    return sortedBarData.map((item) => {
+    return filteredBarData.map((item) => {
       const isFav = item.tabNumber === marketFavorite?.tabNumber;
       const isTopVal = item.tabNumber === topValueRunner?.tabNumber;
+      const barrierAdvantage = Math.max(15, Math.round(100 - (item.barrier * 4.5)));
 
       return {
         tabNumber: item.tabNumber,
@@ -172,6 +323,7 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
         label: `#${item.tabNumber} ${item.horseName.length > 12 ? item.horseName.slice(0, 11) + "…" : item.horseName}`,
         fullHorseName: item.horseName,
         barrier: item.barrier,
+        barrierAdvantage,
         jockey: item.jockey,
         trainer: item.trainer,
         bookmakerOdds: Number(item.bookmakerOdds.toFixed(2)),
@@ -202,7 +354,7 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
             : "#64748B",
       };
     });
-  }, [sortedBarData, marketFavorite, topValueRunner, isApple]);
+  }, [filteredBarData, marketFavorite, topValueRunner, isApple]);
 
   // Multi-dimensional Radar Chart Axes data
   // We compare up to 4 selected runners across 6 dimensions
@@ -283,7 +435,7 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
   return (
     <section
       aria-label="Market vs Model Strength Intelligence"
-      className={`rounded-2xl border transition-all ${
+      className={`RaceMarketRadarBarChart rounded-2xl border transition-all ${
         isApple
           ? "bg-white border-[#E5E5EA] shadow-sm text-[#1D1D1F]"
           : "bg-[#0E1512] border-[#23352C] text-[#F3F4F0]"
@@ -367,7 +519,126 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                 <Target className="w-3.5 h-3.5" />
                 <span>Contenders Radar</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("headToHead")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "headToHead"
+                    ? isApple
+                      ? "bg-white text-[#0071E3] shadow-xs"
+                      : "bg-[#10B981] text-[#070B09] shadow-xs"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
+                    : "text-[#8A9990] hover:text-[#F3F4F0]"
+                }`}
+              >
+                <Swords className="w-3.5 h-3.5" />
+                <span>Head-to-Head</span>
+              </button>
             </div>
+
+            {/* Header Runner Sort Drop-Down Menu for Bar Chart View */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all shadow-xs ${
+                isApple
+                  ? "bg-white border-[#D1D1D6] text-[#1D1D1F] dark:bg-[#1C1C1E] dark:border-[#38383A] dark:text-[#F2F2F7]"
+                  : "bg-[#121A15] border-[#223328] text-[#F3F4F0]"
+              }`}
+              title="Sort runners by odds or runner number within bar chart view"
+            >
+              <ArrowUpDown className={`w-3.5 h-3.5 shrink-0 ${isApple ? "text-[#0071E3]" : "text-[#10B981]"}`} />
+              <label
+                htmlFor="header-runner-sort-dropdown"
+                className="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider shrink-0 cursor-pointer"
+              >
+                Sort:
+              </label>
+              <select
+                id="header-runner-sort-dropdown"
+                value={sortOption}
+                onChange={(e) => {
+                  setSortOption(e.target.value as SortOption);
+                  if (viewMode !== "bar") {
+                    setViewMode("bar");
+                  }
+                }}
+                aria-label="Sort runners within bar chart view"
+                className={`bg-transparent text-xs font-bold focus:outline-hidden cursor-pointer pr-1 ${
+                  isApple ? "text-[#1D1D1F] dark:text-[#F2F2F7]" : "text-[#F3F4F0]"
+                }`}
+              >
+                <option value="oddsAsc" className="bg-[#1C1C1E] text-white">
+                  Odds (Lowest to Highest)
+                </option>
+                <option value="oddsDesc" className="bg-[#1C1C1E] text-white">
+                  Odds (Highest to Lowest)
+                </option>
+                <option value="tabAsc" className="bg-[#1C1C1E] text-white">
+                  Runner Number (1 to N)
+                </option>
+                <option value="tabDesc" className="bg-[#1C1C1E] text-white">
+                  Runner Number (N to 1)
+                </option>
+                <option value="valueEdgeDesc" className="bg-[#1C1C1E] text-white">
+                  Model Value Edge (+%)
+                </option>
+                <option value="ratingDesc" className="bg-[#1C1C1E] text-white">
+                  Model Rating (Highest)
+                </option>
+              </select>
+            </div>
+
+            {/* AI Race Trends Side Panel Trigger Button */}
+            <button
+              type="button"
+              onClick={() => setIsAiDrawerOpen(true)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isApple
+                  ? "bg-[#0071E3] border-[#0071E3] text-white hover:bg-[#0077ED] shadow-sm"
+                  : "bg-[#D4AF37] border-[#D4AF37] text-[#070B09] hover:bg-[#E5BE42] shadow-sm"
+              }`}
+              title="Generate AI Race Trends & Market Intelligence Summary with Aussie Trackside Banter"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Generate Trends Summary</span>
+            </button>
+
+            {/* Set Market Alert Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAlertRunnerTab(undefined);
+                setIsAlertModalOpen(true);
+              }}
+              className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs active:scale-95 ${
+                activeRaceAlertsCount > 0
+                  ? isApple
+                    ? "bg-[#0071E3]/10 border-[#0071E3]/50 text-[#0071E3] hover:bg-[#0071E3]/20"
+                    : "bg-[#10B981]/15 border-[#10B981]/60 text-[#10B981] hover:bg-[#10B981]/25"
+                  : isApple
+                  ? "bg-white border-[#D1D1D6] text-[#1D1D1F] hover:bg-[#F2F2F7] dark:bg-[#1C1C1E] dark:border-[#38383A] dark:text-[#F2F2F7]"
+                  : "bg-[#121A15] border-[#223328] text-[#F3F4F0] hover:bg-[#1C2A22]"
+              }`}
+              title="Set market odds thresholds and receive instant browser notifications on plunges or drifts"
+            >
+              {activeRaceAlertsCount > 0 ? (
+                <BellRing className={`w-3.5 h-3.5 ${isApple ? "text-[#0071E3] animate-pulse" : "text-[#10B981] animate-pulse"}`} />
+              ) : (
+                <Bell className="w-3.5 h-3.5 opacity-80" />
+              )}
+              <span>Set Market Alert</span>
+              {activeRaceAlertsCount > 0 && (
+                <span
+                  className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold leading-none ${
+                    isApple
+                      ? "bg-[#0071E3] text-white"
+                      : "bg-[#10B981] text-[#070B09]"
+                  }`}
+                >
+                  {activeRaceAlertsCount}
+                </span>
+              )}
+            </button>
 
             {onInspectFormGuide && (
               <button
@@ -591,16 +862,16 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
       {/* =========================================================================
           3. MAIN VISUALIZATION AREA: BAR CHART vs RADAR CHART
           ========================================================================= */}
-      {viewMode === "bar" ? (
+      {viewMode === "bar" && (
         <div className="space-y-4">
-          {/* Bar Chart Secondary Controls (Metric mode & Sort) */}
+          {/* Bar Chart Secondary Controls (Metric mode, Odds Filter & Sort) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Metric Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-current/5">
+            <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-current/5">
               <button
                 type="button"
                 onClick={() => setBarMetricMode("oddsVsFair")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   barMetricMode === "oddsVsFair"
                     ? isApple
                       ? "bg-white text-[#1D1D1F] shadow-xs font-semibold"
@@ -608,12 +879,12 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                     : "text-[#86868B] hover:text-current"
                 }`}
               >
-                Odds vs. Fair Price ($)
+                Odds vs. Fair ($)
               </button>
               <button
                 type="button"
                 onClick={() => setBarMetricMode("ratingsVsImplied")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   barMetricMode === "ratingsVsImplied"
                     ? isApple
                       ? "bg-white text-[#1D1D1F] shadow-xs font-semibold"
@@ -621,12 +892,12 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                     : "text-[#86868B] hover:text-current"
                 }`}
               >
-                Model Rating vs. Implied %
+                Model vs. Implied %
               </button>
               <button
                 type="button"
                 onClick={() => setBarMetricMode("valueEdge")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   barMetricMode === "valueEdge"
                     ? isApple
                       ? "bg-white text-[#1D1D1F] shadow-xs font-semibold"
@@ -634,30 +905,107 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                     : "text-[#86868B] hover:text-current"
                 }`}
               >
-                Value Edge Index (%)
+                Value Edge %
+              </button>
+              <button
+                type="button"
+                onClick={() => setBarMetricMode("barrierSpeed")}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  barMetricMode === "barrierSpeed"
+                    ? isApple
+                      ? "bg-white text-[#1D1D1F] shadow-xs font-semibold"
+                      : "bg-[#10B981] text-[#070B09] font-bold"
+                    : "text-[#86868B] hover:text-current"
+                }`}
+              >
+                Speed vs. Barrier
               </button>
             </div>
 
-            {/* Sort Selector */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-[#86868B] flex items-center gap-1">
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                Sort:
-              </span>
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
-                className={`rounded-lg px-2.5 py-1 text-xs border font-medium cursor-pointer ${
-                  isApple
-                    ? "bg-white border-[#E5E5EA] text-[#1D1D1F]"
-                    : "bg-[#1A2420] border-[#2B3D34] text-[#F3F4F0]"
-                }`}
-              >
-                <option value="oddsAsc">Favorites First (Lowest Odds)</option>
-                <option value="valueEdgeDesc">Highest Value Edge (+%)</option>
-                <option value="ratingDesc">Highest Model Rating</option>
-                <option value="tabAsc">TAB Number (1–{chartData.length})</option>
-              </select>
+            {/* Odds Threshold Filters & Sort Selector */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <div className="flex items-center gap-1 border border-current/10 p-0.5 rounded-lg">
+                <span className="text-[#86868B] pl-1.5 pr-0.5 flex items-center gap-1 font-mono text-[11px]">
+                  <Filter className="w-3 h-3" />
+                  Odds:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOddsThreshold("all")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    oddsThreshold === "all"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white font-bold"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : "text-[#86868B] hover:text-current"
+                  }`}
+                >
+                  All ({sortedBarData.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOddsThreshold("shorties")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    oddsThreshold === "shorties"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white font-bold"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : "text-[#86868B] hover:text-current"
+                  }`}
+                >
+                  &lt;$4 ({sortedBarData.filter((r) => r.bookmakerOdds < 4).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOddsThreshold("value")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    oddsThreshold === "value"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white font-bold"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : "text-[#86868B] hover:text-current"
+                  }`}
+                >
+                  $4–$12 ({sortedBarData.filter((r) => r.bookmakerOdds >= 4 && r.bookmakerOdds < 12).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOddsThreshold("roughies")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    oddsThreshold === "roughies"
+                      ? isApple
+                        ? "bg-[#0071E3] text-white font-bold"
+                        : "bg-[#10B981] text-[#070B09] font-bold"
+                      : "text-[#86868B] hover:text-current"
+                  }`}
+                >
+                  $12+ ({sortedBarData.filter((r) => r.bookmakerOdds >= 12).length})
+                </button>
+              </div>
+
+              {/* Sort Selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#86868B] flex items-center gap-1">
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  Sort:
+                </span>
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as SortOption)}
+                  className={`rounded-lg px-2.5 py-1 text-xs border font-medium cursor-pointer ${
+                    isApple
+                      ? "bg-white border-[#E5E5EA] text-[#1D1D1F]"
+                      : "bg-[#1A2420] border-[#2B3D34] text-[#F3F4F0]"
+                  }`}
+                >
+                  <option value="oddsAsc">Odds: Lowest to Highest ($)</option>
+                  <option value="oddsDesc">Odds: Highest to Lowest ($)</option>
+                  <option value="tabAsc">Runner Number (1 to N)</option>
+                  <option value="tabDesc">Runner Number (N to 1)</option>
+                  <option value="valueEdgeDesc">Highest Value Edge (+%)</option>
+                  <option value="ratingDesc">Highest Model Rating</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -867,6 +1215,35 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                     </Bar>
                   </>
                 )}
+
+                {barMetricMode === "barrierSpeed" && (
+                  <>
+                    <Bar
+                      dataKey="speedRating"
+                      name="Speed Rating (0–100)"
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-spd-${index}`}
+                          fill={entry.color}
+                          opacity={
+                            hoveredRunnerTab === null ||
+                            hoveredRunnerTab === entry.tabNumber
+                              ? 0.95
+                              : 0.4
+                          }
+                        />
+                      ))}
+                    </Bar>
+                    <Bar
+                      dataKey="barrierAdvantage"
+                      name="Barrier Advantage (0–100)"
+                      fill={isApple ? "#FF9500" : "#F59E0B"}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </>
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -896,10 +1273,12 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
             </span>
           </div>
         </div>
-      ) : (
-        /* =========================================================================
-           RADAR CHART: MULTI-DIMENSIONAL CONTENDER COMPARISON
-           ========================================================================= */
+      )}
+
+      {/* =========================================================================
+          RADAR CHART: MULTI-DIMENSIONAL CONTENDER COMPARISON
+          ========================================================================= */}
+      {viewMode === "radar" && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -1023,19 +1402,251 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
       )}
 
       {/* =========================================================================
+          HEAD-TO-HEAD: DUAL RUNNER SHOWDOWN & TACTICAL EDGE MATRIX
+          ========================================================================= */}
+      {viewMode === "headToHead" && (() => {
+        const runnerA = analysisData.find((r) => r.tabNumber === h2hTabs[0]) || analysisData[0];
+        const runnerB = analysisData.find((r) => r.tabNumber === h2hTabs[1]) || analysisData[1] || analysisData[0];
+        if (!runnerA || !runnerB) return null;
+
+        const advSpeed = runnerA.speedRating >= runnerB.speedRating;
+        const advBarrier = runnerA.barrier <= runnerB.barrier;
+        const advEdge = runnerA.edgePct >= runnerB.edgePct;
+        const advComposite = runnerA.compositeRating >= runnerB.compositeRating;
+
+        const advantageCountA = [advSpeed, advBarrier, advEdge, advComposite].filter(Boolean).length;
+        const winner = advantageCountA >= 3 ? runnerA : advantageCountA <= 1 ? runnerB : runnerA.compositeRating >= runnerB.compositeRating ? runnerA : runnerB;
+        const diffRating = Math.abs(runnerA.compositeRating - runnerB.compositeRating);
+
+        return (
+          <div className="space-y-4">
+            {/* Showdown Header & Matchup Selectors */}
+            <div className={`p-4 rounded-xl border ${isApple ? "bg-[#F9F9FB] border-[#E5E5EA]" : "bg-[#141C18] border-[#23352C]"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold font-mono uppercase tracking-wide text-[#0071E3] dark:text-[#38BDF8]">
+                    <Swords className="w-3.5 h-3.5" />
+                    <span>Trackside Duel · Direct Contender Showdown</span>
+                  </div>
+                  <h4 className="text-base font-bold mt-0.5">
+                    #{runnerA.tabNumber} {runnerA.horseName} vs. #{runnerB.tabNumber} {runnerB.horseName}
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#86868B]">Matchup:</span>
+                  <select
+                    value={runnerA.tabNumber}
+                    onChange={(e) => setH2hTabs([Number(e.target.value), h2hTabs[1]])}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold border cursor-pointer ${
+                      isApple ? "bg-white border-[#E5E5EA] text-[#0071E3]" : "bg-[#1A2420] border-[#2B3D34] text-[#38BDF8]"
+                    }`}
+                  >
+                    {analysisData.map((r) => (
+                      <option key={`a-${r.tabNumber}`} value={r.tabNumber}>
+                        #{r.tabNumber} {r.horseName} (${r.bookmakerOdds.toFixed(2)})
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-xs text-[#86868B] font-bold">vs</span>
+                  <select
+                    value={runnerB.tabNumber}
+                    onChange={(e) => setH2hTabs([h2hTabs[0], Number(e.target.value)])}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold border cursor-pointer ${
+                      isApple ? "bg-white border-[#E5E5EA] text-[#34C759]" : "bg-[#1A2420] border-[#2B3D34] text-[#10B981]"
+                    }`}
+                  >
+                    {analysisData.map((r) => (
+                      <option key={`b-${r.tabNumber}`} value={r.tabNumber}>
+                        #{r.tabNumber} {r.horseName} (${r.bookmakerOdds.toFixed(2)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Head-to-Head Comparative Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Runner A Card */}
+                <div className={`p-4 rounded-xl border transition-all ${
+                  isApple ? "bg-white border-[#0071E3]/30 shadow-xs" : "bg-[#0E1D2E] border-[#38BDF8]/30 shadow-xs"
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="font-mono text-xs font-bold text-[#0071E3] dark:text-[#38BDF8] uppercase">
+                        Contender A · Barrier {runnerA.barrier}
+                      </span>
+                      <h5 className="text-lg font-bold">
+                        #{runnerA.tabNumber} {runnerA.horseName}
+                      </h5>
+                      <div className="text-xs text-[#86868B] mt-0.5">
+                        <span>{runnerA.jockey}</span>
+                        <span className="mx-1">·</span>
+                        <span>{runnerA.trainer}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xl font-black text-[#0071E3] dark:text-[#38BDF8]">
+                        ${runnerA.bookmakerOdds.toFixed(2)}
+                      </span>
+                      <span className="block text-[11px] font-mono text-[#86868B]">
+                        Fair ${runnerA.modelFairOdds.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs pt-3 border-t border-current/10 font-mono">
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Speed</span>
+                      <span className="font-bold text-sm">{runnerA.speedRating}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Form</span>
+                      <span className="font-bold text-sm">{runnerA.formScore}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Edge</span>
+                      <span className={`font-bold text-sm ${runnerA.edgePct >= 0 ? "text-[#34C759] dark:text-[#10B981]" : "text-[#FF9500]"}`}>
+                        {runnerA.edgePct >= 0 ? `+${runnerA.edgePct.toFixed(0)}%` : `${runnerA.edgePct.toFixed(0)}%`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {onAssignPreference && activePunter && (
+                    <div className="mt-3 pt-3 border-t border-current/10 flex items-center justify-between">
+                      <span className="text-[11px] text-[#86868B]">Assign {activePunter.name}&apos;s Pick:</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onAssignPreference(1, runnerA.tabNumber)}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[#0071E3] text-white hover:bg-[#0077ED] transition-colors cursor-pointer"
+                        >
+                          Lock 1st Pick
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onAssignPreference(2, runnerA.tabNumber)}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-current/20 hover:bg-current/5 transition-colors cursor-pointer"
+                        >
+                          2nd
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Runner B Card */}
+                <div className={`p-4 rounded-xl border transition-all ${
+                  isApple ? "bg-white border-[#34C759]/30 shadow-xs" : "bg-[#0D2418] border-[#10B981]/30 shadow-xs"
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="font-mono text-xs font-bold text-[#34C759] dark:text-[#10B981] uppercase">
+                        Contender B · Barrier {runnerB.barrier}
+                      </span>
+                      <h5 className="text-lg font-bold">
+                        #{runnerB.tabNumber} {runnerB.horseName}
+                      </h5>
+                      <div className="text-xs text-[#86868B] mt-0.5">
+                        <span>{runnerB.jockey}</span>
+                        <span className="mx-1">·</span>
+                        <span>{runnerB.trainer}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xl font-black text-[#34C759] dark:text-[#10B981]">
+                        ${runnerB.bookmakerOdds.toFixed(2)}
+                      </span>
+                      <span className="block text-[11px] font-mono text-[#86868B]">
+                        Fair ${runnerB.modelFairOdds.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs pt-3 border-t border-current/10 font-mono">
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Speed</span>
+                      <span className="font-bold text-sm">{runnerB.speedRating}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Form</span>
+                      <span className="font-bold text-sm">{runnerB.formScore}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-current/5">
+                      <span className="text-[10px] text-[#86868B] block">Edge</span>
+                      <span className={`font-bold text-sm ${runnerB.edgePct >= 0 ? "text-[#34C759] dark:text-[#10B981]" : "text-[#FF9500]"}`}>
+                        {runnerB.edgePct >= 0 ? `+${runnerB.edgePct.toFixed(0)}%` : `${runnerB.edgePct.toFixed(0)}%`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {onAssignPreference && activePunter && (
+                    <div className="mt-3 pt-3 border-t border-current/10 flex items-center justify-between">
+                      <span className="text-[11px] text-[#86868B]">Assign {activePunter.name}&apos;s Pick:</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onAssignPreference(1, runnerB.tabNumber)}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[#34C759] text-white hover:bg-[#2FB350] transition-colors cursor-pointer"
+                        >
+                          Lock 1st Pick
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onAssignPreference(2, runnerB.tabNumber)}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-current/20 hover:bg-current/5 transition-colors cursor-pointer"
+                        >
+                          2nd
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tactical Matchup Verdict */}
+              <div className="mt-4 p-3.5 rounded-xl bg-current/5 border border-current/10 text-xs space-y-1">
+                <div className="flex items-center gap-2 font-bold">
+                  <Flame className="w-3.5 h-3.5 text-[#FF9500]" />
+                  <span>Trackside Showdown Verdict</span>
+                </div>
+                <p className="text-[#86868B] leading-relaxed">
+                  Model gives <strong className="text-current">#{winner.tabNumber} {winner.horseName}</strong> the edge (rated {winner.compositeRating}/100, {diffRating > 0 ? `${diffRating} pts clear` : "level pegging"}). {winner.edgePct > 0 ? `Plus a juicy +${winner.edgePct.toFixed(0)}% overlay cushion against the bookies.` : "Backing market consensus to salute."}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* =========================================================================
           4. RUNNER DIRECT SELECTION TABLE & VALUE CLASSIFICATION
           ========================================================================= */}
       <div className="pt-2 border-t border-current/10">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-[#86868B]" />
             <span className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
               Quick Preference Assignment from Chart
             </span>
           </div>
-          <span className="text-xs text-[#86868B]">
-            Showing top contenders ranked by {sortOption}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#86868B] hidden sm:inline">
+              Showing top contenders ranked by {sortOption}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsAiDrawerOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer shadow-xs ${
+                isApple
+                  ? "bg-[#0071E3]/10 border-[#0071E3]/30 text-[#0071E3] hover:bg-[#0071E3]/20"
+                  : "bg-[#D4AF37]/15 border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/25"
+              }`}
+              title="Generate AI Trends Summary with Aussie trackside banter"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Generate Trends Summary</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -1087,52 +1698,108 @@ export const RaceMarketRadarBarChart: React.FC<RaceMarketRadarBarChartProps> = (
                   </div>
                 </div>
 
-                {/* Preference Buttons */}
-                {onAssignPreference && activePunter && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      title={`Assign #${runner.tabNumber} as 1st Preference`}
-                      onClick={() => onAssignPreference(1, runner.tabNumber)}
-                      className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                        is1st
-                          ? "bg-[#0071E3] text-white shadow-xs"
-                          : "bg-current/10 hover:bg-current/20 text-current"
-                      }`}
-                    >
-                      1st
-                    </button>
-                    <button
-                      type="button"
-                      title={`Assign #${runner.tabNumber} as 2nd Preference`}
-                      onClick={() => onAssignPreference(2, runner.tabNumber)}
-                      className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                        is2nd
-                          ? "bg-[#34C759] text-white shadow-xs"
-                          : "bg-current/10 hover:bg-current/20 text-current"
-                      }`}
-                    >
-                      2nd
-                    </button>
-                    <button
-                      type="button"
-                      title={`Assign #${runner.tabNumber} as 3rd Preference`}
-                      onClick={() => onAssignPreference(3, runner.tabNumber)}
-                      className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                        is3rd
-                          ? "bg-[#FF9500] text-white shadow-xs"
-                          : "bg-current/10 hover:bg-current/20 text-current"
-                      }`}
-                    >
-                      3rd
-                    </button>
-                  </div>
-                )}
+                {/* Action Buttons: Quick Alert + Preferences */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    title={`Set Market Alert for #${runner.tabNumber} ${runner.horseName}`}
+                    onClick={() => {
+                      setSelectedAlertRunnerTab(runner.tabNumber);
+                      setIsAlertModalOpen(true);
+                    }}
+                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer ${
+                      marketAlerts.some(
+                        (a) =>
+                          a.meetingId === meeting.id &&
+                          a.raceNumber === currentRace.raceNumber &&
+                          a.tabNumber === runner.tabNumber &&
+                          !a.triggered
+                      )
+                        ? isApple
+                          ? "bg-[#0071E3]/20 text-[#0071E3]"
+                          : "bg-[#10B981]/20 text-[#10B981]"
+                        : "bg-current/10 hover:bg-current/20 text-current/70 hover:text-current"
+                    }`}
+                  >
+                    <Bell className="w-3 h-3" />
+                  </button>
+
+                  {onAssignPreference && activePunter && (
+                    <>
+                      <button
+                        type="button"
+                        title={`Assign #${runner.tabNumber} as 1st Preference`}
+                        onClick={() => onAssignPreference(1, runner.tabNumber)}
+                        className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          is1st
+                            ? "bg-[#0071E3] text-white shadow-xs"
+                            : "bg-current/10 hover:bg-current/20 text-current"
+                        }`}
+                      >
+                        1st
+                      </button>
+                      <button
+                        type="button"
+                        title={`Assign #${runner.tabNumber} as 2nd Preference`}
+                        onClick={() => onAssignPreference(2, runner.tabNumber)}
+                        className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          is2nd
+                            ? "bg-[#34C759] text-white shadow-xs"
+                            : "bg-current/10 hover:bg-current/20 text-current"
+                        }`}
+                      >
+                        2nd
+                      </button>
+                      <button
+                        type="button"
+                        title={`Assign #${runner.tabNumber} as 3rd Preference`}
+                        onClick={() => onAssignPreference(3, runner.tabNumber)}
+                        className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          is3rd
+                            ? "bg-[#FF9500] text-white shadow-xs"
+                            : "bg-current/10 hover:bg-current/20 text-current"
+                        }`}
+                      >
+                        3rd
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* AI Race Trends Drawer Side Panel */}
+      <AiRaceTrendsDrawer
+        isOpen={isAiDrawerOpen}
+        onClose={() => setIsAiDrawerOpen(false)}
+        meeting={meeting}
+        raceNumber={currentRace.raceNumber}
+        isApple={isApple}
+        analysisData={analysisData}
+        punters={punters}
+        onAssignPreference={onAssignPreference}
+        currentSelections={currentSelections}
+      />
+
+      {/* Market Odds Alert Modal */}
+      <MarketOddsAlertModal
+        isOpen={isAlertModalOpen}
+        onClose={() => setIsAlertModalOpen(false)}
+        meeting={meeting}
+        race={currentRace}
+        analysisData={analysisData}
+        alerts={marketAlerts}
+        onAddAlert={handleAddMarketAlert}
+        onRemoveAlert={handleRemoveMarketAlert}
+        onClearAlerts={handleClearRaceAlerts}
+        isApple={isApple}
+        initialTabNumber={selectedAlertRunnerTab}
+      />
     </section>
   );
 };
+
+export const RaceMarketRadarBarChart = React.memo(RaceMarketRadarBarChartComponent);
