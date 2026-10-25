@@ -73,6 +73,7 @@ import { RaceReportSheet } from "./components/RaceReportSheet";
 import { EnterpriseAiStudioArchitectureModal } from "./components/EnterpriseAiStudioArchitectureModal";
 import { PunterLeaderboard } from "./components/PunterLeaderboard";
 import { SyndicatePerformanceSection } from "./components/SyndicatePerformanceSection";
+import { SiteQuickJumpNavigator } from "./components/SiteQuickJumpNavigator";
 import { OfflineIndicator } from "./components/PWAInstallControl";
 import {
   UpdaterDownloadModal,
@@ -2618,6 +2619,22 @@ export default function App() {
           </section>
         )}
 
+        {/* Universal Quick Navigation & Race Jump Dock */}
+        <SiteQuickJumpNavigator
+          meetings={visibleMeetings}
+          selectedMeetingId={selectedMeetingId}
+          onSelectMeeting={setSelectedMeetingId}
+          selectedRaceNumber={selectedRaceNumber}
+          onSelectRaceNumber={setSelectedRaceNumber}
+          activeTab={activeTab}
+          onSwitchTab={switchTab}
+          onJumpToRace={handleJumpToRace}
+          onOpenReport={handleGenerateAndOpenReport}
+          punters={punters}
+          isApple={isApple}
+          isObsidian={isObsidian}
+        />
+
         {/* Date & Date Range Calendar Control Bar */}
         <div id="section-calendar-bar" className="scroll-mt-24">
           <DateRangeCalendarBar
@@ -3147,6 +3164,7 @@ export default function App() {
                       `Set Runner #${tabNo} as ${rankText} in Race ${raceNo} for ${activePunter.name}`
                     );
                   }}
+                  onJumpToSelections={(mId, rNo) => handleJumpToRace("selections", rNo, mId)}
                   isApple={isApple}
                   isObsidian={isObsidian}
                 />

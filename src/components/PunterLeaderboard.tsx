@@ -206,7 +206,7 @@ const PunterLeaderboardComponent: React.FC<PunterLeaderboardProps> = ({
   }, [sortedStats]);
 
   return (
-    <div className="space-y-6">
+    <div id="section-punter-leaderboard" className="space-y-6 scroll-mt-24">
       {/* Bento Header & Executive Summary */}
       <div className={`p-6 rounded-2xl border transition-all ${
         isApple ? "bg-white border-[#E5E5EA] shadow-sm text-[#1D1D1F]" : "bg-[#0B120E] border-[#1E2E25] shadow-xl text-[#F3F4F0]"

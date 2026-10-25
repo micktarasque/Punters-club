@@ -225,29 +225,24 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
         });
 
         const participatedRaceEvals = raceEvals.filter(
-          (r) => r.evaluation.hasCombinedSelections
+          (r) => r.evaluation.hasCombinedSelections && r.evaluation.combinedRunners.length >= 3
         );
         const participatedCount = participatedRaceEvals.length;
 
-        const activeEvalsForTotals = showAllRaces
-          ? raceEvals
-          : participatedCount > 0
-          ? participatedRaceEvals
-          : raceEvals;
-
-        const totalWon = activeEvalsForTotals.filter(
+        // Outlay and returns tally participated race cards only
+        const totalWon = participatedRaceEvals.filter(
           (r) => r.evaluation.isTrifectaHit
         ).length;
-        const totalCollect = activeEvalsForTotals.reduce(
+        const totalCollect = participatedRaceEvals.reduce(
           (sum, r) => sum + (r.evaluation.customBetFlexiReturn || 0),
           0
         );
-        const totalOutlay = activeEvalsForTotals.length * trifectaBetAmount;
-        const totalCombos = activeEvalsForTotals.reduce(
+        const totalOutlay = participatedCount * trifectaBetAmount;
+        const totalCombos = participatedRaceEvals.reduce(
           (sum, r) => sum + (r.evaluation.combinationsCount || 0),
           0
         );
-        const isAlive = activeEvalsForTotals.some(
+        const isAlive = participatedRaceEvals.some(
           (r) => !r.evaluation.isRaceResulted || r.evaluation.isTrifectaHit
         );
 
@@ -851,21 +846,28 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
     }
   };
 
-  // KPI Pool Aggregations across active meeting
-  const trifectaHitsCount = allTrifectaEvals.filter(
+  // KPI Pool Aggregations across active meeting (tally participated race cards only)
+  const participatedTrifectaEvals = allTrifectaEvals.filter(
+    (e) => e.evaluation.hasCombinedSelections && e.evaluation.combinedRunners.length >= 3
+  );
+  const trifectaHitsCount = participatedTrifectaEvals.filter(
     (e) => e.evaluation.isCombinedBoxedTrifectaHit
   ).length;
-  const totalTrifectaPoolStaked = allTrifectaEvals.length * trifectaBetAmount;
-  const totalTrifectaPoolCollected = allTrifectaEvals.reduce(
+  const totalTrifectaPoolStaked = participatedTrifectaEvals.length * trifectaBetAmount;
+  const totalTrifectaPoolCollected = participatedTrifectaEvals.reduce(
     (acc, e) => acc + (e.evaluation.customBetFlexiReturn || 0),
     0
   );
 
-  const totalQuaddieStakedAll = allQuaddieEvals.reduce(
+  // Tally Quaddie outlay ONLY for meetings where punters have actively made selections
+  const participatedQuaddieEvals = allQuaddieEvals.filter((q) =>
+    q.evaluation.legs.some((leg) => leg.allUserPicksInLeg.length > 0)
+  );
+  const totalQuaddieStakedAll = participatedQuaddieEvals.reduce(
     (acc, q) => acc + q.evaluation.quaddieBetAmount,
     0
   );
-  const totalQuaddieCollectedAll = allQuaddieEvals.reduce(
+  const totalQuaddieCollectedAll = participatedQuaddieEvals.reduce(
     (acc, q) => acc + (q.evaluation.isQuaddieWon ? q.evaluation.wonQuaddieReturn : 0),
     0
   );
@@ -986,9 +988,9 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
               ${totalExoticsStaked.toFixed(2)}
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-[#8A9990] font-mono mt-1">
-              <span>Trifectas: ${totalTrifectaPoolStaked}</span>
+              <span>Trifectas: ${totalTrifectaPoolStaked} ({participatedTrifectaEvals.length} Races)</span>
               <span>·</span>
-              <span>Quaddies: ${totalQuaddieStakedAll.toFixed(0)}</span>
+              <span>Quaddies: ${totalQuaddieStakedAll.toFixed(0)} ({participatedQuaddieEvals.length} Meetings)</span>
             </div>
           </div>
 
@@ -1025,12 +1027,12 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
               Trifecta Strike Rate
             </span>
             <div className="text-xl sm:text-2xl font-mono font-bold text-[#D4AF37] mt-1">
-              {trifectaHitsCount} / {allTrifectaEvals.length}
+              {trifectaHitsCount} / {participatedTrifectaEvals.length}
             </div>
             <div className="text-[11px] text-[#8A9990] font-mono mt-1">
-              {allTrifectaEvals.length > 0
-                ? `${((trifectaHitsCount / allTrifectaEvals.length) * 100).toFixed(0)}% Hit Precision`
-                : "0%"}
+              {participatedTrifectaEvals.length > 0
+                ? `${((trifectaHitsCount / participatedTrifectaEvals.length) * 100).toFixed(0)}% Hit Precision (${participatedTrifectaEvals.length} Participated)`
+                : "0% (0 Participated)"}
             </div>
           </div>
 

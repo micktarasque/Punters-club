@@ -52,6 +52,7 @@ interface RaceCardAndFormSheetProps {
     preferenceRank: 1 | 2 | 3,
     tabNumber: number
   ) => void;
+  onJumpToSelections?: (meetingId: string, raceNumber: number) => void;
   isApple?: boolean;
   isObsidian?: boolean;
 }
@@ -75,6 +76,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
   activePunterName,
   currentMeetingSelections,
   onAssignPreference,
+  onJumpToSelections,
   isApple = false,
   isObsidian = false,
 }) => {
@@ -334,7 +336,7 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div id="section-full-racecard" className="space-y-4 scroll-mt-24">
       {/* Venue & Race Switcher Strip */}
       <div className="bg-[#121A16] border border-[#1F2D26] rounded-lg p-4 space-y-3.5">
         {/* Top Filter Row: Multi-Select Checkbox Dropdown + Jurisdiction Filter */}
@@ -708,6 +710,21 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                   </span>
                 </span>
               </>
+            )}
+
+            {onJumpToSelections && (
+              <button
+                type="button"
+                onClick={() => onJumpToSelections(activeMeeting.id, activeRace.raceNumber)}
+                className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer border shadow-xs ${
+                  isApple
+                    ? "bg-[#0071E3]/10 border-[#0071E3]/30 text-[#0071E3] hover:bg-[#0071E3]/20"
+                    : "bg-[#10B981]/15 border-[#10B981]/40 text-[#10B981] hover:bg-[#10B981]/25"
+                }`}
+                title={`Jump directly to Selections for ${activeMeeting.venue} Race ${activeRace.raceNumber}`}
+              >
+                <span>🎯 Jump to Selections (R{activeRace.raceNumber}) →</span>
+              </button>
             )}
           </div>
         </div>

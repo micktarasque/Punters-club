@@ -53,7 +53,7 @@ export interface SyndicatePerformanceSectionProps {
 }
 
 type TimeframeOption = "30" | "14" | "7";
-type MetricViewMode = "dual" | "winRate" | "dollars" | "timeline";
+type MetricViewMode = "dual" | "stacked" | "winRate" | "dollars" | "timeline";
 
 export interface SyndicateChartDataEntry {
   name: string;
@@ -65,6 +65,12 @@ export interface SyndicateChartDataEntry {
   netProfit: number;
   roiPct: number;
   winsCount: number;
+  secondsCount: number;
+  thirdsCount: number;
+  totalPoints: number;
+  winPoints: number;
+  placePoints: number;
+  jokerBonusPoints: number;
   racesTipped: number;
   color: string;
 }
@@ -79,6 +85,10 @@ interface Punter30DayPerformance {
   secondsCount: number;
   thirdsCount: number;
   podiumCount: number;
+  totalPoints: number;
+  winPoints: number;
+  placePoints: number;
+  jokerBonusPoints: number;
   winRatePct: number;
   podiumRatePct: number;
   totalOutlay: number;
@@ -275,6 +285,202 @@ export const DualOverviewRechartsChart: React.FC<DualOverviewRechartsChartProps>
   }
 );
 DualOverviewRechartsChart.displayName = "DualOverviewRechartsChart";
+
+// Tooltip for Stacked Points & Value Return
+const StackedTooltipContent: React.FC<any> = React.memo(({ active, payload, isApple }) => {
+  if (!active || !payload || !payload.length) return null;
+  const d: SyndicateChartDataEntry = payload[0]?.payload;
+  if (!d) return null;
+
+  const returnPerPoint = d.totalPoints > 0 ? (d.totalDollarReturn / d.totalPoints).toFixed(2) : "0.00";
+
+  return (
+    <div
+      className={`p-3 rounded-xl border shadow-xl text-xs space-y-2 select-none ${
+        isApple
+          ? "bg-white/95 border-[#E5E5EA] text-[#1D1D1F] backdrop-blur-md"
+          : "bg-[#0B120E]/95 border-[#1F2D26] text-[#F3F4F0] backdrop-blur-md"
+      }`}
+    >
+      <div className="font-bold border-b border-current/10 pb-1.5 flex items-center justify-between gap-3">
+        <span className="text-sm font-bold">{d.name}</span>
+        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold">
+          {d.racesTipped} Races
+        </span>
+      </div>
+
+      {/* Points Stack Breakdown */}
+      <div className="space-y-1">
+        <div className="text-[10px] uppercase font-mono font-bold text-[#D4AF37]">
+          Points Breakdown ({d.totalPoints} pts Total)
+        </div>
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-[#86868B] flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+            1st Place Wins ({d.winsCount}W × 3pts):
+          </span>
+          <span className="font-mono font-bold text-[#D4AF37]">
+            {d.winPoints} pts
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-[#86868B] flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />
+            2nd &amp; 3rd Places ({d.secondsCount + d.thirdsCount}P):
+          </span>
+          <span className="font-mono font-bold text-[#3B82F6]">
+            {d.placePoints} pts
+          </span>
+        </div>
+        {d.jokerBonusPoints > 0 && (
+          <div className="flex justify-between items-center text-[11px]">
+            <span className="text-[#86868B] flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#FF9500]" />
+              🃏 Joker Bonus Points (2×):
+            </span>
+            <span className="font-mono font-bold text-[#FF9500]">
+              +{d.jokerBonusPoints} pts
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Value Returns ($) Breakdown */}
+      <div className="border-t border-current/10 pt-1.5 space-y-1">
+        <div className="text-[10px] uppercase font-mono font-bold text-[#10B981]">
+          Value Return ($) Breakdown
+        </div>
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-[#86868B]">Total Value Return:</span>
+          <span className="font-mono font-bold text-[#10B981]">
+            ${d.totalDollarReturn.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-[#86868B]">Total Outlay:</span>
+          <span className="font-mono text-[#86868B]">
+            ${d.totalOutlay.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-[#86868B]">Net Profit / Loss:</span>
+          <span
+            className={`font-mono font-bold ${
+              d.netProfit >= 0 ? "text-[#10B981]" : "text-[#FF9500]"
+            }`}
+          >
+            {d.netProfit >= 0 ? `+$${d.netProfit.toFixed(2)}` : `-$${Math.abs(d.netProfit).toFixed(2)}`}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-[10px] border-t border-current/10 pt-1 text-[#86868B] font-mono">
+          <span>Efficiency:</span>
+          <span className="text-current font-bold">${returnPerPoint} return / point</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+StackedTooltipContent.displayName = "StackedTooltipContent";
+
+// Memoized Recharts Subcomponent: Stacked Points & Value Returns
+interface StackedPointsAndValueRechartsChartProps {
+  data: SyndicateChartDataEntry[];
+  isApple: boolean;
+}
+
+export const StackedPointsAndValueRechartsChart: React.FC<StackedPointsAndValueRechartsChartProps> = React.memo(
+  ({ data, isApple }) => {
+    const tooltipRenderer = useCallback(
+      (props: any) => <StackedTooltipContent {...props} isApple={isApple} />,
+      [isApple]
+    );
+
+    return (
+      <div className="w-full h-80 sm:h-96">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={data}
+            margin={{ top: 20, right: 30, left: 10, bottom: 25 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={isApple ? "#E5E5EA" : "#1F2E25"}
+              vertical={false}
+            />
+            <XAxis
+              dataKey="name"
+              stroke={isApple ? "#86868B" : "#8A9990"}
+              fontSize={12}
+              tickLine={false}
+              dy={10}
+            />
+            {/* Left Y-Axis: Dollar Value Returns ($) */}
+            <YAxis
+              yAxisId="dollars"
+              stroke={isApple ? "#10B981" : "#10B981"}
+              fontSize={11}
+              tickLine={false}
+              tickFormatter={formatDollarTick}
+            />
+            {/* Right Y-Axis: Points Tally (Pts) */}
+            <YAxis
+              yAxisId="points"
+              orientation="right"
+              stroke={isApple ? "#D4AF37" : "#D4AF37"}
+              fontSize={11}
+              tickLine={false}
+              tickFormatter={(val) => `${val} pts`}
+            />
+            <Tooltip content={tooltipRenderer} />
+            <Legend verticalAlign="top" height={36} formatter={renderLegendItem} />
+
+            {/* Stacked Bars for Points (1st Place Win Pts + 2nd/3rd Place Pts + Joker Bonus) */}
+            <Bar
+              yAxisId="points"
+              dataKey="winPoints"
+              name="1st Place (3pts)"
+              stackId="pointsStack"
+              fill="#D4AF37"
+              maxBarSize={44}
+              isAnimationActive={false}
+            />
+            <Bar
+              yAxisId="points"
+              dataKey="placePoints"
+              name="2nd/3rd Places (2pt/1pt)"
+              stackId="pointsStack"
+              fill="#3B82F6"
+              maxBarSize={44}
+              isAnimationActive={false}
+            />
+            <Bar
+              yAxisId="points"
+              dataKey="jokerBonusPoints"
+              name="Joker Bonus (2×)"
+              stackId="pointsStack"
+              fill="#FF9500"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={false}
+            />
+
+            {/* Value Returns ($) Bar beside points */}
+            <Bar
+              yAxisId="dollars"
+              dataKey="totalDollarReturn"
+              name="Value Return ($)"
+              fill="#10B981"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+);
+StackedPointsAndValueRechartsChart.displayName = "StackedPointsAndValueRechartsChart";
 
 // Memoized Recharts Subcomponent: Win-Rate % (BarChart)
 interface WinRateRechartsChartProps {
@@ -538,6 +744,10 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
       let podiumCount = 0;
       let totalOutlay = 0;
       let totalDollarReturn = 0;
+      let totalPoints = 0;
+      let winPoints = 0;
+      let placePoints = 0;
+      let jokerBonusPoints = 0;
 
       // Map punter role to appropriate tipping strategy for unpicked past races
       const strategy: AutoPickStrategy = punter.name.includes("Steve")
@@ -581,15 +791,26 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
               completedRaces++;
               totalOutlay += evalRes.parOutlayUnits || 6;
               totalDollarReturn += evalRes.raceDollarReturn;
+              totalPoints += evalRes.racePointsTally;
+              jokerBonusPoints += evalRes.jokerBonusPoints;
 
               const hasWin = evalRes.picks.some((p) => p.finishPosition === 1);
-              if (hasWin) winsCount++;
+              if (hasWin) {
+                winsCount++;
+                winPoints += isJoker ? 6 : 3;
+              }
 
               const hasSecond = evalRes.picks.some((p) => p.finishPosition === 2);
-              if (hasSecond) secondsCount++;
+              if (hasSecond) {
+                secondsCount++;
+                placePoints += isJoker ? 4 : 2;
+              }
 
               const hasThird = evalRes.picks.some((p) => p.finishPosition === 3);
-              if (hasThird) thirdsCount++;
+              if (hasThird) {
+                thirdsCount++;
+                placePoints += isJoker ? 2 : 1;
+              }
 
               const hasPodium = evalRes.picks.some(
                 (p) => p.finishPosition >= 1 && p.finishPosition <= 3
@@ -617,6 +838,10 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
         secondsCount,
         thirdsCount,
         podiumCount,
+        totalPoints,
+        winPoints,
+        placePoints,
+        jokerBonusPoints,
         winRatePct,
         podiumRatePct,
         totalOutlay: Number(totalOutlay.toFixed(2)),
@@ -750,6 +975,12 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
       netProfit: p.netProfit,
       roiPct: p.roiPct,
       winsCount: p.winsCount,
+      secondsCount: p.secondsCount,
+      thirdsCount: p.thirdsCount,
+      totalPoints: p.totalPoints,
+      winPoints: p.winPoints,
+      placePoints: p.placePoints,
+      jokerBonusPoints: p.jokerBonusPoints,
       racesTipped: p.racesTipped,
       color: p.color,
     }));
@@ -855,6 +1086,23 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
             >
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Dual Overview</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("stacked")}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === "stacked"
+                  ? isApple
+                    ? "bg-white text-[#0071E3] shadow-xs"
+                    : "bg-[#10B981] text-[#070B09] shadow-xs"
+                  : isApple
+                  ? "text-[#86868B] hover:text-[#1D1D1F]"
+                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+              }`}
+              title="Stacked Option: View Points Breakdown (1st/2nd/3rd/Joker) and Value Returns ($) together"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Stacked (Points &amp; $)</span>
             </button>
             <button
               type="button"
@@ -1075,6 +1323,7 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold tracking-tight">
               {viewMode === "dual" && "Dual Metric: Total Dollar Returns ($) vs. Win-Rate (%)"}
+              {viewMode === "stacked" && "Stacked Breakdown: Points (1st/2nd/3rd Pts) & Value Returns ($)"}
               {viewMode === "winRate" && "Member Win-Rate Percentage Comparison (Last 30 Days)"}
               {viewMode === "dollars" && "Total Dollar Returns ($) & Outlay Breakdown"}
               {viewMode === "timeline" && "Cumulative Dollar Return Growth Over Time"}
@@ -1106,7 +1355,15 @@ const SyndicatePerformanceSectionComponent: React.FC<SyndicatePerformanceSection
           />
         )}
 
-        {/* 3.2 WIN RATE % BAR CHART */}
+        {/* 3.2 STACKED POINTS & VALUE RETURNS RECHARTS CHART */}
+        {viewMode === "stacked" && (
+          <StackedPointsAndValueRechartsChart
+            data={chartData}
+            isApple={isApple}
+          />
+        )}
+
+        {/* 3.3 WIN RATE % BAR CHART */}
         {viewMode === "winRate" && (
           <WinRateRechartsChart
             data={chartData}
