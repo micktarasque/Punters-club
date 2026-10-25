@@ -1,161 +1,63 @@
-# Syndicate Selections & Workflow Navigation Optimization Plan
+# Implementation Plan: Visual Race Countdown Timer, Progressive Stepper & Data Leverage (Completed)
 
-Enhances the race tipping workflow with member initials badges on runner rows, an interactive sticky race jump dock with global keyboard shortcuts, and intelligent auto-advancement upon completing race preferences.
-
----
-
-### User Review & Critical Decisions
-
-> [!IMPORTANT]
-> The following product decisions were confirmed through Phase 1 clarification questions and will govern the implementation:
-
-- **Confirmed Decision 1 (Other Members' Selections)**: Display compact, color-coded initials badges (e.g. `[SF 1]`, `[MS 2]`) directly on runner rows in both table and stepper views so members can instantly spot overlaps, consensus picks, and contrarian positions without switching views.
-- **Confirmed Decision 2 (Navigation Shortcuts)**: Implement a sticky floating race jump dock with dedicated race jump capsules (R1–R12), completion status indicators, and keyboard shortcuts (`[` / `]` or `←` / `→` for races, `1` / `2` / `3` for preference assignment, `J` for Joker race nomination).
-- **Confirmed Decision 3 (Input Workflow)**: Seamlessly auto-advance the active race cursor to the next race (`R(n) -> R(n+1)`) once all 3 preferences (1st, 2nd, and 3rd) are selected, accompanied by a subtle progress chime and an instant "Undo / Stay" toast affordance.
-- **User Control Toggle**: Provide an accessible "Auto-Advance" toggle switch directly on the floating dock and preferences bar, allowing punters to disable auto-advancement if they prefer manual inspection.
+Deliver an intuitive, progressive race inspection experience featuring a live visual countdown timer card with an animated SVG progress ring and next-jump alerts, a step-by-step sequential race analysis workflow, career closing speed percentile rankings, live betting market mover indicators, and a CSS-based smooth rotation animation for the countdown ring as time ticks down to zero.
 
 ---
 
-## 1. Overview & Core Concept
+## 1. Specifications & Visual Experience
 
-### What It Does
-This upgrade transforms the Saturday racing tipping experience from a manual, click-heavy process into a high-speed, frictionless workflow. Punters can rapidly navigate across an entire 10-race card using mouse clicks or keyboard hotkeys, see what their syndicate companions (e.g., Sean, Mark, Dave) have tipped right on each runner's row, and fly through card entries with intelligent auto-advancement.
+1. **Visual Race Countdown Timer with Smooth CSS Rotation**:
+   - Prominent countdown card in the race header.
+   - Circular SVG progress ring reflecting the countdown time relative to race jump.
+   - **Continuous CSS Rotation Animation**:
+     - Pure CSS keyframe rotation (`countdown-ring-spin`) running at 60/120fps with `transform: rotate` and `transform-origin: 28px 28px`.
+     - **Dynamic Speed Acceleration**: Automatically accelerates rotation as time ticks down to zero:
+       - `> 20 mins`: Calm 14s continuous sweep.
+       - `10–20 mins`: 9s revolution.
+       - `5–10 mins`: 6s revolution.
+       - `2–5 mins`: 3.5s brisk turn.
+       - `< 2 mins` (Imminent): Urgent 1.8s revolution with radiant crimson glow pulse (`countdown-ring-imminent-flash`).
+       - Final 30 seconds: 1.0s rapid spin.
+       - `Gates Open / Racing Now`: 0.75s emerald sprint sweep.
+       - `Finalized`: Smoothly pauses and locks to 12 o'clock complete state.
+     - **Outer Chronometer Bezel Track**: Subtle orbiting track markings (`countdown-bezel-orbit-track`) echoing luxury chronometer dials.
+     - **Reduced Motion Support**: Full `@media (prefers-reduced-motion: reduce)` compliance.
+   - High-contrast digital clock readout (`MM:SS` or `HH:MM:SS`), jump status pill (`Fixed Odds Open` -> `Firming` -> `Imminent Jump < 2m` -> `Racing Now`), official jump time (e.g., `14:25 AEDT`), and next-race jump alert with quick-switch capability if the active race is completed.
 
-### Target Audience & Persona
-- **Syndicate Punters**: Avid racing syndicate members placing selections across 2–4 metropolitan cards simultaneously prior to jump.
-- **Power Users**: Users who prefer keyboard navigation (`[`/`]` to cycle races, `1`/`2`/`3` to assign rankings, `J` to tag Joker race).
-- **Casual Members**: Users who rely on visual feedback to verify card completion (e.g. "8/10 races tipped") before the first race locks.
+2. **Progressive Stepper Layout for Race Inspection**:
+   - Clean, sequential 3-step inspection mode (`1. Speed Map & Pace` -> `2. Key Form & Market Flucs` -> `3. Syndicate Consensus & Selections`).
+   - Quick jump pills between steps with completion badges and clear visual hierarchy.
+   - Smooth transitions without cluttering the screen on mobile or desktop.
+   - Mode switcher allowing punters to toggle between "⚡️ Progressive Stepper" and "📑 Full Sheet" at any time.
 
-### Key Value
-- **$3\times$ Faster Selections**: Eliminates redundant scrolling and back-and-forth race switching.
-- **Social Awareness**: Instantly shows consensus without crowding the screen or relying on separate tabs.
-- **Zero Omissions**: Visual indicators highlight unselected or partially completed races before jump time.
-
----
-
-## 2. User Experience & Visual Design
-
-### Key User Flows
-
-1. **Card Entry & Auto-Advance Flow**:
-   - Punter opens the **Selections** tab on a Sydney or Melbourne card (e.g., Randwick).
-   - The punter clicks or keys `1st`, `2nd`, and `3rd` on their preferred runners.
-   - When the third preference is clicked, the race completes: a micro-badge pulses green, a subtle checkmark appears on the floating race dock, and the interface smoothly slides forward to the next unfinished race.
-   - A quiet toast appears at the top: *"Race 3 Complete · Advancing to Race 4"* with a `[Stay on R3]` action button.
-
-2. **Syndicate Member Initials Badges on Runner Rows**:
-   - Each runner row displays an unobtrusive "Syndicate Picks" cluster adjacent to the runner's barrier and name.
-   - Example: On runner *#3 Think About It*, small rounded initials badges display:
-     - `SF: 1st` (Amber tint for Sean's top pick)
-     - `MS: 2nd` (Blue tint for Mark's second pick)
-   - Hovering or tapping a badge opens a micro-popover displaying full member details and time of selection.
-   - If no other punter has selected the horse, the cluster remains quiet/empty, preserving clean whitespace.
-
-3. **Sticky Floating Race Jump Dock & Keyboard Shortcuts**:
-   - Anchored at the bottom center of the viewport, styled with Apple Clean / Turf Dark frosted glass (`backdrop-blur-md`).
-   - Contains:
-     - Race pills `R1` through `R10` with real-time indicators:
-       - Filled green check: All 3 picks submitted.
-       - Amber dot: 1 or 2 picks submitted (incomplete).
-       - Empty ring: 0 picks submitted.
-       - Gold star icon: User's nominated Joker double-points race.
-     - Fast race controls: `< Prev ( [ )` and `Next ( ] ) >`.
-     - Hotkey helper toggle showing keyboard guide overlay (`?`).
-     - "Auto-Advance" on/off switch.
-
-### Visual Identity & Theme
-- **Theme Support**: Flawless fidelity across both **Apple Clean** (crisp slate-50/100, hairline borders, SF Pro typographic weight) and **Turf Dark** (deep emerald slate `#0D1912`, glowing lime accents, high-contrast odds).
-- **Anti-Slop Discipline**: Zero generic purple gradients or pill sandwiches. Initials badges use subtle border-radius tokens with high-contrast text (`text-[10px] font-mono font-bold`) and tabular numerals (`font-mono tabular-nums`).
-- **Touch & Click Geometry**: Floating dock buttons maintain $\ge 40$px hitboxes on desktop and $\ge 44$px on mobile viewports.
+3. **Data Leverage & Runner Analytics**:
+   - **Career Closing Speed Percentile**: Calculated and displayed for each runner (e.g. `Top 10% Burst`, `Top 25% Finisher`, `88th %ile`), integrated on both standard table rows and mobile card views.
+   - **Market Movers & Fluc Alerts**: Visual steam/drift indicators (`FIRMING 🔥 (-15%)`, `DRIFTING ❄️ (+20%)`, `SOLID ⚖️`) so punters can immediately spot smart money moves.
 
 ---
 
-## 3. Key Product Decisions & Trade-Offs
+## 2. Changes Completed
 
-| Decision | Chosen Approach | Why | Alternatives Considered |
-| :--- | :--- | :--- | :--- |
-| **Member Selection Display** | Inline initials badges (`SF 1st`, `MS 2nd`) on runner rows | Immediate scannability without breaking runner comparison flow | Floating hover tooltip (too hidden) or dedicated separate column (wastes horizontal space on mobile) |
-| **Race Dock Placement** | Floating sticky bottom center dock (`z-40`) | Thumb-reachable on mobile, omnipresent on desktop without pushing content down | Top header tabs (requires scrolling back up on long 16-runner fields) |
-| **Auto-Advance Timing** | Triggers immediately when all 3 picks are distinct and set, with a 350ms settle delay and 3s undo toast | Eliminates jarring instant flips while giving fast typers continuous flow | Confirmation dialog modal (breaks speed and cadence) |
-| **Keyboard Scope** | Global listeners disabled when typing in inputs/search bars, enabled anywhere on Selections tab | Prevents accidental race jumps when searching horses or typing notes | Requiring focus on a specific container first (cumbersome) |
+### `src/index.css`
+- Added `@keyframes countdown-ring-spin` from `-90deg` to `270deg` with hardware-accelerated transform.
+- Added `@keyframes countdown-ring-glow-pulse` and `@keyframes countdown-ring-imminent-flash` for multi-layered drop-shadow neon glows.
+- Added `.countdown-progress-ring-spinner`, `.countdown-progress-ring-glow-urgent`, `.countdown-progress-ring-glow-imminent`, and `.countdown-bezel-orbit-track`.
+- Configured accessibility fallback for `prefers-reduced-motion`.
 
----
+### `src/components/RaceCardCountdownClock.tsx`
+- Added `rotationDurationSec` calculation dynamically scaling rotation velocity as time ticks down to zero.
+- Replaced static SVG container with a rotating `<g>` group wrapped in `rotationClass`, inline dynamic duration, and `transformOrigin: "28px 28px"`.
+- Added the rotating outer chronometer bezel ring.
+- Added mini rotating progress ring badge to the **Next Race Jump Alert** banner.
 
-## 4. Technical Architecture & Data Strategy
-
-### System Component Architecture
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                                App.tsx                                 │
-│  - Global State: meetings, activeMeeting, punters, activePunterId      │
-│  - Keyboard Shortcut Coordinator (Global listener: [, ], 1-3, J, A)    │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        BettingLedgerSheet.tsx                          │
-│  - Active race cursor & auto-advance engine                            │
-│  - Multi-Punter selection lookup map: [meetingId][raceNo][runnerTab]   │
-│                                                                        │
-│  ┌───────────────────────────────┐  ┌────────────────────────────────┐ │
-│  │     Runner Row Component      │  │     Race Preference Trio       │ │
-│  │  - Runner details & flucs     │  │  - 1st, 2nd, 3rd action chips  │ │
-│  │  - MemberInitialsBadgesGroup  │  │  - On completion: trigger      │ │
-│  │    (SF:1, MS:2, TC:3 tokens)  │  │    autoAdvanceToNextRace()     │ │
-│  └───────────────────────────────┘  └────────────────────────────────┘ │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        StickySyndicateDock.tsx                         │
-│  - Race buttons (R1–R10) with status rings (Complete, Partial, Empty)  │
-│  - Joker indicator & quick toggle ([J])                                │
-│  - Auto-advance toggle switch & status toast coordinator              │
-│  - Keyboard shortcuts cheat-sheet drawer                               │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-### Component & State Mapping
-
-1. **`BettingLedgerSheet.tsx`**:
-   - Compute `syndicateSelectionsByRunner` for the current race: key each `runner.tabNumber` to an array of `{ punterName, punterInitials, preferenceRank, color }`.
-   - In both Table view and Stepper view, render the `MemberInitialsBadgesGroup` alongside runner silks and horse names.
-   - Implement `handlePreferenceSelectionWithAutoAdvance`:
-     - Set preference in active punter's record.
-     - Evaluate if the race now has complete 1st, 2nd, and 3rd picks.
-     - If complete and `autoAdvanceEnabled` is true, trigger smooth step to `raceNumber + 1` (stopping at the card's final race) and display the Undo toast.
-
-2. **`StickySyndicateDock.tsx`**:
-   - Render R1..Rn capsules with completion glyphs.
-   - Display key badges: `[←/→]` or `[ [ / ] ]` for Race Jump, `[J]` for Joker.
-   - Include auto-advance toggle state switch: `Auto-advance: On / Off`.
-   - Provide an expandable keyboard shortcut cheatsheet.
-
-3. **Keyboard Shortcuts Engine**:
-   - `[` / `ArrowLeft`: Navigate to previous race.
-   - `]` / `ArrowRight`: Navigate to next race.
-   - `j` / `J`: Toggle Joker status for current race.
-   - `a` / `A`: Trigger auto-pick strategy for current race.
-   - `Escape`: Clear current race selection.
-   - `?`: Toggle shortcut guide.
+### `src/components/RaceCardAndFormSheet.tsx`
+- Added **Progressive Race Stepper** toggle (`⚡️ Progressive Stepper` vs `📑 Full Sheet`) with sequential steps (Step 1: Speed Map, Step 2: Key Form & Movers, Step 3: Official TAB Exotics & Consensus Selections).
+- Integrated career closing speed percentiles and live market mover fluctuations.
 
 ---
 
-## 5. Verification & Test Plan
+## 3. Verification & Validation
 
-1. **Initials Badges**:
-   - Verify multiple punters (e.g. Sean, Mark, Dave) selecting the same horse shows stacked or inline badges (`SF 1`, `MS 2`).
-   - Verify active punter's own selection is clearly highlighted as the primary interactive button, while companions are rendered as quiet informational badges.
-2. **Auto-Advance**:
-   - Fill 1st and 2nd preference: verify race remains on current card.
-   - Fill 3rd preference: verify smooth transition to next race and presence of Undo toast.
-   - Toggle Auto-advance OFF: verify 3rd pick sets without changing race.
-   - Last race on card (e.g. R10): verify auto-advance cleanly recognizes end-of-card without overflow.
-3. **Keyboard Shortcuts**:
-   - Press `[` and `]` across R1–R10: verify active race updates immediately and synchronizes dock and main view.
-   - Press `J`: verify Joker tag activates/deactivates on current race with audio feedback.
-   - Verify typing in search/filter inputs suppresses keyboard shortcut triggering.
-4. **Build & Accessibility**:
-   - Run `lint_applet` and `compile_applet` to ensure zero compilation or TypeScript errors.
-   - Test responsive layout at 375px (mobile) and 1440px (desktop) ensuring no layout clipping or sticky dock height exceeding 15% viewport.
+- **TypeScript Compilation**: `npm run lint` (`tsc --noEmit`) succeeded with 0 errors.
+- **Production Bundle**: `compile_applet` passed successfully.
+- **Theme Compatibility**: Tested and verified across Default Turf Dark, Apple Minimalist, and Midnight Obsidian.

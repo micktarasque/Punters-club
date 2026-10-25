@@ -1229,3 +1229,91 @@ body.theme-obsidian,
     transform: scale(1) translateY(0);
   }
 }
+
+/* =========================================================================
+   RACE START COUNTDOWN PROGRESS RING ROTATION ANIMATIONS
+   Smooth CSS rotation that rotates the countdown progress ring as time ticks down to zero
+   ========================================================================= */
+
+@keyframes countdown-ring-spin {
+  0% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(270deg);
+  }
+}
+
+@keyframes countdown-ring-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px currentColor) drop-shadow(0 0 6px currentColor);
+    opacity: 0.95;
+  }
+  50% {
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+    opacity: 1;
+  }
+}
+
+@keyframes countdown-ring-imminent-flash {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px #FF3B30) drop-shadow(0 0 10px rgba(255, 59, 48, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px #FF3B30) drop-shadow(0 0 22px rgba(255, 59, 48, 0.95));
+  }
+}
+
+@keyframes countdown-orbit-shimmer {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.countdown-progress-ring-spinner {
+  animation-name: countdown-ring-spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  transform-origin: 28px 28px;
+  will-change: transform;
+}
+
+.countdown-progress-ring-glow-urgent {
+  animation-name: countdown-ring-spin, countdown-ring-glow-pulse;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  transform-origin: 28px 28px;
+  will-change: transform, filter;
+}
+
+.countdown-progress-ring-glow-imminent {
+  animation-name: countdown-ring-spin, countdown-ring-imminent-flash;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  transform-origin: 28px 28px;
+  will-change: transform, filter;
+}
+
+.countdown-bezel-orbit-track {
+  animation: countdown-orbit-shimmer 20s linear infinite;
+  transform-origin: 28px 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown-progress-ring-spinner,
+  .countdown-progress-ring-glow-urgent,
+  .countdown-progress-ring-glow-imminent,
+  .countdown-bezel-orbit-track {
+    animation: none !important;
+    transform: rotate(-90deg) !important;
+  }
+}
+
