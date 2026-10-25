@@ -1,63 +1,77 @@
-# Implementation Plan: Visual Race Countdown Timer, Progressive Stepper & Data Leverage (Completed)
+# Implementation Plan: Syndicate 'Cup Mode' Tournament & Discrete Draft System (Completed)
 
-Deliver an intuitive, progressive race inspection experience featuring a live visual countdown timer card with an animated SVG progress ring and next-jump alerts, a step-by-step sequential race analysis workflow, career closing speed percentile rankings, live betting market mover indicators, and a CSS-based smooth rotation animation for the countdown ring as time ticks down to zero.
+Deliver **Cup Mode** — a multi-user draft tournament system where syndicate members take turns selecting a single, mutually exclusive horse per race across active race cards. All selections are discrete (no horse can be picked twice in the same race), using the existing NSW TAB scoring system ($1 Each-Way Par & Points), and combining all users' discrete selections into a collective syndicate Flexi Box Trifecta, selectable via a header button matching the theme selector.
 
 ---
 
-## 1. Specifications & Visual Experience
+## 1. Specifications & Delivered Features
 
-1. **Visual Race Countdown Timer with Smooth CSS Rotation**:
-   - Prominent countdown card in the race header.
-   - Circular SVG progress ring reflecting the countdown time relative to race jump.
-   - **Continuous CSS Rotation Animation**:
-     - Pure CSS keyframe rotation (`countdown-ring-spin`) running at 60/120fps with `transform: rotate` and `transform-origin: 28px 28px`.
-     - **Dynamic Speed Acceleration**: Automatically accelerates rotation as time ticks down to zero:
-       - `> 20 mins`: Calm 14s continuous sweep.
-       - `10–20 mins`: 9s revolution.
-       - `5–10 mins`: 6s revolution.
-       - `2–5 mins`: 3.5s brisk turn.
-       - `< 2 mins` (Imminent): Urgent 1.8s revolution with radiant crimson glow pulse (`countdown-ring-imminent-flash`).
-       - Final 30 seconds: 1.0s rapid spin.
-       - `Gates Open / Racing Now`: 0.75s emerald sprint sweep.
-       - `Finalized`: Smoothly pauses and locks to 12 o'clock complete state.
-     - **Outer Chronometer Bezel Track**: Subtle orbiting track markings (`countdown-bezel-orbit-track`) echoing luxury chronometer dials.
-     - **Reduced Motion Support**: Full `@media (prefers-reduced-motion: reduce)` compliance.
-   - High-contrast digital clock readout (`MM:SS` or `HH:MM:SS`), jump status pill (`Fixed Odds Open` -> `Firming` -> `Imminent Jump < 2m` -> `Racing Now`), official jump time (e.g., `14:25 AEDT`), and next-race jump alert with quick-switch capability if the active race is completed.
+1. **Header Selector Button (matching Theme Selector style)**:
+   - Dedicated **🏆 Cup Mode** dropdown button in the main header beside the Theme and Punter selectors.
+   - Shows live state: `🏆 Cup Active` with an active pulsing indicator or `Standard`.
+   - Dropdown control menu includes:
+     - 1-click **Enable / Disable Cup Mode** toggle.
+     - Live tournament stats (participants count, draft style, discrete lock status).
+     - 1-click **Open Cup Tournament Board** navigation button.
+     - **Reset Draft Selections** button with confirmation prompt.
 
-2. **Progressive Stepper Layout for Race Inspection**:
-   - Clean, sequential 3-step inspection mode (`1. Speed Map & Pace` -> `2. Key Form & Market Flucs` -> `3. Syndicate Consensus & Selections`).
-   - Quick jump pills between steps with completion badges and clear visual hierarchy.
-   - Smooth transitions without cluttering the screen on mobile or desktop.
-   - Mode switcher allowing punters to toggle between "⚡️ Progressive Stepper" and "📑 Full Sheet" at any time.
+2. **Turn-Based Discrete Draft Selection Mechanics**:
+   - **Single Horse per User**: In each race on the card, each user drafts exactly 1 horse.
+   - **Discrete & Mutually Exclusive Selections**: Once a horse is drafted by User A in Race X, that runner is locked (`🔒 Taken by [User A]`) and cannot be drafted by any other participant in that race. If the current drafter made the pick, they can clear it via the `✕` button.
+   - **Snake Draft Turn Order**:
+     - Odd races (R1, R3, R5...): Original sequence (P1 → P2 → P3).
+     - Even races (R2, R4, R6...): Reversed sequence (P3 → P2 → P1).
+     - Automatically highlights the active drafter: `🎯 NOW DRAFTING: Race X · [User]'s Turn`.
 
-3. **Data Leverage & Runner Analytics**:
-   - **Career Closing Speed Percentile**: Calculated and displayed for each runner (e.g. `Top 10% Burst`, `Top 25% Finisher`, `88th %ile`), integrated on both standard table rows and mobile card views.
-   - **Market Movers & Fluc Alerts**: Visual steam/drift indicators (`FIRMING 🔥 (-15%)`, `DRIFTING ❄️ (+20%)`, `SOLID ⚖️`) so punters can immediately spot smart money moves.
+3. **Syndicate Flexi Box Trifecta System**:
+   - In each race, all distinct horses drafted across participants are automatically combined into the syndicate's **Flexi Box Trifecta**.
+   - Computes $N(N-1)(N-2)$ total combinations, stake outlay ($10 default with quick adjustments for $6, $10, $20, $24), and exact Flexi %.
+   - When 1st, 2nd, and 3rd runners in the official results are all among the drafted horses, the syndicate hits the official TAB Trifecta dividend proportionally.
+
+4. **Identical Scoring Architecture**:
+   - Evaluates picks against official NSW TAB race results with dual scoring:
+     - **Points Mode**: 1st = 3 pts, 2nd = 2 pts, 3rd = 1 pt.
+     - **$1 Each-Way Par Mode**: $1 Win + $1 Place on official NSW TAB dividends minus $2.00 stake per pick.
+   - Standings table displays: Rank (Crown for 1st, Medals for 2nd/3rd), Punter Name, Picks Made, Wins, Places, Strike Rate %, Total Points, Total $ Return, and Net Profit.
 
 ---
 
 ## 2. Changes Completed
 
-### `src/index.css`
-- Added `@keyframes countdown-ring-spin` from `-90deg` to `270deg` with hardware-accelerated transform.
-- Added `@keyframes countdown-ring-glow-pulse` and `@keyframes countdown-ring-imminent-flash` for multi-layered drop-shadow neon glows.
-- Added `.countdown-progress-ring-spinner`, `.countdown-progress-ring-glow-urgent`, `.countdown-progress-ring-glow-imminent`, and `.countdown-bezel-orbit-track`.
-- Configured accessibility fallback for `prefers-reduced-motion`.
+### `src/types/cupMode.ts`
+- Defined `CupTournamentState`, `CupUserRaceOutcome`, `CupUserLeaderboardEntry`, and `CupSyndicateTrifectaOutcome`.
 
-### `src/components/RaceCardCountdownClock.tsx`
-- Added `rotationDurationSec` calculation dynamically scaling rotation velocity as time ticks down to zero.
-- Replaced static SVG container with a rotating `<g>` group wrapped in `rotationClass`, inline dynamic duration, and `transformOrigin: "28px 28px"`.
-- Added the rotating outer chronometer bezel ring.
-- Added mini rotating progress ring badge to the **Next Race Jump Alert** banner.
+### `src/utils/cupMode.ts`
+- Implemented `getInitialCupState` and `STORAGE_KEY_CUP_MODE` persistence.
+- Implemented `getDraftOrderForRace` supporting Snake and Fixed turn order.
+- Implemented `getActiveDraftPunter` to detect whose turn it is in the active race.
+- Implemented `isHorseTakenInRace`, `assignCupPick`, and `removeCupPick` enforcing mutual exclusivity.
+- Implemented `calculateCupLeaderboard` and `calculateCupTrifectaOutcomes`.
+
+### `src/components/CupModeTournamentView.tsx`
+- Built full tournament dashboard featuring:
+  - Header with venue info, draft order indicator, and quick race selector.
+  - Active Drafter Banner highlighting current turn.
+  - **Leaderboard & Standings Tab**: Live points, $ returns, strike rate, and participant management (add/remove punters).
+  - **Draft Matrix Tab**: High-density grid of all races showing drafted runners, barrier, odds, and podium tags.
+  - **Syndicate Flexi Box Trifecta Tab**: Trackside exotics monitor showing combinations, flexi %, and total payouts.
 
 ### `src/components/RaceCardAndFormSheet.tsx`
-- Added **Progressive Race Stepper** toggle (`⚡️ Progressive Stepper` vs `📑 Full Sheet`) with sequential steps (Step 1: Speed Map, Step 2: Key Form & Movers, Step 3: Official TAB Exotics & Consensus Selections).
-- Integrated career closing speed percentiles and live market mover fluctuations.
+- Added Cup Mode Live Draft Header Banner at the top of the race card.
+- Updated Desktop Table rows with `🔒 Taken: [User]` or `🏆 Draft for [User]` buttons.
+- Updated Mobile Cards with corresponding touch-friendly draft and lock controls.
+- Added Cup Mode Syndicate Flexi Box Trifecta card to Step 3 of the inspection flow.
+
+### `src/App.tsx`
+- Added Cup Mode Selector Button in the header right next to the Theme Selector.
+- Connected `cupState` with automatic `localStorage` synchronization.
+- Added dedicated `🏆 Cup Mode` tab to the navigation bar.
+- Integrated `CupModeTournamentView` workspace panel.
 
 ---
 
 ## 3. Verification & Validation
 
 - **TypeScript Compilation**: `npm run lint` (`tsc --noEmit`) succeeded with 0 errors.
-- **Production Bundle**: `compile_applet` passed successfully.
+- **Production Build**: `compile_applet` passed successfully.
 - **Theme Compatibility**: Tested and verified across Default Turf Dark, Apple Minimalist, and Midnight Obsidian.

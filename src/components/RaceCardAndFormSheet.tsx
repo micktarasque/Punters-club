@@ -15,6 +15,8 @@ import {
   Timer,
   Trophy,
   Sparkles,
+  Lock,
+  Undo2,
 } from "lucide-react";
 import {
   PunterProfile,
@@ -22,6 +24,12 @@ import {
   RaceMeeting,
   RaceSelectionTrio,
 } from "../types/racing";
+import { CupTournamentState } from "../types/cupMode";
+import {
+  getActiveDraftPunter,
+  isHorseTakenInRace,
+  getDraftOrderForRace,
+} from "../utils/cupMode";
 import { JockeySilkSvg } from "./JockeySilkSvg";
 import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { generateRaceAutoPickTrio } from "../utils/autoPick";
@@ -55,6 +63,10 @@ interface RaceCardAndFormSheetProps {
     tabNumber: number
   ) => void;
   onJumpToSelections?: (meetingId: string, raceNumber: number) => void;
+  cupTournament?: CupTournamentState;
+  onAssignCupPick?: (raceNumber: number, punterName: string, tabNumber: number) => void;
+  onRemoveCupPick?: (raceNumber: number, punterName: string) => void;
+  onOpenCupView?: () => void;
   isApple?: boolean;
   isObsidian?: boolean;
 }
@@ -79,6 +91,10 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
   currentMeetingSelections,
   onAssignPreference,
   onJumpToSelections,
+  cupTournament,
+  onAssignCupPick,
+  onRemoveCupPick,
+  onOpenCupView,
   isApple = false,
   isObsidian = false,
 }) => {
@@ -137,6 +153,27 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
       }
     );
   }, [currentMeetingSelections, activeRace]);
+
+  // Cup Mode active drafter & race draft status
+  const isCupActive = Boolean(cupTournament?.isActive);
+  const activeCupDrafter = useMemo(() => {
+    if (!cupTournament?.isActive || !activeRace) return null;
+    return getActiveDraftPunter(cupTournament, activeRace.raceNumber);
+  }, [cupTournament, activeRace]);
+
+  const activeRaceCupPicks = useMemo(() => {
+    if (!cupTournament || !activeRace) return {};
+    return cupTournament.selectionsByRace[activeRace.raceNumber] || {};
+  }, [cupTournament, activeRace]);
+
+  const activeRaceDraftOrder = useMemo(() => {
+    if (!cupTournament || !activeRace) return [];
+    return getDraftOrderForRace(
+      activeRace.raceNumber,
+      cupTournament.participants,
+      cupTournament.draftType
+    );
+  }, [cupTournament, activeRace]);
 
   // Live 1-second interval ticker for dynamic "Time to Start" calculations
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
@@ -822,6 +859,62 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
         isObsidian={isObsidian}
       />
 
+      {/* Cup Mode Live Race Draft Header Banner */}
+      {isCupActive && activeRace && (
+        <div
+          className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
+            isApple
+              ? "bg-[#FFF9EB] border-[#D4AF37]/50 text-[#1D1D1F] shadow-sm"
+              : isObsidian
+              ? "bg-[#161D2B] border-[#D4AF37]/40 text-[#F1F5F9]"
+              : "bg-[#181D14] border-[#D4AF37]/50 text-[#F3F4F0] shadow-[0_0_20px_rgba(212,175,55,0.12)]"
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] flex items-center justify-center text-lg shrink-0">
+                🏆
+              </span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-sm sm:text-base font-mono">
+                    Cup Mode Draft: Race {activeRace.raceNumber}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#D4AF37] text-[#070B09] uppercase">
+                    {activeCupDrafter ? `Now Drafting: ${activeCupDrafter}` : "All Picks Complete"}
+                  </span>
+                </div>
+                <div className="text-xs opacity-75 mt-0.5">
+                  Single horse per participant · Discretely locked · Snake order:{" "}
+                  {activeRaceDraftOrder.map((p, idx) => (
+                    <span key={p} className={activeRaceCupPicks[p] ? "opacity-50" : "text-[#D4AF37] font-bold"}>
+                      {idx > 0 && " → "}
+                      {p.split(" ")[0]}
+                      {activeRaceCupPicks[p] && ` (#${activeRaceCupPicks[p]})`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {onOpenCupView && (
+              <button
+                type="button"
+                onClick={onOpenCupView}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs ${
+                  isApple
+                    ? "bg-[#0071E3] text-white hover:bg-[#0077ED]"
+                    : "bg-[#D4AF37] text-[#070B09] hover:bg-[#c49f2e]"
+                }`}
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>View Cup Leaderboard →</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Progressive Race Stepper & Inspection Mode Control */}
       <div className={`p-2.5 sm:p-3 rounded-2xl border transition-all ${
         isApple
@@ -1460,64 +1553,117 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                         </div>
                       </td>
 
-                      {/* Quick Preference Assignment Buttons (1st, 2nd, 3rd) */}
+                      {/* Quick Preference Assignment Buttons OR Cup Mode Draft Button */}
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1 bg-[#0B110E] p-1 rounded border border-[#1F2D26]">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onAssignPreference(
-                                activeMeeting.id,
-                                activeRace.raceNumber,
-                                1,
-                                runner.tabNumber
-                              )
+                        {isCupActive ? (
+                          (() => {
+                            const taken = isHorseTakenInRace(
+                              activeRace.raceNumber,
+                              runner.tabNumber,
+                              cupTournament?.selectionsByRace || {}
+                            );
+                            const drafter = activeCupDrafter || activePunterName;
+                            const isTakenByMe = taken.takenBy === drafter;
+
+                            if (taken.isTaken) {
+                              return (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A1D0B] border border-[#D4AF37]/50 text-[#D4AF37] font-mono text-xs font-bold shadow-xs">
+                                  <Lock className="w-3 h-3 text-[#D4AF37]" />
+                                  <span>Taken: {taken.takenBy}</span>
+                                  {isTakenByMe && onRemoveCupPick && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onRemoveCupPick(activeRace.raceNumber, taken.takenBy!)}
+                                      className="p-0.5 rounded hover:bg-black/30 text-red-400 cursor-pointer ml-1"
+                                      title="Clear pick"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              );
                             }
-                            className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
-                              is1stPref
-                                ? "bg-[#D4AF37] text-[#0B110E] font-semibold"
-                                : "text-[#8A9990] hover:text-[#F3F4F0]"
-                            }`}
-                          >
-                            1st
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onAssignPreference(
-                                activeMeeting.id,
-                                activeRace.raceNumber,
-                                2,
-                                runner.tabNumber
-                              )
-                            }
-                            className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
-                              is2ndPref
-                                ? "bg-[#10B981] text-[#0B110E] font-semibold"
-                                : "text-[#8A9990] hover:text-[#F3F4F0]"
-                            }`}
-                          >
-                            2nd
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onAssignPreference(
-                                activeMeeting.id,
-                                activeRace.raceNumber,
-                                3,
-                                runner.tabNumber
-                              )
-                            }
-                            className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
-                              is3rdPref
-                                ? "bg-[#3B82F6] text-white font-semibold"
-                                : "text-[#8A9990] hover:text-[#F3F4F0]"
-                            }`}
-                          >
-                            3rd
-                          </button>
-                        </div>
+
+                            return (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onAssignCupPick?.(
+                                    activeRace.raceNumber,
+                                    drafter,
+                                    runner.tabNumber
+                                  )
+                                }
+                                className={`px-3 py-1 rounded-md text-xs font-bold font-mono transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm ${
+                                  isApple
+                                    ? "bg-[#0071E3] text-white hover:bg-[#0077ED]"
+                                    : "bg-[#D4AF37] text-[#070B09] hover:bg-[#c49f2e]"
+                                }`}
+                                title={`Draft #${runner.tabNumber} ${runner.horseName} for ${drafter}`}
+                              >
+                                <Trophy className="w-3 h-3" />
+                                <span>Draft for {drafter.split(" ")[0]}</span>
+                              </button>
+                            );
+                          })()
+                        ) : (
+                          <div className="inline-flex items-center gap-1 bg-[#0B110E] p-1 rounded border border-[#1F2D26]">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onAssignPreference(
+                                  activeMeeting.id,
+                                  activeRace.raceNumber,
+                                  1,
+                                  runner.tabNumber
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
+                                is1stPref
+                                  ? "bg-[#D4AF37] text-[#0B110E] font-semibold"
+                                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+                              }`}
+                            >
+                              1st
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onAssignPreference(
+                                  activeMeeting.id,
+                                  activeRace.raceNumber,
+                                  2,
+                                  runner.tabNumber
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
+                                is2ndPref
+                                  ? "bg-[#10B981] text-[#0B110E] font-semibold"
+                                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+                              }`}
+                            >
+                              2nd
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onAssignPreference(
+                                  activeMeeting.id,
+                                  activeRace.raceNumber,
+                                  3,
+                                  runner.tabNumber
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer ${
+                                is3rdPref
+                                  ? "bg-[#3B82F6] text-white font-semibold"
+                                  : "text-[#8A9990] hover:text-[#F3F4F0]"
+                              }`}
+                            >
+                              3rd
+                            </button>
+                          </div>
+                        )}
                       </td>
 
                       {/* Form Guide Expand Action */}
@@ -1757,62 +1903,114 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
 
                 {/* 44px Touch Action Buttons for 1st, 2nd, 3rd Preference & Form */}
                 <div className="flex items-center justify-between gap-2 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onAssignPreference(
-                          activeMeeting.id,
-                          activeRace.raceNumber,
-                          1,
-                          runner.tabNumber
-                        )
+                  {isCupActive ? (
+                    (() => {
+                      const taken = isHorseTakenInRace(
+                        activeRace.raceNumber,
+                        runner.tabNumber,
+                        cupTournament?.selectionsByRace || {}
+                      );
+                      const drafter = activeCupDrafter || activePunterName;
+                      const isTakenByMe = taken.takenBy === drafter;
+
+                      if (taken.isTaken) {
+                        return (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-[#2A1D0B] border border-[#D4AF37]/50 text-[#D4AF37] font-mono text-xs font-bold">
+                            <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <span>Taken: {taken.takenBy}</span>
+                            {isTakenByMe && onRemoveCupPick && (
+                              <button
+                                type="button"
+                                onClick={() => onRemoveCupPick(activeRace.raceNumber, taken.takenBy!)}
+                                className="p-0.5 rounded hover:bg-black/30 text-red-400 cursor-pointer ml-1"
+                                title="Clear pick"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        );
                       }
-                      className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
-                        is1stPref
-                          ? "bg-[#D4AF37] border-[#D4AF37] text-[#0B110E] font-semibold"
-                          : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
-                      }`}
-                    >
-                      1st Pref
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onAssignPreference(
-                          activeMeeting.id,
-                          activeRace.raceNumber,
-                          2,
-                          runner.tabNumber
-                        )
-                      }
-                      className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
-                        is2ndPref
-                          ? "bg-[#10B981] border-[#10B981] text-[#0B110E] font-semibold"
-                          : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
-                      }`}
-                    >
-                      2nd Pref
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onAssignPreference(
-                          activeMeeting.id,
-                          activeRace.raceNumber,
-                          3,
-                          runner.tabNumber
-                        )
-                      }
-                      className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
-                        is3rdPref
-                          ? "bg-[#3B82F6] border-[#3B82F6] text-white font-semibold"
-                          : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
-                      }`}
-                    >
-                      3rd Pref
-                    </button>
-                  </div>
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onAssignCupPick?.(
+                              activeRace.raceNumber,
+                              drafter,
+                              runner.tabNumber
+                            )
+                          }
+                          className={`min-h-[44px] px-3.5 py-2 rounded-md font-mono text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                            isApple
+                              ? "bg-[#0071E3] text-white hover:bg-[#0077ED]"
+                              : "bg-[#D4AF37] text-[#070B09] hover:bg-[#c49f2e]"
+                          }`}
+                        >
+                          <Trophy className="w-3.5 h-3.5" />
+                          <span>Draft for {drafter.split(" ")[0]}</span>
+                        </button>
+                      );
+                    })()
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onAssignPreference(
+                            activeMeeting.id,
+                            activeRace.raceNumber,
+                            1,
+                            runner.tabNumber
+                          )
+                        }
+                        className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
+                          is1stPref
+                            ? "bg-[#D4AF37] border-[#D4AF37] text-[#0B110E] font-semibold"
+                            : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
+                        }`}
+                      >
+                        1st Pref
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onAssignPreference(
+                            activeMeeting.id,
+                            activeRace.raceNumber,
+                            2,
+                            runner.tabNumber
+                          )
+                        }
+                        className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
+                          is2ndPref
+                            ? "bg-[#10B981] border-[#10B981] text-[#0B110E] font-semibold"
+                            : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
+                        }`}
+                      >
+                        2nd Pref
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onAssignPreference(
+                            activeMeeting.id,
+                            activeRace.raceNumber,
+                            3,
+                            runner.tabNumber
+                          )
+                        }
+                        className={`min-h-[44px] px-3 py-2 rounded-md font-mono text-xs font-medium border transition-colors ${
+                          is3rdPref
+                            ? "bg-[#3B82F6] border-[#3B82F6] text-white font-semibold"
+                            : "bg-[#0B110E] border-[#1F2D26] text-[#F3F4F0]"
+                        }`}
+                      >
+                        3rd Pref
+                      </button>
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -1967,6 +2165,61 @@ export const RaceCardAndFormSheet: React.FC<RaceCardAndFormSheetProps> = ({
                 )}
               </div>
             </div>
+
+            {/* When Cup Mode is active: Syndicate Flexi Box Trifecta from all users' discrete picks */}
+            {isCupActive && activeRace && (
+              <div className="mb-4 p-4 rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/5 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🏆</span>
+                    <div>
+                      <h4 className="font-bold text-xs sm:text-sm font-mono text-[#D4AF37] uppercase tracking-wide">
+                        Cup Mode Syndicate Flexi Box Trifecta (Race {activeRace.raceNumber})
+                      </h4>
+                      <p className="text-[11px] text-current/70 font-sans">
+                        Combines all {cupTournament?.participants.length} users&apos; discrete selections into a collective Flexi Box
+                      </p>
+                    </div>
+                  </div>
+                  {onOpenCupView && (
+                    <button
+                      type="button"
+                      onClick={onOpenCupView}
+                      className="text-xs font-mono font-bold text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <span>Cup Tournament Board →</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Boxed runners chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {cupTournament?.participants.map((punter) => {
+                    const pickedTab = cupTournament.selectionsByRace[activeRace.raceNumber]?.[punter];
+                    const runner = pickedTab ? activeRace.runners.find((r) => r.tabNumber === pickedTab) : null;
+                    return (
+                      <div
+                        key={punter}
+                        className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border text-xs font-mono ${
+                          runner
+                            ? "bg-[#D4AF37]/15 border-[#D4AF37]/40 text-current"
+                            : "bg-black/20 border-dashed border-current/20 opacity-50"
+                        }`}
+                      >
+                        <span className="font-bold opacity-75">{punter.split(" ")[0]}:</span>
+                        {runner ? (
+                          <span className="font-bold text-[#D4AF37]">
+                            #{runner.tabNumber} {runner.horseName}
+                          </span>
+                        ) : (
+                          <span className="italic text-[11px]">Not yet drafted</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Active Punter's Trio Selections for this Race */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">

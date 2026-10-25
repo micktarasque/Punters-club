@@ -19,6 +19,7 @@ import {
   LogOut,
   Palette,
   RefreshCw,
+  RotateCcw,
   Sliders,
   Sparkles,
   Table2,
@@ -80,6 +81,14 @@ import {
   downloadInMemoryMicroUpdaterPhp,
   downloadVerifiedBinaryBlob,
 } from "./components/UpdaterDownloadModal";
+import { CupTournamentState } from "./types/cupMode";
+import {
+  getInitialCupState,
+  STORAGE_KEY_CUP_MODE,
+  assignCupPick,
+  removeCupPick,
+} from "./utils/cupMode";
+import { CupModeTournamentView } from "./components/CupModeTournamentView";
 import {
   DEFAULT_QUADDIE_BUY_IN_PER_USER,
   evaluateCombinedTrifectaForRace,
@@ -204,7 +213,8 @@ export type ActiveTab =
   | "overview"
   | "selections"
   | "exotics"
-  | "results";
+  | "results"
+  | "cup";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
@@ -232,6 +242,8 @@ export default function App() {
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const [showPunterMenu, setShowPunterMenu] = useState<boolean>(false);
   const punterMenuRef = useRef<HTMLDivElement>(null);
+  const [showCupMenu, setShowCupMenu] = useState<boolean>(false);
+  const cupMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(72);
 
@@ -309,14 +321,20 @@ export default function App() {
       ) {
         setShowPunterMenu(false);
       }
+      if (
+        cupMenuRef.current &&
+        !cupMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowCupMenu(false);
+      }
     }
-    if (showThemeMenu || showPunterMenu) {
+    if (showThemeMenu || showPunterMenu || showCupMenu) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }
-  }, [showThemeMenu, showPunterMenu]);
+  }, [showThemeMenu, showPunterMenu, showCupMenu]);
 
   const isApple = themeScheme === "apple";
   const isObsidian = themeScheme === "obsidian";
@@ -420,6 +438,28 @@ export default function App() {
       // ignore storage errors
     }
   }, [quaddieBuyInPerUser]);
+
+  // Syndicate Cup Mode Tournament state (discrete draft, mutual exclusivity, snake order, and flexi trifectas)
+  const [cupState, setCupState] = useState<CupTournamentState>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_CUP_MODE);
+      const parsed = safeJsonParse<CupTournamentState | null>(saved, null);
+      if (parsed && typeof parsed.isActive === "boolean") {
+        return parsed;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return getInitialCupState(selectedMeetingId || "", punters);
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CUP_MODE, JSON.stringify(cupState));
+    } catch {
+      // ignore storage errors
+    }
+  }, [cupState]);
 
   // Quaddie-Only Extra Selections (strictly isolated to the Quaddie section, never scored elsewhere)
   const [quaddieExtraByMeeting, setQuaddieExtraByMeeting] = useState<
@@ -881,7 +921,7 @@ export default function App() {
 
   const handleJumpToRace = useCallback(
     (
-      tab: "overview" | "selections" | "exotics" | "results",
+      tab: ActiveTab,
       raceNumber: number,
       meetingId?: string
     ) => {
@@ -2145,6 +2185,28 @@ export default function App() {
                 </span>
               )}
             </button>
+
+            {cupState.isActive && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "cup"}
+                onClick={() => switchTab("cup")}
+                className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs font-bold transition cursor-pointer ${
+                  activeTab === "cup"
+                    ? isApple
+                      ? "bg-[#0071E3] text-white shadow-xs"
+                      : "bg-[#D4AF37] text-[#070B09] shadow-[0_2px_8px_rgba(212,175,55,0.4)]"
+                    : isApple
+                    ? "text-[#86868B] hover:text-[#1D1D1F]"
+                    : "text-[#D4AF37] hover:bg-[#D4AF37]/10"
+                }`}
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Cup Mode</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+              </button>
+            )}
           </nav>
 
           {/* Actions: Punter Switcher + Date + Points/$ Toggle + Cloud Status + Theme Selector + Primary Action */}
@@ -2277,6 +2339,147 @@ export default function App() {
               >
                 <span>$ Return</span>
               </button>
+            </div>
+
+            {/* Cup Mode Tournament Selector Dropdown */}
+            <div className="relative" ref={cupMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCupMenu((prev) => !prev);
+                  setShowThemeMenu(false);
+                  setShowPunterMenu(false);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold transition cursor-pointer border ${
+                  cupState.isActive
+                    ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] shadow-xs ring-1 ring-[#D4AF37]/30"
+                    : isApple
+                    ? "bg-[#F2F2F7] border-[#E5E5EA] text-[#1D1D1F] hover:bg-[#E5E5EA]"
+                    : isObsidian
+                    ? "bg-[#111827] border-[#1E293B] text-[#F1F5F9] hover:bg-[#1E293B]"
+                    : "bg-[#121A16] border-[#1F2D26] text-[#F3F4F0] hover:bg-[#192620]"
+                }`}
+                title="Toggle Syndicate Cup Mode Tournament & Turn Draft System"
+                aria-label="Cup Mode Selector"
+              >
+                <Trophy className={`w-3.5 h-3.5 ${cupState.isActive ? "text-[#D4AF37] animate-pulse" : "text-[#D4AF37]"}`} />
+                <span className="hidden xl:inline">Mode:</span>
+                <span className="font-semibold hidden sm:inline">
+                  {cupState.isActive ? "🏆 Cup Active" : "Standard"}
+                </span>
+                {cupState.isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+                )}
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+
+              {showCupMenu && (
+                <div
+                  className={`absolute right-0 mt-1.5 w-72 rounded-2xl p-2.5 shadow-2xl border z-50 animate-in fade-in zoom-in-95 duration-100 ${
+                    isApple
+                      ? "bg-white border-[#E5E5EA] text-[#1D1D1F]"
+                      : isObsidian
+                      ? "bg-[#0F172A] border-[#1E293B] text-[#F1F5F9]"
+                      : "bg-[#0E1512] border-[#2A3F33] text-[#F3F4F0]"
+                  }`}
+                >
+                  <div className="px-2 py-1 flex items-center justify-between border-b border-current/10 pb-2">
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#D4AF37] flex items-center gap-1.5">
+                      <Trophy className="w-3.5 h-3.5" />
+                      <span>Syndicate Cup Mode</span>
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                      cupState.isActive ? "bg-[#10B981]/20 text-[#10B981]" : "bg-black/20 text-current/60"
+                    }`}>
+                      {cupState.isActive ? "ACTIVE" : "STANDBY"}
+                    </span>
+                  </div>
+
+                  {/* Toggle button */}
+                  <div className="py-2.5 px-1 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCupState((prev) => ({
+                          ...prev,
+                          isActive: !prev.isActive,
+                          updatedAt: new Date().toISOString(),
+                        }));
+                        triggerToast(
+                          !cupState.isActive
+                            ? "🏆 Cup Mode Activated: Discrete Draft enabled!"
+                            : "Standard Mode Restored"
+                        );
+                      }}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-bold font-mono transition flex items-center justify-between cursor-pointer ${
+                        cupState.isActive
+                          ? "bg-[#10B981] text-[#070B09] shadow-sm"
+                          : "bg-[#D4AF37] text-[#070B09] shadow-sm hover:bg-[#c49f2e]"
+                      }`}
+                    >
+                      <span>{cupState.isActive ? "✓ Cup Mode Enabled" : "⚡️ Enable Cup Mode"}</span>
+                      <span className="text-[10px] uppercase font-sans">
+                        {cupState.isActive ? "Click to Disable" : "Activate"}
+                      </span>
+                    </button>
+
+                    <div className="p-2 rounded-xl bg-current/5 border border-current/10 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-mono">
+                        <span className="opacity-70">Participants:</span>
+                        <strong className="text-[#D4AF37]">{cupState.participants.length} Punters</strong>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] font-mono">
+                        <span className="opacity-70">Draft Style:</span>
+                        <strong>{cupState.draftType === "snake" ? "🐍 Snake Draft" : "➡️ Fixed"}</strong>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] font-mono">
+                        <span className="opacity-70">Discreet Picks:</span>
+                        <strong>1 horse/user (locked)</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-current/10 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchTab("cup");
+                        setShowCupMenu(false);
+                      }}
+                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer ${
+                        isApple ? "hover:bg-[#F2F2F7]" : "hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>Open Cup Tournament Board</span>
+                      </span>
+                      <span>→</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm("Reset all drafted selections for the Cup tournament?")) {
+                          setCupState((prev) => ({
+                            ...prev,
+                            selectionsByRace: {},
+                            activeRaceNumber: 1,
+                            activeDraftIndex: 0,
+                            updatedAt: new Date().toISOString(),
+                          }));
+                          triggerToast("Cup selections reset");
+                          setShowCupMenu(false);
+                        }
+                      }}
+                      className="w-full py-1.5 px-3 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 text-left transition cursor-pointer flex items-center justify-between"
+                    >
+                      <span>Reset Draft Selections</span>
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Theme Selector Dropdown */}
@@ -3165,6 +3368,16 @@ export default function App() {
                     );
                   }}
                   onJumpToSelections={(mId, rNo) => handleJumpToRace("selections", rNo, mId)}
+                  cupTournament={cupState}
+                  onAssignCupPick={(raceNo, punter, tabNo) => {
+                    setCupState((prev) => assignCupPick(prev, raceNo, punter, tabNo));
+                    triggerToast(`🏆 Drafted Runner #${tabNo} in Race ${raceNo} for ${punter}`);
+                  }}
+                  onRemoveCupPick={(raceNo, punter) => {
+                    setCupState((prev) => removeCupPick(prev, raceNo, punter));
+                    triggerToast(`Cleared Race ${raceNo} pick for ${punter}`);
+                  }}
+                  onOpenCupView={() => switchTab("cup")}
                   isApple={isApple}
                   isObsidian={isObsidian}
                 />
@@ -3739,6 +3952,28 @@ export default function App() {
               )}
             </section>
           </div>
+        )}
+
+        {/* ====================================================================
+            TAB: CUP MODE (SYNDICATE DISCRETE DRAFT & FLEXI BOX TRIFECTAS)
+           ==================================================================== */}
+        {activeTab === "cup" && activeMeeting && (
+          <section
+            id="section-cup-mode"
+            role="tabpanel"
+            aria-label="Cup Mode Tab"
+            className="space-y-4 pb-24"
+          >
+            <CupModeTournamentView
+              tournament={cupState}
+              meeting={activeMeeting}
+              onUpdateTournament={(updated) => setCupState(updated)}
+              onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+              onNavigateToRaceCard={() => switchTab("overview")}
+              isApple={isApple}
+              isObsidian={isObsidian}
+            />
+          </section>
         )}
 
       </main>

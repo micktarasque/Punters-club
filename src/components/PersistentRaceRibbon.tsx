@@ -20,9 +20,9 @@ export interface PersistentRaceRibbonProps {
   onSelectMeeting: (id: string) => void;
   selectedRaceNumber: number;
   onSelectRaceNumber: (raceNumber: number) => void;
-  activeTab: "overview" | "selections" | "exotics" | "results";
+  activeTab: "overview" | "selections" | "exotics" | "results" | "cup";
   onJumpTo: (
-    tab: "overview" | "selections" | "exotics" | "results",
+    tab: "overview" | "selections" | "exotics" | "results" | "cup",
     raceNumber: number,
     meetingId?: string
   ) => void;

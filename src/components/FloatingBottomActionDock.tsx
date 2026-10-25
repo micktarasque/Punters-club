@@ -24,8 +24,8 @@ interface FloatingBottomActionDockProps {
   onSelectMeeting: (meetingId: string) => void;
   selectedRaceNumber: number;
   onSelectRaceNumber: (raceNo: number) => void;
-  activeTab: "overview" | "selections" | "exotics" | "results";
-  onSwitchTab: (tab: "overview" | "selections" | "exotics" | "results") => void;
+  activeTab: "overview" | "selections" | "exotics" | "results" | "cup";
+  onSwitchTab: (tab: "overview" | "selections" | "exotics" | "results" | "cup") => void;
   onJumpToRace?: (raceNo: number) => void;
   isApple?: boolean;
   onToggleTheme?: () => void;

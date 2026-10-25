@@ -21,10 +21,10 @@ export interface SiteQuickJumpNavigatorProps {
   onSelectMeeting: (meetingId: string) => void;
   selectedRaceNumber: number;
   onSelectRaceNumber: (raceNo: number) => void;
-  activeTab: "overview" | "selections" | "exotics" | "results";
-  onSwitchTab: (tab: "overview" | "selections" | "exotics" | "results") => void;
+  activeTab: "overview" | "selections" | "exotics" | "results" | "cup";
+  onSwitchTab: (tab: "overview" | "selections" | "exotics" | "results" | "cup") => void;
   onJumpToRace: (
-    tab: "overview" | "selections" | "exotics" | "results",
+    tab: "overview" | "selections" | "exotics" | "results" | "cup",
     raceNumber: number,
     meetingId?: string
   ) => void;
