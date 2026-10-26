@@ -479,9 +479,9 @@ const RaceMarketRadarBarChartComponent: React.FC<RaceMarketRadarBarChartProps> =
           </div>
 
           {/* View Mode Segmented Control (Bar Chart vs Radar Chart) */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 max-w-full min-w-0">
             <div
-              className={`flex items-center p-1 rounded-xl border ${
+              className={`flex items-center p-1 rounded-xl border max-w-full overflow-x-auto ${
                 isApple
                   ? "bg-[#F2F2F7] border-[#E5E5EA]"
                   : "bg-[#1A2420] border-[#2B3D34]"

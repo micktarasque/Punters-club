@@ -13,7 +13,6 @@ import {
   MapPin,
   ChevronRight,
   CheckCircle2,
-  ShieldCheck,
   Eye,
   X,
   BarChart3,
@@ -616,122 +615,34 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
       style={{ scrollMarginTop: "calc(var(--app-header-height, 68px) + 28px)" }}
       className="scroll-section-clearance space-y-6"
     >
-      {/* Section Header + Multi-Select Checkbox Race Card Dropdown */}
-      <div className="apple-card p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Compact header: what this is, and which meetings are shown. */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[#86868B]">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-[#0071E3] bg-[#EBF5FF] px-2.5 py-0.5 rounded-full">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Sydney &amp; Melbourne Feature Race Cards
-            </span>
-            <span>•</span>
-            <span>Sources: {verifiedSourcesUsed.join(" · ")}</span>
-          </div>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[#1D1D1F]">
-            Active Race Cards ({displayedMeetings.length} Selected:{" "}
-            {displayedMeetings.map((m) => m.venue).join(" · ")})
+          <div className="ui-label">Feature races</div>
+          <h2 className="text-[18px] font-semibold tracking-tight ui-text mt-0.5">
+            {displayedMeetings.map((m) => m.venue).join(" & ")}
           </h2>
-          <p className="mt-1 text-xs sm:text-sm text-[#86868B] max-w-3xl leading-relaxed">
-            Displaying primary <strong>Melbourne (VIC)</strong> and{" "}
-            <strong>Sydney (NSW)</strong> metro meetings by default. Select one or multiple race cards across today's schedule using the selector.
-          </p>
         </div>
-
-        {/* Multi-Select Race Card Dropdown & View Mode Switcher */}
-        <div className="self-start lg:self-center flex flex-wrap items-center gap-2.5">
-          <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA] border border-black/[0.04] text-xs font-mono shadow-xs">
-            <button
-              type="button"
-              onClick={() => handleToggleViewMode("analytics")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
-                currentViewMode === "analytics"
-                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
-                  : "text-[#86868B] hover:text-[#1D1D1F]"
-              }`}
-              title="Switch Overview to Market Analytics View"
-            >
-              <BarChart3 className="h-3.5 w-3.5" />
-              <span>Market Analytics</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleViewMode("speedmap")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
-                currentViewMode === "speedmap"
-                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
-                  : "text-[#86868B] hover:text-[#1D1D1F]"
-              }`}
-              title="Switch Overview to Speed Map View (Pace Groups & Settling Positions)"
-            >
-              <Zap className="h-3.5 w-3.5 text-[#FF9500]" />
-              <span>Speed Map</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleViewMode("form")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
-                currentViewMode === "form"
-                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
-                  : "text-[#86868B] hover:text-[#1D1D1F]"
-              }`}
-              title="Switch Overview to Detailed Form Guide View"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Detailed Form Guide</span>
-            </button>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-2">
           <RaceCardMultiSelectDropdown
             meetings={sorted}
             selectedMeetingIds={activeSelectedIds}
             onChangeSelectedMeetingIds={handleUpdateSelectedIds}
             punters={punters}
-            labelPrefix="Race Cards"
+            labelPrefix="Meetings"
             align="right"
           />
-
           {activeSelectedIds.join(",") !== defaultSelectedIds.join(",") && (
             <button
               type="button"
               onClick={() => handleUpdateSelectedIds(defaultSelectedIds)}
-              className="apple-btn-secondary"
-              title="Reset to showing only Sydney and Melbourne cards"
+              className="ui-btn"
+              title="Show only the Sydney and Melbourne cards"
             >
-              Reset to Syd &amp; Melb
+              Reset
             </button>
           )}
         </div>
-      </div>
-
-      {/* Active Race Cards Quick-Toggle Bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#E5E5EA] bg-white p-3 text-xs shadow-xs">
-        <span className="font-semibold text-[#86868B] ml-1">
-          Checked Cards ({displayedMeetings.length}/{sorted.length}):
-        </span>
-        {displayedMeetings.map((m) => (
-          <span
-            key={m.id}
-            className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] bg-[#F2F2F7] px-3 py-1 font-medium text-[#1D1D1F]"
-          >
-            <span>
-              {m.venue} ({m.state} · {m.races.length}R)
-            </span>
-            {displayedMeetings.length > 1 && (
-              <button
-                type="button"
-                onClick={() =>
-                  handleUpdateSelectedIds(
-                    activeSelectedIds.filter((id) => id !== m.id)
-                  )
-                }
-                className="text-[#86868B] hover:text-[#FF3B30] cursor-pointer"
-                title={`Uncheck ${m.venue}`}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </span>
-        ))}
       </div>
 
       {/* Selected Race Cards Grid (Side-by-Side on iPad Pro Landscape & Desktop) */}
