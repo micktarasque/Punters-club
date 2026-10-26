@@ -30,6 +30,7 @@ import {
   calculateCupTrifectaOutcomes,
   removeCupPick,
 } from "../utils/cupMode";
+import { CupDraftRulesCard } from "./CupDraftRulesCard";
 
 interface CupModeTournamentViewProps {
   tournament: CupTournamentState;
@@ -369,6 +370,14 @@ export const CupModeTournamentView: React.FC<CupModeTournamentViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Cup Draft Rules & Mechanics Card */}
+      <CupDraftRulesCard
+        tournament={tournament}
+        isApple={isApple}
+        isObsidian={isObsidian}
+        defaultExpanded={false}
+      />
 
       {/* =========================================================================
           TAB 1: TOURNAMENT LEADERBOARD

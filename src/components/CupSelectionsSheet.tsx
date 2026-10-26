@@ -37,6 +37,7 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react";
+import { CupDraftRulesCard } from "./CupDraftRulesCard";
 
 interface CupSelectionsSheetProps {
   meeting: RaceMeeting;
@@ -646,6 +647,14 @@ export const CupSelectionsSheet: React.FC<CupSelectionsSheetProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cup Draft Rules & Mechanics Reference Card */}
+      <CupDraftRulesCard
+        tournament={tournament}
+        isApple={isApple}
+        isObsidian={isObsidian}
+        defaultExpanded={false}
+      />
 
       {/* ====================================================================
           DRAFT CONSOLE: SEQUENTIAL PRIORITY RESOLVER (MELBOURNE -> SYDNEY)
