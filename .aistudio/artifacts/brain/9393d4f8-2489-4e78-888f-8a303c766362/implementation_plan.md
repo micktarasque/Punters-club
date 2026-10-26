@@ -1,77 +1,43 @@
-# Implementation Plan: Syndicate 'Cup Mode' Tournament & Discrete Draft System (Completed)
+# Implementation Plan: Direct Cup Mode Selections & Sequential Melbourne-to-Sydney Card Flow
 
-Deliver **Cup Mode** — a multi-user draft tournament system where syndicate members take turns selecting a single, mutually exclusive horse per race across active race cards. All selections are discrete (no horse can be picked twice in the same race), using the existing NSW TAB scoring system ($1 Each-Way Par & Points), and combining all users' discrete selections into a collective syndicate Flexi Box Trifecta, selectable via a header button matching the theme selector.
-
----
-
-## 1. Specifications & Delivered Features
-
-1. **Header Selector Button (matching Theme Selector style)**:
-   - Dedicated **🏆 Cup Mode** dropdown button in the main header beside the Theme and Punter selectors.
-   - Shows live state: `🏆 Cup Active` with an active pulsing indicator or `Standard`.
-   - Dropdown control menu includes:
-     - 1-click **Enable / Disable Cup Mode** toggle.
-     - Live tournament stats (participants count, draft style, discrete lock status).
-     - 1-click **Open Cup Tournament Board** navigation button.
-     - **Reset Draft Selections** button with confirmation prompt.
-
-2. **Turn-Based Discrete Draft Selection Mechanics**:
-   - **Single Horse per User**: In each race on the card, each user drafts exactly 1 horse.
-   - **Discrete & Mutually Exclusive Selections**: Once a horse is drafted by User A in Race X, that runner is locked (`🔒 Taken by [User A]`) and cannot be drafted by any other participant in that race. If the current drafter made the pick, they can clear it via the `✕` button.
-   - **Snake Draft Turn Order**:
-     - Odd races (R1, R3, R5...): Original sequence (P1 → P2 → P3).
-     - Even races (R2, R4, R6...): Reversed sequence (P3 → P2 → P1).
-     - Automatically highlights the active drafter: `🎯 NOW DRAFTING: Race X · [User]'s Turn`.
-
-3. **Syndicate Flexi Box Trifecta System**:
-   - In each race, all distinct horses drafted across participants are automatically combined into the syndicate's **Flexi Box Trifecta**.
-   - Computes $N(N-1)(N-2)$ total combinations, stake outlay ($10 default with quick adjustments for $6, $10, $20, $24), and exact Flexi %.
-   - When 1st, 2nd, and 3rd runners in the official results are all among the drafted horses, the syndicate hits the official TAB Trifecta dividend proportionally.
-
-4. **Identical Scoring Architecture**:
-   - Evaluates picks against official NSW TAB race results with dual scoring:
-     - **Points Mode**: 1st = 3 pts, 2nd = 2 pts, 3rd = 1 pt.
-     - **$1 Each-Way Par Mode**: $1 Win + $1 Place on official NSW TAB dividends minus $2.00 stake per pick.
-   - Standings table displays: Rank (Crown for 1st, Medals for 2nd/3rd), Punter Name, Picks Made, Wins, Places, Strike Rate %, Total Points, Total $ Return, and Net Profit.
+## Overview
+When entering or activating Cup Mode, users will be taken directly to the **Cup Selections screen** (`CupSelectionsSheet`) rather than the tournament board or general racecard. The selection workflow starts on the **Melbourne** feature meeting. Once users complete their 8-horse rankings through the Melbourne card, they are prompted with a dedicated **"Next: Proceed to Sydney Card"** callout that smoothly transitions them straight into the Sydney card to complete selections before running the sequential draft.
 
 ---
 
-## 2. Changes Completed
-
-### `src/types/cupMode.ts`
-- Defined `CupTournamentState`, `CupUserRaceOutcome`, `CupUserLeaderboardEntry`, and `CupSyndicateTrifectaOutcome`.
-
-### `src/utils/cupMode.ts`
-- Implemented `getInitialCupState` and `STORAGE_KEY_CUP_MODE` persistence.
-- Implemented `getDraftOrderForRace` supporting Snake and Fixed turn order.
-- Implemented `getActiveDraftPunter` to detect whose turn it is in the active race.
-- Implemented `isHorseTakenInRace`, `assignCupPick`, and `removeCupPick` enforcing mutual exclusivity.
-- Implemented `calculateCupLeaderboard` and `calculateCupTrifectaOutcomes`.
-
-### `src/components/CupModeTournamentView.tsx`
-- Built full tournament dashboard featuring:
-  - Header with venue info, draft order indicator, and quick race selector.
-  - Active Drafter Banner highlighting current turn.
-  - **Leaderboard & Standings Tab**: Live points, $ returns, strike rate, and participant management (add/remove punters).
-  - **Draft Matrix Tab**: High-density grid of all races showing drafted runners, barrier, odds, and podium tags.
-  - **Syndicate Flexi Box Trifecta Tab**: Trackside exotics monitor showing combinations, flexi %, and total payouts.
-
-### `src/components/RaceCardAndFormSheet.tsx`
-- Added Cup Mode Live Draft Header Banner at the top of the race card.
-- Updated Desktop Table rows with `🔒 Taken: [User]` or `🏆 Draft for [User]` buttons.
-- Updated Mobile Cards with corresponding touch-friendly draft and lock controls.
-- Added Cup Mode Syndicate Flexi Box Trifecta card to Step 3 of the inspection flow.
-
-### `src/App.tsx`
-- Added Cup Mode Selector Button in the header right next to the Theme Selector.
-- Connected `cupState` with automatic `localStorage` synchronization.
-- Added dedicated `🏆 Cup Mode` tab to the navigation bar.
-- Integrated `CupModeTournamentView` workspace panel.
+## 1. Direct Entry to Cup Selections
+- **Auto-Routing upon Cup Activation**:
+  - Whenever Cup Mode is enabled from the header toggle or the "Cup Mode" navigation tab is selected, set `activeTab = "cup"` and ensure `cupSubView = "selections"`.
+  - Automatically identify the Melbourne metro meeting (e.g. Flemington, Caulfield, Moonee Valley) on the active race date and set it as `selectedMeetingId` so the user lands straight on the Melbourne card.
+  - If a Melbourne meeting is not present on the date, fall back to the primary metro meeting followed by Sydney.
 
 ---
 
-## 3. Verification & Validation
+## 2. Melbourne to Sydney Card Transition in `CupSelectionsSheet`
+- **Meeting Header Navigation in Cup Selections**:
+  - Add meeting tabs at the top of `CupSelectionsSheet` displaying the progression sequence:
+    1. **Melbourne Card** (e.g., Flemington) — *Primary*
+    2. **Sydney Card** (e.g., Randwick) — *Next*
+  - Display badge indicators on each meeting pill showing card completion status (e.g., `8/8 Races Complete`).
+- **Sequential Card Completion Prompt**:
+  - When the user completes the final race of the Melbourne card (or when all Melbourne races are ranked for the active punter), display a prominent, animated call-to-action bar:
+    - **"Next: Proceed to Sydney Card (Randwick / Rosehill) →"**
+    - Clicking this button switches the active meeting to Sydney, scrolls to Race 1 of the Sydney card, plays a chime, and triggers haptic feedback.
+- **Return to Melbourne Option**:
+  - Punters can easily toggle back to review or adjust Melbourne picks at any time.
 
-- **TypeScript Compilation**: `npm run lint` (`tsc --noEmit`) succeeded with 0 errors.
-- **Production Build**: `compile_applet` passed successfully.
-- **Theme Compatibility**: Tested and verified across Default Turf Dark, Apple Minimalist, and Midnight Obsidian.
+---
+
+## 3. Sequential Priority Draft Execution
+- **Card-by-Card Draft Resolution**:
+  - The draft resolves Melbourne races first, followed by Sydney races.
+  - Update `CupTournamentState` and draft helpers to store meeting-isolated draft selections and preference rankings (`userPreferencesByMeeting?: Record<string, Record<number, Record<string, number[]>>>`).
+  - The draft console in `CupSelectionsSheet` and `CupModeTournamentView` clearly announces which card is currently being drafted, advancing to Sydney once Melbourne draft steps finish.
+
+---
+
+## 4. Verification & Testing
+- Test Cup Mode toggle to ensure immediate routing to `CupSelectionsSheet` on Melbourne card.
+- Verify 8-horse rankings on Melbourne card until completion, checking that the **"Next: Proceed to Sydney Card →"** prompt appears.
+- Click prompt and verify transition to Sydney card Race 1.
+- Run `npm run lint` and `npm run build` (`compile_applet`) to ensure clean compilation.

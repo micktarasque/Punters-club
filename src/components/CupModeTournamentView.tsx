@@ -37,6 +37,7 @@ interface CupModeTournamentViewProps {
   onUpdateTournament: (updated: CupTournamentState) => void;
   onSelectRaceNumber: (raceNumber: number) => void;
   onNavigateToRaceCard: () => void;
+  onNavigateToSelections?: () => void;
   isApple?: boolean;
   isObsidian?: boolean;
 }
@@ -47,6 +48,7 @@ export const CupModeTournamentView: React.FC<CupModeTournamentViewProps> = ({
   onUpdateTournament,
   onSelectRaceNumber,
   onNavigateToRaceCard,
+  onNavigateToSelections,
   isApple = false,
   isObsidian = false,
 }) => {
@@ -220,6 +222,17 @@ export const CupModeTournamentView: React.FC<CupModeTournamentViewProps> = ({
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
             </button>
+
+            {onNavigateToSelections && (
+              <button
+                type="button"
+                onClick={onNavigateToSelections}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md bg-[#D4AF37] text-[#070B09] hover:bg-[#c49f2e]"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Jump to Cup Selections (8-Rank)</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -543,18 +556,30 @@ export const CupModeTournamentView: React.FC<CupModeTournamentViewProps> = ({
                 Turn sequence: {tournament.draftType === "snake" ? "Snake order reverses every race" : "Fixed order"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onNavigateToRaceCard}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                isApple
-                  ? "bg-[#0071E3] text-white hover:bg-[#0077ED]"
-                  : "bg-[#10B981] text-[#070B09] hover:bg-[#0ea371]"
-              }`}
-            >
-              <span>Inspect on RaceCard</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {onNavigateToSelections && (
+                <button
+                  type="button"
+                  onClick={onNavigateToSelections}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer bg-[#D4AF37] text-[#070B09] hover:bg-[#c49f2e] shadow-sm"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Jump to Cup Selections (8-Rank)</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onNavigateToRaceCard}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  isApple
+                    ? "bg-[#0071E3] text-white hover:bg-[#0077ED]"
+                    : "bg-[#10B981] text-[#070B09] hover:bg-[#0ea371]"
+                }`}
+              >
+                <span>Inspect on RaceCard</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto pt-3">
@@ -632,50 +657,73 @@ export const CupModeTournamentView: React.FC<CupModeTournamentViewProps> = ({
                         const isDrafterTurn =
                           activeDrafter === punter && race.raceNumber === tournament.activeRaceNumber;
 
+                        const resDetail = tournament.draftResolutionDetails?.[race.raceNumber]?.[punter];
+
                         return (
                           <td key={punter} className="py-3 px-3">
                             {runner ? (
-                              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg border bg-current/5 border-current/10">
-                                <div className="flex items-center gap-1.5 truncate">
-                                  <span className="w-5 h-5 rounded-full bg-[#D4AF37] text-[#070B09] font-mono text-xs flex items-center justify-center font-bold shrink-0">
-                                    {runner.tabNumber}
-                                  </span>
-                                  <span className="truncate font-semibold">{runner.horseName}</span>
+                              <div className="flex flex-col gap-1 p-2 rounded-lg border bg-current/5 border-current/10">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="w-5 h-5 rounded-full bg-[#D4AF37] text-[#070B09] font-mono text-xs flex items-center justify-center font-bold shrink-0">
+                                      {runner.tabNumber}
+                                    </span>
+                                    <span className="truncate font-semibold">{runner.horseName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0 font-mono text-[11px]">
+                                    {runner.finishPosition === 1 ? (
+                                      <span className="px-1.5 py-0.2 rounded bg-[#10B981] text-[#070B09] font-bold">
+                                        1st
+                                      </span>
+                                    ) : runner.finishPosition === 2 ? (
+                                      <span className="px-1.5 py-0.2 rounded bg-[#38BDF8] text-[#070B09] font-bold">
+                                        2nd
+                                      </span>
+                                    ) : runner.finishPosition === 3 ? (
+                                      <span className="px-1.5 py-0.2 rounded bg-[#B45309] text-white font-bold">
+                                        3rd
+                                      </span>
+                                    ) : runner.finishPosition > 3 ? (
+                                      <span className="text-current/50">
+                                        {runner.finishPosition}th
+                                      </span>
+                                    ) : (
+                                      <span className="text-current/60">
+                                        ${(runner.nswTabWin || runner.fixedWin).toFixed(2)}
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = removeCupPick(tournament, race.raceNumber, punter);
+                                        onUpdateTournament(updated);
+                                      }}
+                                      className="p-0.5 text-current/40 hover:text-red-500 cursor-pointer ml-1"
+                                      title={`Clear ${punter}'s selection for Race ${race.raceNumber}`}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0 font-mono text-[11px]">
-                                  {runner.finishPosition === 1 ? (
-                                    <span className="px-1.5 py-0.2 rounded bg-[#10B981] text-[#070B09] font-bold">
-                                      1st
-                                    </span>
-                                  ) : runner.finishPosition === 2 ? (
-                                    <span className="px-1.5 py-0.2 rounded bg-[#38BDF8] text-[#070B09] font-bold">
-                                      2nd
-                                    </span>
-                                  ) : runner.finishPosition === 3 ? (
-                                    <span className="px-1.5 py-0.2 rounded bg-[#B45309] text-white font-bold">
-                                      3rd
-                                    </span>
-                                  ) : runner.finishPosition > 3 ? (
-                                    <span className="text-current/50">
-                                      {runner.finishPosition}th
-                                    </span>
-                                  ) : (
-                                    <span className="text-current/60">
-                                      ${(runner.nswTabWin || runner.fixedWin).toFixed(2)}
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const updated = removeCupPick(tournament, race.raceNumber, punter);
-                                      onUpdateTournament(updated);
-                                    }}
-                                    className="p-0.5 text-current/40 hover:text-red-500 cursor-pointer ml-1"
-                                    title={`Clear ${punter}'s selection for Race ${race.raceNumber}`}
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
+                                {resDetail && (
+                                  <div className="text-[10px] font-mono flex items-center justify-between border-t border-current/5 pt-1">
+                                    {!resDetail.wasFallback ? (
+                                      <span className="text-[#10B981] font-bold">✓ 1st Choice</span>
+                                    ) : (
+                                      <span
+                                        className="text-amber-400 font-semibold cursor-help"
+                                        title={
+                                          resDetail.originallyTakenBy
+                                            ? `Fell back from #${resDetail.originallyWantedTab} (drafted by ${resDetail.originallyTakenBy})`
+                                            : `Fell back to preference #${resDetail.preferenceRankUsed}`
+                                        }
+                                      >
+                                        ⚡️ Pref #{resDetail.preferenceRankUsed}{" "}
+                                        {resDetail.originallyTakenBy ? `(1st was #${resDetail.originallyWantedTab})` : ""}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             ) : isDrafterTurn ? (
                               <button

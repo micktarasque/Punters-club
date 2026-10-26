@@ -30,6 +30,7 @@ import {
   Volume2,
   VolumeX,
   X,
+  Zap,
 } from "lucide-react";
 import { generateRaceAutoPickTrio } from "./utils/autoPick";
 import { triggerConfetti } from "./components/github/confettiUtil";
@@ -87,8 +88,11 @@ import {
   STORAGE_KEY_CUP_MODE,
   assignCupPick,
   removeCupPick,
+  getEffectiveCupPuntersForExotics,
 } from "./utils/cupMode";
 import { CupModeTournamentView } from "./components/CupModeTournamentView";
+import { CupSelectionsSheet } from "./components/CupSelectionsSheet";
+import { RaceSpeedMapVisualizer } from "./components/RaceSpeedMapVisualizer";
 import {
   DEFAULT_QUADDIE_BUY_IN_PER_USER,
   evaluateCombinedTrifectaForRace,
@@ -358,9 +362,10 @@ export default function App() {
       SEED_NSW_TAB_MEETINGS[0].id
   );
   const [selectedRaceNumber, setSelectedRaceNumber] = useState<number>(1);
-  const [overviewViewMode, setOverviewViewMode] = useState<"analytics" | "form">(
+  const [overviewViewMode, setOverviewViewMode] = useState<"analytics" | "speedmap" | "form">(
     "analytics"
   );
+  const [cupSubView, setCupSubView] = useState<"board" | "selections">("board");
   const [verifiedSourcesUsed, setVerifiedSourcesUsed] = useState<string[]>([
     "Ladbrokes AU Racing API (v1)",
     "Neds AU Racing API (v1)",
@@ -460,6 +465,25 @@ export default function App() {
       // ignore storage errors
     }
   }, [cupState]);
+
+  // Synchronize Cup Mode active meeting selections and preferences when selectedMeetingId changes
+  useEffect(() => {
+    if (!cupState.isActive || !selectedMeetingId) return;
+    setCupState((prev) => {
+      if (prev.meetingId === selectedMeetingId) return prev;
+      const meetingSelections = prev.selectionsByMeeting?.[selectedMeetingId] || {};
+      const meetingPrefs = prev.userPreferencesByMeeting?.[selectedMeetingId] || {};
+      const meetingDetails = prev.draftResolutionDetailsByMeeting?.[selectedMeetingId] || {};
+      return {
+        ...prev,
+        meetingId: selectedMeetingId,
+        selectionsByRace: meetingSelections,
+        userPreferencesByRace: meetingPrefs,
+        draftResolutionDetails: meetingDetails,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }, [selectedMeetingId, cupState.isActive]);
 
   // Quaddie-Only Extra Selections (strictly isolated to the Quaddie section, never scored elsewhere)
   const [quaddieExtraByMeeting, setQuaddieExtraByMeeting] = useState<
@@ -975,6 +999,12 @@ export default function App() {
     );
   }, [allMeetingsOnSelectedDate, trackFilter]);
 
+  // Effective punters for exotics (Trifectas & Quaddies):
+  // When Cup Mode is active, each punter's selection is replaced with their mutually exclusive allocated draft pick
+  const effectiveExoticPunters = useMemo(() => {
+    return getEffectiveCupPuntersForExotics(punters, cupState, allMeetingsOnSelectedDate);
+  }, [punters, cupState, allMeetingsOnSelectedDate]);
+
   // Multi-select race card IDs across the entire page (defaults to Sydney & Melbourne race cards on the selected date)
   const [selectedMeetingIds, setSelectedMeetingIds] = useState<string[]>(() => {
     const initialDateMeetings = SEED_NSW_TAB_MEETINGS.filter(
@@ -1161,9 +1191,14 @@ export default function App() {
       const anyParticipatedUserWon = participatedUsers.some((u) => u.won);
 
       // Evaluate whether the Combined Syndicate Trifecta hit on this confirmed race
+      const exoticPuntersForRace = getEffectiveCupPuntersForExotics(
+        currentPunters,
+        cupState,
+        targetMeeting ? [targetMeeting] : visibleMeetings
+      );
       const trifectaEval = evaluateCombinedTrifectaForRace(
         race,
-        currentPunters,
+        exoticPuntersForRace,
         targetMeeting.id,
         targetMeeting.date,
         trifectaBetAmount,
@@ -1173,7 +1208,8 @@ export default function App() {
 
       // Count how many selections placed (1st, 2nd, 3rd) or won across participated users
       const allPlacedOrWonRunners = new Set<number>();
-      currentPunters.forEach((punter) => {
+      const evaluatedRunnersPunters = cupState.isActive ? exoticPuntersForRace : currentPunters;
+      evaluatedRunnersPunters.forEach((punter) => {
         const mSelections = punter.selectionsByMeeting?.[targetMeeting.id];
         const trio = mSelections?.[race.raceNumber];
         if (trio) {
@@ -2191,7 +2227,14 @@ export default function App() {
                 type="button"
                 role="tab"
                 aria-selected={activeTab === "cup"}
-                onClick={() => switchTab("cup")}
+                onClick={() => {
+                  setCupSubView("selections");
+                  const { melbourneMeeting } = getSydneyAndMelbourneMeetings(visibleMeetings);
+                  if (melbourneMeeting && (!selectedMeetingId || selectedMeetingId !== melbourneMeeting.id)) {
+                    setSelectedMeetingId(melbourneMeeting.id);
+                  }
+                  switchTab("cup");
+                }}
                 className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs font-bold transition cursor-pointer ${
                   activeTab === "cup"
                     ? isApple
@@ -2400,14 +2443,26 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => {
+                        const nextActive = !cupState.isActive;
+                        const { melbourneMeeting } = getSydneyAndMelbourneMeetings(visibleMeetings);
+                        const targetMeetingId = melbourneMeeting?.id || visibleMeetings[0]?.id || selectedMeetingId;
+                        if (nextActive) {
+                          if (targetMeetingId) {
+                            setSelectedMeetingId(targetMeetingId);
+                          }
+                          setCupSubView("selections");
+                          switchTab("cup");
+                          setShowCupMenu(false);
+                        }
                         setCupState((prev) => ({
                           ...prev,
-                          isActive: !prev.isActive,
+                          isActive: nextActive,
+                          meetingId: targetMeetingId,
                           updatedAt: new Date().toISOString(),
                         }));
                         triggerToast(
-                          !cupState.isActive
-                            ? "🏆 Cup Mode Activated: Discrete Draft enabled!"
+                          nextActive
+                            ? `🏆 Cup Mode Activated: Directing to Melbourne 8-Horse Selections (${melbourneMeeting?.venue || "Melbourne"} Card)!`
                             : "Standard Mode Restored"
                         );
                       }}
@@ -2443,6 +2498,29 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => {
+                        const { melbourneMeeting } = getSydneyAndMelbourneMeetings(visibleMeetings);
+                        if (melbourneMeeting) {
+                          setSelectedMeetingId(melbourneMeeting.id);
+                        }
+                        setCupSubView("selections");
+                        switchTab("cup");
+                        setShowCupMenu(false);
+                      }}
+                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer ${
+                        isApple ? "hover:bg-[#F2F2F7]" : "hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>Jump to Cup Selections (8-Rank)</span>
+                      </span>
+                      <span>→</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCupSubView("board");
                         switchTab("cup");
                         setShowCupMenu(false);
                       }}
@@ -2822,6 +2900,45 @@ export default function App() {
           </section>
         )}
 
+        {/* Syndicate Cup Mode Direct Entry & Transition Callout */}
+        {cupState.isActive && (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#D4AF37]/20 via-[#10B981]/20 to-[#0071E3]/20 border-2 border-[#D4AF37] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37] text-[#070B09] font-bold text-xl shadow-md shrink-0">
+                🏆
+              </span>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-xs sm:text-sm font-mono text-[#D4AF37] uppercase tracking-wider">
+                    Syndicate Cup Mode Active
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] font-bold font-mono">
+                    8-Horse Ranked Preferences
+                  </span>
+                </div>
+                <p className="text-xs text-current/80 mt-0.5">
+                  Discrete draft system with automated preference fallbacks: <strong>Melbourne Card</strong> → <strong>Sydney Card</strong>.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const { melbourneMeeting } = getSydneyAndMelbourneMeetings(visibleMeetings);
+                if (melbourneMeeting) {
+                  setSelectedMeetingId(melbourneMeeting.id);
+                }
+                setCupSubView("selections");
+                switchTab("cup");
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#c49f2e] text-[#070B09] font-bold text-xs font-mono flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-sm active:scale-95 transition"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Jump to Cup Selections ({getSydneyAndMelbourneMeetings(visibleMeetings).melbourneMeeting?.venue || "Melbourne"} Card) →</span>
+            </button>
+          </div>
+        )}
+
         {/* Universal Quick Navigation & Race Jump Dock */}
         <SiteQuickJumpNavigator
           meetings={visibleMeetings}
@@ -3107,6 +3224,38 @@ export default function App() {
               </div>
             )}
 
+            {cupState.isActive && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#D4AF37]/20 via-[#10B981]/15 to-[#0071E3]/20 border border-[#D4AF37]/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+                    🏆
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-xs sm:text-sm font-mono flex items-center gap-2">
+                      <span>Syndicate Cup Mode is Active!</span>
+                      <span className="text-[10px] uppercase font-sans font-semibold bg-[#10B981] text-[#070B09] px-2 py-0.2 rounded-full">
+                        8-Horse Priority Draft
+                      </span>
+                    </h4>
+                    <p className="text-xs opacity-80 mt-0.5">
+                      Each user ranks 8 horses in priority order for every race. If your pick is taken, you automatically fall back to your next preference.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCupSubView("selections");
+                    switchTab("cup");
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#c49f2e] text-[#070B09] font-mono text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer shrink-0"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Jump to Cup Selections →</span>
+                </button>
+              </div>
+            )}
+
             {layoutConfig.showMajorOverview && (
               <MajorRaceDaysOverview
                 meetings={visibleMeetings}
@@ -3187,6 +3336,23 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => {
+                      setOverviewViewMode("speedmap");
+                      audioAlerts.playTapClick();
+                      audioAlerts.triggerHapticFeedback(10);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                      overviewViewMode === "speedmap"
+                        ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                        : "text-[#86868B] hover:text-[#1D1D1F]"
+                    }`}
+                    title="Switch to Speed Map (Pace Groups & Settling Positions)"
+                  >
+                    <Zap className="h-3.5 w-3.5 text-[#FF9500]" />
+                    <span>Speed Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setOverviewViewMode("form");
                       audioAlerts.playTapClick();
                       audioAlerts.triggerHapticFeedback(10);
@@ -3196,12 +3362,79 @@ export default function App() {
                         ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
                         : "text-[#86868B] hover:text-[#1D1D1F]"
                     }`}
-                    title="Switch to Detailed Form Guide (Speed Maps & Full Field)"
+                    title="Switch to Detailed Form Guide (Full Field)"
                   >
                     <FileText className="h-3.5 w-3.5" />
                     <span>Detailed Form Guide</span>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Speed Map View */}
+            {activeMeeting && overviewViewMode === "speedmap" && (
+              <div
+                id="section-speed-map"
+                style={{ scrollMarginTop: "calc(var(--app-header-height, 72px) + 24px)" }}
+                className="scroll-section-clearance animate-fadeIn space-y-4"
+              >
+                {(() => {
+                  const race =
+                    activeMeeting.races.find((r) => r.raceNumber === selectedRaceNumber) ||
+                    activeMeeting.races[0];
+                  return (
+                    <div className="apple-card p-5 space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h2
+                            className={`text-base sm:text-lg font-bold tracking-tight ${
+                              isApple ? "text-[#1D1D1F]" : "text-[#F3F4F0]"
+                            }`}
+                          >
+                            Speed Map &amp; Settling Positions — {activeMeeting.venue} (Race {selectedRaceNumber}: {race.raceName})
+                          </h2>
+                          <p
+                            className={`text-xs mt-0.5 ${
+                              isApple ? "text-[#86868B]" : "text-[#8A9990]"
+                            }`}
+                          >
+                            Pace profile, estimated leader, settling groups (Lead, On Pace, Midfield, Backmarker), and barrier run to 1st turn.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setOverviewViewMode("analytics")}
+                            className="apple-btn-secondary text-xs flex items-center gap-1.5"
+                          >
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            <span>Switch to Analytics</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOverviewViewMode("form")}
+                            className="apple-btn-secondary text-xs flex items-center gap-1.5"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Switch to Form</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <RaceSpeedMapVisualizer
+                        race={race}
+                        allRacesInMeeting={activeMeeting.races}
+                        selectedRaceNumber={selectedRaceNumber}
+                        onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+                        trackCondition={activeMeeting.trackRating}
+                        railPosition={activeMeeting.railPosition}
+                        meetingVenue={activeMeeting.venue}
+                        isApple={isApple}
+                        isObsidian={isObsidian}
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -3504,7 +3737,7 @@ export default function App() {
               onSelectMeeting={setSelectedMeetingId}
               selectedMeetingIds={selectedMeetingIds}
               onChangeSelectedMeetingIds={handleUpdateSelectedMeetingIds}
-              punters={punters}
+              punters={effectiveExoticPunters}
               activePunterId={activePunter.id}
               onSelectPunter={setActivePunterId}
               trifectaBetAmount={trifectaBetAmount}
@@ -3514,6 +3747,7 @@ export default function App() {
               quaddieExtraByMeeting={quaddieExtraByMeeting}
               onToggleQuaddieExtraRunner={handleToggleQuaddieExtraRunner}
               onClearQuaddieExtrasForLeg={handleClearQuaddieExtrasForLeg}
+              cupState={cupState}
               onJumpToSelections={(punterId, meetingId) => {
                 if (punterId) setActivePunterId(punterId);
                 if (meetingId) {
@@ -3761,11 +3995,12 @@ export default function App() {
                   onSelectMeeting={setSelectedMeetingId}
                   selectedMeetingIds={selectedMeetingIds}
                   onChangeSelectedMeetingIds={handleUpdateSelectedMeetingIds}
-                  punters={punters}
+                  punters={effectiveExoticPunters}
                   trifectaBetAmount={trifectaBetAmount}
                   onChangeTrifectaBetAmount={setTrifectaBetAmount}
                   onTriggerToast={triggerToast}
                   isApple={isApple}
+                  cupState={cupState}
                   onJumpToSelections={(punterId, meetingId) => {
                     if (punterId) setActivePunterId(punterId);
                     if (meetingId) {
@@ -3869,13 +4104,14 @@ export default function App() {
                   onSelectMeeting={setSelectedMeetingId}
                   selectedMeetingIds={selectedMeetingIds}
                   onChangeSelectedMeetingIds={handleUpdateSelectedMeetingIds}
-                  punters={punters}
+                  punters={effectiveExoticPunters}
                   quaddieBuyInPerUser={quaddieBuyInPerUser}
                   onChangeQuaddieBuyInPerUser={setQuaddieBuyInPerUser}
                   quaddieExtraByMeeting={quaddieExtraByMeeting}
                   onToggleQuaddieExtraRunner={handleToggleQuaddieExtraRunner}
                   onClearQuaddieExtrasForLeg={handleClearQuaddieExtrasForLeg}
                   isApple={isApple}
+                  cupState={cupState}
                   onJumpToSelections={(punterId, meetingId) => {
                     if (punterId) setActivePunterId(punterId);
                     if (meetingId) {
@@ -3964,15 +4200,85 @@ export default function App() {
             aria-label="Cup Mode Tab"
             className="space-y-4 pb-24"
           >
-            <CupModeTournamentView
-              tournament={cupState}
-              meeting={activeMeeting}
-              onUpdateTournament={(updated) => setCupState(updated)}
-              onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
-              onNavigateToRaceCard={() => switchTab("overview")}
-              isApple={isApple}
-              isObsidian={isObsidian}
-            />
+            {/* Sub-view switcher between 8-Rank Selections and Tournament Board */}
+            <div className={`flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border ${
+              isApple
+                ? "bg-white border-[#E5E5EA] text-[#1D1D1F] shadow-xs"
+                : isObsidian
+                ? "bg-[#111827] border-[#1E293B] text-[#F1F5F9]"
+                : "bg-[#0E1512] border-[#2A3F33] text-[#F3F4F0]"
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider opacity-60">
+                  Cup View:
+                </span>
+                <span className="font-bold text-xs sm:text-sm font-mono">
+                  {cupSubView === "selections" ? "📋 8-Horse Ordered Selections" : "🏆 Tournament Board & Leaderboard"}
+                </span>
+              </div>
+              <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA] border border-black/[0.04] text-xs font-mono shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCupSubView("selections");
+                    audioAlerts.playTapClick();
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                    cupSubView === "selections"
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                      : "text-[#86868B] hover:text-[#1D1D1F]"
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-[#D4AF37]" />
+                  <span>8-Horse Selections</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCupSubView("board");
+                    audioAlerts.playTapClick();
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                    cupSubView === "board"
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                      : "text-[#86868B] hover:text-[#1D1D1F]"
+                  }`}
+                >
+                  <Trophy className="h-3.5 w-3.5 text-[#D4AF37]" />
+                  <span>Tournament Board</span>
+                </button>
+              </div>
+            </div>
+
+            {cupSubView === "selections" ? (
+              <CupSelectionsSheet
+                meeting={activeMeeting}
+                meetings={visibleMeetings}
+                onSelectMeeting={(mId) => {
+                  setSelectedMeetingId(mId);
+                  if (!selectedMeetingIds.includes(mId)) {
+                    handleUpdateSelectedMeetingIds([...selectedMeetingIds, mId]);
+                  }
+                }}
+                tournament={cupState}
+                onUpdateTournament={(updated) => setCupState(updated)}
+                onNavigateToTournamentBoard={() => setCupSubView("board")}
+                punters={punters}
+                isApple={isApple}
+                isObsidian={isObsidian}
+              />
+            ) : (
+              <CupModeTournamentView
+                tournament={cupState}
+                meeting={activeMeeting}
+                onUpdateTournament={(updated) => setCupState(updated)}
+                onSelectRaceNumber={(raceNo) => setSelectedRaceNumber(raceNo)}
+                onNavigateToRaceCard={() => switchTab("overview")}
+                onNavigateToSelections={() => setCupSubView("selections")}
+                isApple={isApple}
+                isObsidian={isObsidian}
+              />
+            )}
           </section>
         )}
 

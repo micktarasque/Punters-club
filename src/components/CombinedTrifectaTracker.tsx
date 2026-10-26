@@ -34,6 +34,7 @@ import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { InteractiveTrifectaCustomiser } from "./InteractiveTrifectaCustomiser";
 import { RollingDividendCounter } from "./RollingDividendCounter";
 import { triggerConfetti } from "./github/confettiUtil";
+import { CupTournamentState } from "../types/cupMode";
 
 interface CombinedTrifectaTrackerProps {
   meetings: RaceMeeting[];
@@ -47,6 +48,7 @@ interface CombinedTrifectaTrackerProps {
   onChangeTrifectaBetAmount?: (amount: number) => void;
   onTriggerToast?: (msg: string) => void;
   isApple?: boolean;
+  cupState?: CupTournamentState;
 }
 
 const STORAGE_KEY_TRIFECTA_BET = "turfsheet_trifecta_bet_amount_v1";
@@ -219,7 +221,9 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
   onChangeTrifectaBetAmount,
   onTriggerToast,
   isApple = false,
+  cupState,
 }) => {
+  const isCupModeActive = Boolean(cupState?.isActive);
   const [filterMode, setFilterMode] =
     useState<"ALL" | "SELECTED_ONLY">("SELECTED_ONLY");
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([
@@ -907,6 +911,27 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
           </div>
         </div>
 
+        {isCupModeActive && (
+          <div className="p-3 sm:p-3.5 rounded-lg bg-gradient-to-r from-[#D4AF37]/20 via-[#10B981]/15 to-[#0071E3]/20 border border-[#D4AF37]/50 flex items-center justify-between gap-3 text-xs font-mono animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-md bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                🏆
+              </span>
+              <div>
+                <strong className="text-[#D4AF37] font-bold">
+                  Syndicate Cup Mode Active
+                </strong>
+                <span className="opacity-90 block sm:inline sm:ml-1 text-[#F3F4F0]">
+                  — Group Trifecta pool is built from each member's allocated priority draft selection (1 runner per member).
+                </span>
+              </div>
+            </div>
+            <span className="hidden md:inline px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] font-bold text-[10px]">
+              Mutually Exclusive Draft Picks
+            </span>
+          </div>
+        )}
+
         {/* Customisable Trifecta Bet Amount Bar (Default $20 Bet) */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 p-3.5 rounded-lg bg-[#0B110E] border border-[#D4AF37]/40">
           <div className="space-y-0.5">
@@ -1457,7 +1482,9 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                     <tr className="border-b border-[#1F2D26] bg-[#0B110E] text-[11px] font-mono uppercase text-[#8A9990]">
                       <th className="py-2.5 px-3 whitespace-nowrap">Race</th>
                       <th className="py-2.5 px-3 whitespace-nowrap">
-                        Each User&apos;s Selections (1st / 2nd / 3rd)
+                        {isCupModeActive
+                          ? "Each Member's Allocated Draft Pick (Cup Mode)"
+                          : "Each User's Selections (1st / 2nd / 3rd)"}
                       </th>
                       <th className="py-2.5 px-3 whitespace-nowrap">
                         Combined Syndicate Consensus Flexi Pool
@@ -1528,7 +1555,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                           </td>
 
                           {/* Column 2: Individual User Selections Contributing to Pool */}
-                          <td className="py-3 px-3 min-w-[210px]">
+                          <td className="py-3 px-3 min-w-[220px]">
                             <div className="space-y-1.5">
                               {punters.map((punter) => {
                                 const mSel = getPunterSelectionsForMeeting(
@@ -1541,37 +1568,71 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                                     punter,
                                     cardMeeting
                                   ) === race.raceNumber;
+                                const cupAlloc =
+                                  punter.cupAllocationsByMeeting?.[cardMeeting.id]?.[
+                                    race.raceNumber
+                                  ];
                                 const picks = [
                                   trio?.firstPref ?? null,
                                   trio?.secondPref ?? null,
                                   trio?.thirdPref ?? null,
                                 ];
-                                const hasPicks = picks.some((x) => x !== null);
+                                const hasPicks =
+                                  picks.some((x) => x !== null) || Boolean(cupAlloc);
 
                                 return (
                                   <div
                                     key={punter.id}
                                     className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-[#0B110E] border border-[#1F2D26] font-mono text-[11px]"
                                   >
-                                    <span className="font-sans font-semibold text-[#F3F4F0] flex items-center gap-1">
-                                      {punter.name}
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <span className="font-sans font-semibold text-[#F3F4F0] truncate">
+                                        {punter.name}
+                                      </span>
                                       {isJoker && (
                                         <span
-                                          className="px-1 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-mono text-[9px] font-bold"
+                                          className="px-1 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-mono text-[9px] font-bold shrink-0"
                                           title="Nominated Joker Round (2x Points if 1st Pref Wins)"
                                         >
                                           🃏 2×
                                         </span>
                                       )}
-                                    </span>
+                                      {isCupModeActive && cupAlloc && (
+                                        <span
+                                          className={`px-1 py-0.2 rounded font-mono text-[9px] font-bold shrink-0 ${
+                                            cupAlloc.wasFallback
+                                              ? "bg-amber-500/20 text-amber-400"
+                                              : "bg-[#10B981]/20 text-[#10B981]"
+                                          }`}
+                                          title={
+                                            cupAlloc.wasFallback
+                                              ? `Allocated #${cupAlloc.tabNumber} (Preference #${cupAlloc.preferenceRankUsed} fallback because #${cupAlloc.originallyWantedTab} was taken by ${cupAlloc.originallyTakenBy || "another member"})`
+                                              : `Allocated #${cupAlloc.tabNumber} (1st Preference)`
+                                          }
+                                        >
+                                          🏆 {cupAlloc.wasFallback ? `Pref #${cupAlloc.preferenceRankUsed}` : "Pref #1"}
+                                        </span>
+                                      )}
+                                    </div>
                                     {hasPicks ? (
-                                      <span className="text-[#D4AF37] tabular-nums">
-                                        {picks
-                                          .map((tab) =>
-                                            tab !== null ? `#${tab}` : "—"
-                                          )
-                                          .join(" / ")}
-                                      </span>
+                                      <div className="text-right shrink-0">
+                                        <span className="text-[#D4AF37] tabular-nums font-bold">
+                                          {isCupModeActive && cupAlloc ? (
+                                            <span>#{cupAlloc.tabNumber}</span>
+                                          ) : (
+                                            picks
+                                              .map((tab) =>
+                                                tab !== null ? `#${tab}` : "—"
+                                              )
+                                              .join(" / ")
+                                          )}
+                                        </span>
+                                        {isCupModeActive && cupAlloc?.wasFallback && (
+                                          <div className="text-[9px] text-amber-400/90 font-mono">
+                                            (Fallback · #{cupAlloc.originallyWantedTab} taken by {cupAlloc.originallyTakenBy || "other"})
+                                          </div>
+                                        )}
+                                      </div>
                                     ) : (
                                       <button
                                         type="button"
@@ -1583,7 +1644,7 @@ export const CombinedTrifectaTracker: React.FC<CombinedTrifectaTrackerProps> = (
                                         }
                                         className="text-[10px] text-[#8A9990] hover:text-[#D4AF37] underline cursor-pointer"
                                       >
-                                        + Pick 3
+                                        + Pick
                                       </button>
                                     )}
                                   </div>

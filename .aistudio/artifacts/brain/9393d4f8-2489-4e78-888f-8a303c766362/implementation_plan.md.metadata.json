@@ -1,6 +1,6 @@
 {
-  "summary":  "Completed implementation plan for Cup Mode: discrete multi-user horse draft with snake turn order, mutual exclusivity per race, identical NSW TAB points and $1 each-way scoring, collective Flexi Box Trifectas, and header selector button.",
-  "updatedAt":  "2026-10-25T18:58:37.024549761Z",
+  "summary":  "Implementation plan for directing users directly to the Cup Selections screen when Cup Mode is active, and guiding them from the Melbourne race card straight to the Sydney card upon completion.",
+  "updatedAt":  "2026-10-26T08:00:57.180033980Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

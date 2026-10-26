@@ -41,6 +41,7 @@ interface CombinedQuaddieTrackerProps {
   onClearQuaddieExtrasForLeg: (meetingId: string, raceNumber: number) => void;
   onJumpToSelections: (punterId?: string, meetingId?: string) => void;
   isApple?: boolean;
+  cupState?: import("../types/cupMode").CupTournamentState;
 }
 
 const STORAGE_KEY_QUADDIE_BUY_IN_PER_USER =
@@ -61,7 +62,9 @@ export const CombinedQuaddieTracker: React.FC<CombinedQuaddieTrackerProps> = ({
   onClearQuaddieExtrasForLeg,
   onJumpToSelections,
   isApple = false,
+  cupState,
 }) => {
+  const isCupModeActive = Boolean(cupState?.isActive);
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([
     selectedMeetingId,
   ]);
@@ -317,6 +320,27 @@ export const CombinedQuaddieTracker: React.FC<CombinedQuaddieTrackerProps> = ({
             </button>
           </div>
         </div>
+
+        {isCupModeActive && (
+          <div className="p-3 sm:p-3.5 rounded-lg bg-gradient-to-r from-[#10B981]/20 via-[#D4AF37]/20 to-[#0071E3]/20 border border-[#10B981]/50 flex items-center justify-between gap-3 text-xs font-mono animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-md bg-[#10B981] text-[#070B09] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                🏆
+              </span>
+              <div>
+                <strong className="text-[#10B981] font-bold">
+                  Syndicate Cup Mode Active
+                </strong>
+                <span className="opacity-90 block sm:inline sm:ml-1 text-[#F3F4F0]">
+                  — Group Quaddie legs are built using each member's allocated draft selection (1 runner per member) + Quaddie-Only Extras.
+                </span>
+              </div>
+            </div>
+            <span className="hidden md:inline px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] font-bold text-[10px]">
+              Allocated Leg Selections
+            </span>
+          </div>
+        )}
 
         {/* Quaddie Per-User Buy-In & Syndicate Pool Customiser */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 p-3.5 rounded-lg bg-[#0B110E] border border-[#10B981]/40">
@@ -694,20 +718,49 @@ export const CombinedQuaddieTracker: React.FC<CombinedQuaddieTrackerProps> = ({
                                       </div>
 
                                       <div className="flex flex-wrap items-center gap-1">
-                                        {entry.pickedByUsers.map((u, idx) => (
-                                          <span
-                                            key={`${u.punterId}-${idx}`}
-                                            className="px-1.5 py-0.5 rounded bg-[#192620] text-[#D4AF37] font-mono text-[10px]"
-                                          >
-                                            {u.punterName} ({u.preferenceRank}
-                                            {u.preferenceRank === 1
-                                              ? "st"
-                                              : u.preferenceRank === 2
-                                              ? "nd"
-                                              : "rd"}
-                                            )
-                                          </span>
-                                        ))}
+                                        {entry.pickedByUsers.map((u, idx) => {
+                                          const punterObj = punters.find(
+                                            (p) => p.id === u.punterId || p.name === u.punterName
+                                          );
+                                          const cupAlloc =
+                                            punterObj?.cupAllocationsByMeeting?.[cardMeeting.id]?.[
+                                              leg.raceNumber
+                                            ];
+
+                                          return (
+                                            <span
+                                              key={`${u.punterId}-${idx}`}
+                                              className="px-1.5 py-0.5 rounded bg-[#192620] text-[#D4AF37] font-mono text-[10px]"
+                                              title={
+                                                isCupModeActive && cupAlloc
+                                                  ? cupAlloc.wasFallback
+                                                    ? `Allocated #${cupAlloc.tabNumber} (Preference #${cupAlloc.preferenceRankUsed} fallback because #${cupAlloc.originallyWantedTab} was taken by ${cupAlloc.originallyTakenBy || "another member"})`
+                                                    : `Allocated #${cupAlloc.tabNumber} (1st Preference)`
+                                                  : undefined
+                                              }
+                                            >
+                                              {isCupModeActive ? (
+                                                <span>
+                                                  🏆 {u.punterName} (
+                                                  {cupAlloc?.wasFallback
+                                                    ? `Pref #${cupAlloc.preferenceRankUsed}`
+                                                    : "Pref #1"}
+                                                  )
+                                                </span>
+                                              ) : (
+                                                <span>
+                                                  {u.punterName} ({u.preferenceRank}
+                                                  {u.preferenceRank === 1
+                                                    ? "st"
+                                                    : u.preferenceRank === 2
+                                                    ? "nd"
+                                                    : "rd"}
+                                                  )
+                                                </span>
+                                              )}
+                                            </span>
+                                          );
+                                        })}
                                         {entry.isQuaddieExtra && (
                                           <span className="px-1.5 py-0.5 rounded bg-[#10B981]/20 border border-[#10B981]/40 text-[#10B981] font-mono text-[10px] font-semibold">
                                             + Quaddie Extra

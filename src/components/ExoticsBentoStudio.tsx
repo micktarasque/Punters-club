@@ -75,6 +75,7 @@ export interface ExoticsBentoStudioProps {
   onClearQuaddieExtrasForLeg: (meetingId: string, raceNumber: number) => void;
   onJumpToSelections: (punterId?: string, meetingId?: string) => void;
   onTriggerToast?: (msg: string) => void;
+  cupState?: import("../types/cupMode").CupTournamentState;
 }
 
 export type ExoticsViewFilter = "all" | "trifectas" | "quaddies";
@@ -94,7 +95,9 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
   onClearQuaddieExtrasForLeg,
   onJumpToSelections,
   onTriggerToast,
+  cupState,
 }) => {
+  const isCupModeActive = Boolean(cupState?.isActive);
   const [activeFilter, setActiveFilter] = useState<ExoticsViewFilter>("all");
 
   // Toggle: Show all scheduled races vs only participated races (defaults to false / participated only)
@@ -1049,6 +1052,27 @@ export const ExoticsBentoStudio: React.FC<ExoticsBentoStudioProps> = ({
           </div>
         </div>
       </div>
+
+      {isCupModeActive && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-[#D4AF37]/20 via-[#10B981]/20 to-[#0071E3]/20 border border-[#D4AF37]/50 shadow-md flex items-center justify-between gap-3 text-xs font-mono animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-xl bg-[#D4AF37] text-[#070B09] flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+              🏆
+            </span>
+            <div>
+              <strong className="text-[#D4AF37] font-bold text-sm block">
+                Syndicate Cup Mode Active
+              </strong>
+              <p className="text-[11px] opacity-80 mt-0.5 leading-relaxed">
+                Exotics Studio pools are generated using each member's allocated selection from the priority draft (including automatic fallbacks if a top preference was taken by an earlier drafter).
+              </p>
+            </div>
+          </div>
+          <span className="hidden md:inline px-3 py-1 rounded-full bg-[#10B981]/20 text-[#10B981] font-bold text-[10px]">
+            Mutually Exclusive Draft Picks
+          </span>
+        </div>
+      )}
 
       {/* ====================================================================
           BENTO SECTION 1: REVISED 3-PLACE TRIFECTA MATRIX (Quaddie-Style Layout)

@@ -136,6 +136,7 @@ export interface PunterProfile {
   jokerRaceByMeeting?: Record<string, number | null>;
   jokerUpdatedAtByMeeting?: Record<string, string>;
   autoSubEnabled?: boolean;
+  cupAllocationsByMeeting?: Record<string, Record<number, import("./cupMode").CupAllocatedPickInfo>>;
   updatedAt?: string;
 }
 

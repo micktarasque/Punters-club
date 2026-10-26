@@ -18,10 +18,12 @@ import {
   X,
   BarChart3,
   FileText,
+  Zap,
 } from "lucide-react";
 import { RaceCardMultiSelectDropdown } from "./RaceCardMultiSelectDropdown";
 import { HarvillePlackettLuceModel } from "./HarvillePlackettLuceModel";
 import { RaceCardCountdownClock } from "./RaceCardCountdownClock";
+import { RaceSpeedMapVisualizer } from "./RaceSpeedMapVisualizer";
 import { audioAlerts } from "../utils/audioAlerts";
 
 interface MajorRaceDaysOverviewProps {
@@ -31,13 +33,13 @@ interface MajorRaceDaysOverviewProps {
   onChangeSelectedMeetingIds?: (ids: string[]) => void;
   punters?: PunterProfile[];
   selectedRaceNumber: number;
-  onInspectRace: (meetingId: string, raceNumber: number, targetViewMode?: "analytics" | "form") => void;
+  onInspectRace: (meetingId: string, raceNumber: number, targetViewMode?: "analytics" | "speedmap" | "form") => void;
   onJumpToSelectionsForMeeting: (meetingId: string) => void;
   verifiedSourcesUsed?: string[];
   extraSelectedMeetingIds?: string[];
   onChangeExtraSelectedMeetingIds?: (ids: string[]) => void;
-  overviewViewMode?: "analytics" | "form";
-  onChangeOverviewViewMode?: (mode: "analytics" | "form") => void;
+  overviewViewMode?: "analytics" | "speedmap" | "form";
+  onChangeOverviewViewMode?: (mode: "analytics" | "speedmap" | "form") => void;
 }
 
 function getTopFavourites(runners: RaceRunner[], count = 3): RaceRunner[] {
@@ -70,7 +72,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
   overviewViewMode = "analytics",
   onChangeOverviewViewMode,
 }) => {
-  const [internalViewMode, setInternalViewMode] = useState<"analytics" | "form">(
+  const [internalViewMode, setInternalViewMode] = useState<"analytics" | "speedmap" | "form">(
     overviewViewMode || "analytics"
   );
 
@@ -82,7 +84,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
 
   const currentViewMode = overviewViewMode || internalViewMode;
 
-  const handleToggleViewMode = (mode: "analytics" | "form") => {
+  const handleToggleViewMode = (mode: "analytics" | "speedmap" | "form") => {
     setInternalViewMode(mode);
     onChangeOverviewViewMode?.(mode);
     audioAlerts.playTapClick();
@@ -167,7 +169,7 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Overview Card View Toggle: Market Analytics vs Detailed Form Guide */}
+              {/* Overview Card View Toggle: Market Analytics vs Speed Map vs Detailed Form Guide */}
               <div className="inline-flex items-center p-0.5 rounded-full bg-[#E5E5EA]/80 border border-black/[0.04] text-[11px] font-mono shadow-xs">
                 <button
                   type="button"
@@ -180,7 +182,20 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                   title="Switch View to Market Analytics (Odds Distribution & Radar)"
                 >
                   <BarChart3 className="h-3 w-3" />
-                  <span>Market Analytics</span>
+                  <span>Analytics</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleViewMode("speedmap")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                    currentViewMode === "speedmap"
+                      ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                      : "text-[#86868B] hover:text-[#1D1D1F]"
+                  }`}
+                  title="Switch View to Speed Map (Pace Groups, Lead / On Pace / Midfield / Backmarker)"
+                >
+                  <Zap className="h-3 w-3 text-[#FF9500]" />
+                  <span>Speed Map</span>
                 </button>
                 <button
                   type="button"
@@ -190,10 +205,10 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                       ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
                       : "text-[#86868B] hover:text-[#1D1D1F]"
                   }`}
-                  title="Switch View to Detailed Form Guide (Speed Maps & Full Card)"
+                  title="Switch View to Detailed Form Guide (Full Card)"
                 >
                   <FileText className="h-3 w-3" />
-                  <span>Detailed Form Guide</span>
+                  <span>Form</span>
                 </button>
               </div>
 
@@ -254,6 +269,66 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Inline Speed Map View when Speed Map mode is active */}
+        {currentViewMode === "speedmap" && (
+          <div className="bg-[#FAF9FA] border-b border-[#E5E5EA] p-4 sm:p-5">
+            {(() => {
+              const activeRace =
+                meeting.races.find((r) => r.raceNumber === selectedRaceNumber) ||
+                meeting.races.find(
+                  (r) => r.raceNumber === getFeatureRaceNumberForMeeting(meeting)
+                ) ||
+                meeting.races[0];
+
+              return (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-8 items-center justify-center rounded-lg bg-[#FF9500] text-white font-mono text-xs font-bold">
+                        R{activeRace.raceNumber}
+                      </span>
+                      <h4 className="font-bold text-sm sm:text-base text-[#1D1D1F]">
+                        {activeRace.raceName} — Speed Map &amp; Settling Positions
+                      </h4>
+                    </div>
+                    {/* Race selector pills */}
+                    <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-1">
+                      {meeting.races.map((r) => (
+                        <button
+                          key={r.raceNumber}
+                          type="button"
+                          onClick={() => onInspectRace(meeting.id, r.raceNumber, "speedmap")}
+                          className={`px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold transition cursor-pointer ${
+                            activeRace.raceNumber === r.raceNumber
+                              ? "bg-[#0071E3] text-white"
+                              : "bg-[#E5E5EA] text-[#1D1D1F] hover:bg-[#D1D1D6]"
+                          }`}
+                        >
+                          R{r.raceNumber}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[#E5E5EA] bg-white overflow-hidden shadow-xs">
+                    <RaceSpeedMapVisualizer
+                      race={activeRace}
+                      allRacesInMeeting={meeting.races}
+                      selectedRaceNumber={activeRace.raceNumber}
+                      onSelectRaceNumber={(raceNo) => onInspectRace(meeting.id, raceNo, "speedmap")}
+                      trackCondition={meeting.trackRating}
+                      railPosition={meeting.railPosition}
+                      meetingVenue={meeting.venue}
+                      compact
+                      isApple
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Individual Races List with Top Favourites */}
         <div className="divide-y divide-[#E5E5EA]">
@@ -379,6 +454,21 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
                     >
                       <BarChart3 className="h-3.5 w-3.5" />
                       <span>Analytics</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onInspectRace(meeting.id, race.raceNumber, "speedmap")
+                      }
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition cursor-pointer active:scale-95 ${
+                        isSelected && currentViewMode === "speedmap"
+                          ? "border-[#FF9500] bg-[#FF9500] text-white font-semibold shadow-xs"
+                          : "border-[#E5E5EA] bg-white text-[#86868B] hover:border-[#FF9500] hover:text-[#FF9500]"
+                      }`}
+                      title="Inspect Speed Map & Pace Profiles"
+                    >
+                      <Zap className="h-3.5 w-3.5 text-[#FF9500]" />
+                      <span>Speed Map</span>
                     </button>
                     <button
                       type="button"
@@ -562,6 +652,19 @@ export const MajorRaceDaysOverview: React.FC<MajorRaceDaysOverviewProps> = ({
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>Market Analytics</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode("speedmap")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition cursor-pointer active:scale-95 ${
+                currentViewMode === "speedmap"
+                  ? "bg-white text-[#0071E3] font-bold shadow-xs ring-1 ring-black/5"
+                  : "text-[#86868B] hover:text-[#1D1D1F]"
+              }`}
+              title="Switch Overview to Speed Map View (Pace Groups & Settling Positions)"
+            >
+              <Zap className="h-3.5 w-3.5 text-[#FF9500]" />
+              <span>Speed Map</span>
             </button>
             <button
               type="button"
